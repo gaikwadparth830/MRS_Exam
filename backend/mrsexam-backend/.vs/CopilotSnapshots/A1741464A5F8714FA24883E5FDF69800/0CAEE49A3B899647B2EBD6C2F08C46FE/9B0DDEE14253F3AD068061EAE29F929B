@@ -1,0 +1,31 @@
+﻿using Microsoft.EntityFrameworkCore;
+using mrsexam_backend.Models;
+
+namespace mrsexam_backend
+{
+    public sealed class MrexamContext : DbContext
+    {
+        public MrexamContext(DbContextOptions<MrexamContext> options)
+            : base(options)
+        {
+        }
+
+        public DbSet<Center> Centers { get; set; } = null!;
+
+        // Optionally override to configure the model:
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Center>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.Email).HasMaxLength(200);
+                entity.Property(e => e.Phone).HasMaxLength(50);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                entity.Property(e => e.IsActive).HasDefaultValue(true);
+            });
+        }
+    }
+}

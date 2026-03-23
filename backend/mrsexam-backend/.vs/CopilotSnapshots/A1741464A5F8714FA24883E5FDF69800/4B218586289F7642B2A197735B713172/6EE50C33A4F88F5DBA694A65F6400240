@@ -1,0 +1,37 @@
+﻿using Microsoft.EntityFrameworkCore;
+using mrsexam_backend.Models;
+
+namespace mrsexam_backend
+{
+    public sealed class MrexamContext : DbContext
+    {
+        public MrexamContext(DbContextOptions<MrexamContext> options)
+            : base(options)
+        {
+        }
+
+        public DbSet<Center> Centres { get; set; } = null!;
+
+        // Optionally override to configure the model:
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Center>(entity =>
+            {
+                entity.HasKey(e => e.CentreNo);
+                entity.Property(e => e.CentreNo).HasMaxLength(10).IsRequired();
+                entity.Property(e => e.AddressTo).HasMaxLength(50);
+                entity.Property(e => e.CentreName).HasMaxLength(100);
+                entity.Property(e => e.DistrictName).HasMaxLength(50);
+                entity.Property(e => e.Add1).HasMaxLength(50);
+                entity.Property(e => e.Add2).HasMaxLength(50);
+                entity.Property(e => e.City).HasMaxLength(35);
+                entity.Property(e => e.Pincode).HasMaxLength(6);
+                entity.Property(e => e.Phone).HasMaxLength(15);
+                entity.Property(e => e.PanditFlag).HasMaxLength(1).HasDefaultValue("N");
+                entity.Property(e => e.CloseFlag).HasMaxLength(1).HasDefaultValue("N");
+            });
+        }
+    }
+}

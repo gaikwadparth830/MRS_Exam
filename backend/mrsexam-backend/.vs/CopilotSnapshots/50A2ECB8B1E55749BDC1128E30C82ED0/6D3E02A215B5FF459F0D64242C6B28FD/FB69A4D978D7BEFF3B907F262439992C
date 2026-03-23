@@ -1,0 +1,71 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using mrsexam_backend.Models;
+
+namespace mrsexam_backend.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public sealed class SessionsController : ControllerBase
+    {
+        private readonly MrsexamContext _db;
+
+        public SessionsController(MrsexamContext db) => _db = db;
+
+        // GET: api/sessions
+        [HttpGet]
+        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+        {
+            var list = await _db.Sessions.AsNoTracking().ToListAsync(cancellationToken);
+            return Ok(list);
+        }
+
+        // GET: api/sessions/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(int id, CancellationToken cancellationToken)
+        {
+            var item = await _db.Sessions.AsNoTracking().FirstOrDefaultAsync(c => c.SessionNo == id, cancellationToken);
+            if (item is null) return NotFound();
+            return Ok(item);
+        }
+
+        // POST: api/sessions
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] Session model, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            _db.Sessions.Add(model);
+            await _db.SaveChangesAsync(cancellationToken);
+
+            return CreatedAtAction(nameof(Get), new { id = model.SessionNo }, model);
+        }
+
+        // PUT: api/sessions/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] Session model, CancellationToken cancellationToken)
+        {
+            if (id != model.SessionNo) return BadRequest();
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var exists = await _db.Sessions.AnyAsync(e => e.SessionNo == id, cancellationToken);
+            if (!exists) return NotFound();
+
+            _db.Entry(model).State = EntityState.Modified;
+            await _db.SaveChangesAsync(cancellationToken);
+            return NoContent();
+        }
+
+        // DELETE: api/sessions/{id}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+        {
+            var item = await _db.Sessions.FindAsync(new object[] { id }, cancellationToken);
+            if (item is null) return NotFound();
+
+            _db.Sessions.Remove(item);
+            await _db.SaveChangesAsync(cancellationToken);
+            return NoContent();
+        }
+    }
+}

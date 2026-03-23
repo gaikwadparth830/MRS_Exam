@@ -1,0 +1,381 @@
+﻿using Microsoft.EntityFrameworkCore;
+using mrsexam_backend.Models;
+
+namespace mrsexam_backend
+{
+    public sealed class MrsexamContext : DbContext
+    {
+        public MrsexamContext(DbContextOptions<MrsexamContext> options)
+            : base(options)
+        {
+        }
+
+        public DbSet<Center> Centres { get; set; } = null!;
+        public DbSet<Region> Regions { get; set; } = null!;
+        public DbSet<User> Users { get; set; } = null!;
+        public DbSet<Session> Sessions { get; set; } = null!;
+        public DbSet<Parameter> Parameters { get; set; } = null!;
+        public DbSet<Exam> Exams { get; set; } = null!;
+        public DbSet<District> Districts { get; set; } = null!;
+        public DbSet<Grade> Grades { get; set; } = null!;
+        public DbSet<Institution> Institutions { get; set; } = null!;
+        public DbSet<Result> Results { get; set; } = null!;
+        public DbSet<Paper> Papers { get; set; } = null!;
+        public DbSet<TotForm> TotForms { get; set; } = null!;
+        public DbSet<CentreCount> CentreCounts { get; set; } = null!;
+        public DbSet<AttSheet> AttSheets { get; set; } = null!;
+        public DbSet<FormBalbodhini> FormBalbodhinis { get; set; } = null!;
+        public DbSet<FormPandit> FormPandits { get; set; } = null!;
+        public DbSet<FormPrabodh> FormPrabodhs { get; set; } = null!;
+        public DbSet<FormPrathamik> FormPrathamiks { get; set; } = null!;
+
+        // Optionally override to configure the model:
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Center>(entity =>
+            {
+                entity.HasKey(e => e.CentreNo);
+                entity.Property(e => e.CentreNo).HasMaxLength(10).IsRequired();
+                entity.Property(e => e.AddressTo).HasMaxLength(50);
+                entity.Property(e => e.CentreName).HasMaxLength(100);
+                entity.Property(e => e.DistrictName).HasMaxLength(50);
+                entity.Property(e => e.Add1).HasMaxLength(50);
+                entity.Property(e => e.Add2).HasMaxLength(50);
+                entity.Property(e => e.City).HasMaxLength(35);
+                entity.Property(e => e.Pincode).HasMaxLength(6);
+                entity.Property(e => e.Phone).HasMaxLength(15);
+                entity.Property(e => e.PanditFlag).HasMaxLength(1).HasDefaultValue("N");
+                entity.Property(e => e.CloseFlag).HasMaxLength(1).HasDefaultValue("N");
+            });
+
+            modelBuilder.Entity<Region>(entity =>
+            {
+                entity.ToTable("REGION");
+                entity.HasKey(e => e.RegionNo);
+                entity.Property(e => e.RegionNo).HasDefaultValue(0).IsRequired();
+                entity.Property(e => e.RegionName).HasMaxLength(50);
+                entity.Property(e => e.SeatRegionNo).HasDefaultValue(0);
+                entity.Property(e => e.RegionNameEng).HasMaxLength(50);
+            });
+
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.ToTable("USERS");
+                entity.HasKey(e => e.UserId);
+                entity.Property(e => e.UserId).HasMaxLength(10).IsRequired();
+                entity.Property(e => e.Password).HasMaxLength(10);
+                entity.Property(e => e.UserKey).HasMaxLength(5);
+                entity.HasIndex(e => e.UserKey).HasDatabaseName("USERS$KEY");
+            });
+
+            modelBuilder.Entity<Session>(entity =>
+            {
+                entity.ToTable("SESSION");
+                entity.HasKey(e => e.SessionNo);
+                entity.Property(e => e.SessionNo).HasDefaultValue(0).IsRequired();
+                entity.Property(e => e.ResultDate);
+                entity.Property(e => e.ResultPrinted).HasMaxLength(1).HasDefaultValue("N");
+                entity.Property(e => e.CloseFlag).HasMaxLength(1).HasDefaultValue("N");
+                entity.Property(e => e.Month).HasMaxLength(20);
+                entity.Property(e => e.Defa).HasMaxLength(1);
+                entity.Property(e => e.ResgenPandit).HasMaxLength(1);
+                entity.Property(e => e.ResgenPraveen).HasMaxLength(1);
+                entity.Property(e => e.ResgenPrabodh).HasMaxLength(1);
+                entity.Property(e => e.ResgenSubodh).HasMaxLength(1);
+                entity.Property(e => e.ResgenPraveshika).HasMaxLength(1);
+                entity.Property(e => e.ResgenPrathamik).HasMaxLength(1);
+                entity.Property(e => e.ResgenBalbodhini).HasMaxLength(1);
+                entity.Property(e => e.Backup).HasMaxLength(1).HasDefaultValue("N");
+            });
+
+            modelBuilder.Entity<Parameter>(entity =>
+            {
+                entity.ToTable("PARAMETER");
+                entity.HasKey(e => e.ParameterId);
+                entity.Property(e => e.CentreAddressTo).HasMaxLength(50);
+                entity.Property(e => e.SessionMonth11).HasMaxLength(20);
+                entity.Property(e => e.SessionMonth12).HasMaxLength(20);
+                entity.Property(e => e.SessionMonth21).HasMaxLength(20);
+                entity.Property(e => e.SessionMonth22).HasMaxLength(20);
+                entity.Property(e => e.InstName).HasMaxLength(50);
+                entity.Property(e => e.InstAdd).HasMaxLength(55);
+                entity.Property(e => e.ListOfCentres).HasMaxLength(50);
+                entity.Property(e => e.CentreNo).HasMaxLength(20);
+                entity.Property(e => e.CentreName).HasMaxLength(20);
+                entity.Property(e => e.CentreAdd).HasMaxLength(20);
+                entity.Property(e => e.PageNo).HasMaxLength(20);
+                entity.Property(e => e.RightHead).HasMaxLength(50);
+                entity.Property(e => e.CentreHeadPandit).HasMaxLength(200);
+                entity.Property(e => e.Centre).HasMaxLength(50);
+                entity.Property(e => e.HeadingAttsheet);
+                entity.Property(e => e.RollNo).HasMaxLength(50);
+                entity.Property(e => e.Paper1).HasMaxLength(50);
+                entity.Property(e => e.Paper2).HasMaxLength(50);
+                entity.Property(e => e.Paper3).HasMaxLength(50);
+                entity.Property(e => e.Paper4).HasMaxLength(50);
+                entity.Property(e => e.Paper5).HasMaxLength(50);
+                entity.Property(e => e.Paper6).HasMaxLength(50);
+                entity.Property(e => e.Date).HasMaxLength(50);
+                entity.Property(e => e.RightFoot).HasMaxLength(200);
+                entity.Property(e => e.From).HasMaxLength(50);
+                entity.Property(e => e.To).HasMaxLength(50);
+                entity.Property(e => e.CentreHeadPraveen).HasMaxLength(200);
+                entity.Property(e => e.ApplicantName).HasMaxLength(50);
+                entity.Property(e => e.ExamCentre).HasMaxLength(50);
+                entity.Property(e => e.RollNo1).HasMaxLength(50);
+                entity.Property(e => e.Session).HasMaxLength(50);
+                entity.Property(e => e.SsmaTimeStamp).IsRowVersion();
+            });
+
+            modelBuilder.Entity<Exam>(entity =>
+            {
+                entity.ToTable("EXAM");
+                entity.HasKey(e => e.ExamNo);
+                entity.Property(e => e.ExamNo).HasDefaultValue(0).IsRequired();
+                entity.Property(e => e.ExamName).HasMaxLength(50);
+                entity.Property(e => e.SessionNo).HasDefaultValue(0);
+                entity.Property(e => e.NoOfPapers).HasDefaultValue(0);
+                entity.Property(e => e.Fees).HasDefaultValue(0);
+                entity.Property(e => e.AttSheetPrinted).HasMaxLength(1);
+                entity.Property(e => e.ResultGenFlag).HasMaxLength(1).HasDefaultValue("N");
+                entity.Property(e => e.MinTotalKhand1).HasDefaultValue(125);
+                entity.Property(e => e.MinTotalKhand2).HasDefaultValue(70);
+                entity.Property(e => e.Class1Marks).HasDefaultValue(0);
+                entity.Property(e => e.Class2Marks).HasDefaultValue(0);
+                entity.Property(e => e.Class3Marks).HasDefaultValue(0);
+                entity.Property(e => e.DistMarks).HasDefaultValue(0);
+            });
+
+            modelBuilder.Entity<District>(entity =>
+            {
+                entity.ToTable("DISTRICT");
+                entity.HasKey(e => e.DistrictName);
+                entity.Property(e => e.DistrictName).HasMaxLength(50).IsRequired();
+                entity.Property(e => e.RegionNo).HasDefaultValue(0);
+                entity.Property(e => e.DistrictCity).HasMaxLength(50);
+                entity.Property(e => e.ShortName).HasMaxLength(10);
+                entity.Property(e => e.SeatDistrictNo).HasDefaultValue(0);
+
+                entity.HasOne<Region>()
+                      .WithMany()
+                      .HasForeignKey(d => d.RegionNo)
+                      .HasConstraintName("DISTRICT_REGION_FK");
+            });
+
+            modelBuilder.Entity<Grade>(entity =>
+            {
+                entity.ToTable("GRADE");
+                entity.HasKey(e => e.GradeNo);
+                entity.Property(e => e.GradeNo).HasMaxLength(10).IsRequired();
+                entity.Property(e => e.GradeName).HasMaxLength(50);
+                entity.Property(e => e.GradeNameCert).HasMaxLength(50);
+            });
+
+            modelBuilder.Entity<Institution>(entity =>
+            {
+                entity.ToTable("INSTITUTION");
+                entity.HasKey(e => e.InstitutionId);
+                entity.Property(e => e.InstName).HasMaxLength(50);
+                entity.Property(e => e.InstAdd).HasMaxLength(55);
+            });
+
+            modelBuilder.Entity<Result>(entity =>
+            {
+                entity.ToTable("RESULT");
+                entity.HasKey(e => e.ResultId);
+                entity.Property(e => e.ResultValue).HasColumnName("RESULT").HasMaxLength(100);
+                entity.Property(e => e.Description).HasColumnName("DESC").HasMaxLength(100);
+                entity.Property(e => e.Exam).HasDefaultValue((short)0);
+            });
+
+            modelBuilder.Entity<Paper>(entity =>
+            {
+                entity.ToTable("PAPER");
+                entity.HasKey(e => new { e.PaperNo, e.ExamNo });
+                entity.Property(e => e.PaperNo).HasDefaultValue(0).IsRequired();
+                entity.Property(e => e.ExamNo).HasDefaultValue(0).IsRequired();
+                entity.Property(e => e.PaperName).HasMaxLength(40);
+                entity.Property(e => e.PassingMarks).HasDefaultValue(0);
+                entity.Property(e => e.ExemptionMarks).HasDefaultValue(0);
+                entity.Property(e => e.MinMarks).HasDefaultValue(0);
+            });
+
+            modelBuilder.Entity<TotForm>(entity =>
+            {
+                entity.ToTable("TOT_FORMS");
+                entity.HasKey(e => e.TotFormsId);
+                entity.Property(e => e.UserId).HasColumnName("userid").HasMaxLength(10);
+                entity.Property(e => e.Exam).HasColumnName("exam").HasMaxLength(15);
+                entity.Property(e => e.TotForms).HasColumnName("tot_forms").HasDefaultValue((short)0);
+                entity.HasIndex(e => e.UserId).HasDatabaseName("TOT_FORMS$userid");
+            });
+
+            modelBuilder.Entity<CentreCount>(entity =>
+            {
+                entity.ToTable("CENTRE_COUNT");
+                entity.HasKey(e => e.CentreCountId);
+                entity.Property(e => e.CentreNo).HasMaxLength(50);
+                entity.Property(e => e.CentreName).HasMaxLength(100);
+                entity.Property(e => e.FromGroup1).HasDefaultValue(0);
+                entity.Property(e => e.ToGroup1).HasMaxLength(50).HasDefaultValue("-");
+                entity.Property(e => e.FromGroup2).HasMaxLength(50).HasDefaultValue("-");
+                entity.Property(e => e.ToGroup2).HasMaxLength(50).HasDefaultValue("-");
+                entity.Property(e => e.Other).HasMaxLength(255);
+                entity.Property(e => e.RegionNo).HasDefaultValue(0);
+            });
+
+            modelBuilder.Entity<AttSheet>(entity =>
+            {
+                entity.ToTable("AttSheet");
+                entity.HasKey(e => e.AttSheetId);
+                entity.Property(e => e.ExamCentre).HasColumnName("exam_centre").HasMaxLength(50);
+                entity.Property(e => e.Col1RollNo).HasColumnName("col1_RollNo").HasDefaultValue(0);
+                entity.Property(e => e.Col2RollNo).HasColumnName("col2_RollNo").HasDefaultValue(0);
+            });
+
+            modelBuilder.Entity<FormBalbodhini>(entity =>
+            {
+                entity.ToTable("FORM_BALBODHINI");
+                entity.HasKey(e => e.SrNo);
+                entity.Property(e => e.SrNo).HasDefaultValue(0).IsRequired();
+                entity.Property(e => e.RollNo);
+                entity.Property(e => e.RegionNo).HasDefaultValue(0);
+                entity.Property(e => e.Name).HasMaxLength(60);
+                entity.Property(e => e.SessionNo);
+                entity.Property(e => e.Gender).HasMaxLength(1);
+                entity.Property(e => e.FormCentre).HasMaxLength(50);
+                entity.Property(e => e.ExamCentre).HasMaxLength(50);
+                entity.Property(e => e.Marks1).HasMaxLength(50);
+                entity.Property(e => e.TotMarks);
+                entity.Property(e => e.Grade).HasMaxLength(10);
+                entity.Property(e => e.UndFlag).HasMaxLength(1);
+                entity.Property(e => e.UndClass).HasMaxLength(6);
+                entity.Property(e => e.SpecialRank).HasMaxLength(20);
+                entity.Property(e => e.Result).HasMaxLength(20);
+                entity.Property(e => e.DummyCentreCode).HasDefaultValue(0);
+                entity.Property(e => e.ResgenRun).HasDefaultValue((short)0);
+                entity.Property(e => e.DistrictName).HasMaxLength(50);
+                entity.Property(e => e.UserId).HasMaxLength(15);
+
+                entity.HasIndex(e => e.DummyCentreCode).HasDatabaseName("FORM_BALBODHINI$DummyCentreCode");
+                entity.HasIndex(e => e.Name).HasDatabaseName("FORM_BALBODHINI$NAME");
+                entity.HasIndex(e => e.UserId).HasDatabaseName("FORM_BALBODHINI$userid");
+            });
+
+            modelBuilder.Entity<FormPandit>(entity =>
+            {
+                entity.ToTable("FORM_PANDIT");
+                entity.HasKey(e => new { e.RollNo, e.SessionNo });
+                entity.Property(e => e.RollNo).HasDefaultValue((short)0).IsRequired();
+                entity.Property(e => e.SessionNo).HasDefaultValue((short)0).IsRequired();
+                entity.Property(e => e.Name).HasMaxLength(60);
+                entity.Property(e => e.FormCentre).HasMaxLength(10);
+                entity.Property(e => e.ExamCentre).HasMaxLength(10);
+                entity.Property(e => e.RollNo1);
+                entity.Property(e => e.SessionNo1);
+                entity.Property(e => e.Marks1).HasMaxLength(3);
+                entity.Property(e => e.RollNo2);
+                entity.Property(e => e.SessionNo2);
+                entity.Property(e => e.Marks2).HasMaxLength(3);
+                entity.Property(e => e.RollNo3);
+                entity.Property(e => e.SessionNo3);
+                entity.Property(e => e.Marks3).HasMaxLength(3);
+                entity.Property(e => e.RollNo4);
+                entity.Property(e => e.SessionNo4);
+                entity.Property(e => e.Marks4).HasMaxLength(3);
+                entity.Property(e => e.RollNo5);
+                entity.Property(e => e.SessionNo5);
+                entity.Property(e => e.Marks5).HasMaxLength(3);
+                entity.Property(e => e.RollNo6);
+                entity.Property(e => e.SessionNo6);
+                entity.Property(e => e.Marks6).HasMaxLength(3);
+                entity.Property(e => e.OralRollNo);
+                entity.Property(e => e.OralSessionNo);
+                entity.Property(e => e.OralMarks).HasMaxLength(3);
+                entity.Property(e => e.OptMarks).HasMaxLength(3);
+                entity.Property(e => e.Khand1TotMarks);
+                entity.Property(e => e.Khand2TotMarks);
+                entity.Property(e => e.TotMarks);
+                entity.Property(e => e.Grade).HasMaxLength(10);
+                entity.Property(e => e.UndFlag).HasMaxLength(1).HasDefaultValue("N");
+                entity.Property(e => e.UndClass).HasMaxLength(4);
+                entity.Property(e => e.SpecialRank).HasMaxLength(10);
+                entity.Property(e => e.KhandAppearing).HasMaxLength(2);
+                entity.Property(e => e.BothKhandFlag).HasMaxLength(1).HasDefaultValue("N");
+                entity.Property(e => e.OthKhandRollNo).HasDefaultValue((short)0);
+                entity.Property(e => e.ConcessionFlag).HasMaxLength(1).HasDefaultValue("N");
+                entity.Property(e => e.ResDeclFlag).HasMaxLength(1).HasDefaultValue("N");
+                entity.Property(e => e.Result).HasMaxLength(20);
+                entity.Property(e => e.Add1).HasMaxLength(80);
+                entity.Property(e => e.Add2).HasMaxLength(80);
+                entity.Property(e => e.Add3).HasMaxLength(80);
+                entity.Property(e => e.DummyCentreCode).HasDefaultValue(0);
+                entity.Property(e => e.UserId).HasMaxLength(15);
+
+                entity.HasIndex(e => e.DummyCentreCode).HasDatabaseName("FORM_PANDIT$DUMMYCENTRECODE");
+                entity.HasIndex(e => e.Name).HasDatabaseName("FORM_PANDIT$NAME");
+                entity.HasIndex(e => e.UserId).HasDatabaseName("FORM_PANDIT$userid");
+            });
+
+            modelBuilder.Entity<FormPrabodh>(entity =>
+            {
+                entity.ToTable("FORM_PRABODH");
+                entity.HasKey(e => e.SrNo);
+                entity.Property(e => e.SrNo).HasDefaultValue(0).IsRequired();
+                entity.Property(e => e.RollNo);
+                entity.Property(e => e.RegionNo).HasDefaultValue(0);
+                entity.Property(e => e.Name).HasMaxLength(60);
+                entity.Property(e => e.SessionNo);
+                entity.Property(e => e.Gender).HasMaxLength(1);
+                entity.Property(e => e.FormCentre).HasMaxLength(50);
+                entity.Property(e => e.ExamCentre).HasMaxLength(50);
+                entity.Property(e => e.Marks1).HasMaxLength(50);
+                entity.Property(e => e.Marks2).HasMaxLength(50);
+                entity.Property(e => e.Marks3).HasMaxLength(50);
+                entity.Property(e => e.OralMarks).HasMaxLength(50);
+                entity.Property(e => e.RegLang).HasMaxLength(50);
+                entity.Property(e => e.TotMarks);
+                entity.Property(e => e.Grade).HasMaxLength(15);
+                entity.Property(e => e.SpecialRank).HasMaxLength(50);
+                entity.Property(e => e.Result).HasMaxLength(20);
+                entity.Property(e => e.DummyCentreCode).HasDefaultValue(0);
+                entity.Property(e => e.ResgenRun).HasDefaultValue((short)0);
+                entity.Property(e => e.UserId).HasMaxLength(15);
+
+                entity.HasIndex(e => e.DummyCentreCode).HasDatabaseName("FORM_PRABODH$DummyCentreCode");
+                entity.HasIndex(e => e.Name).HasDatabaseName("FORM_PRABODH$NAME");
+                entity.HasIndex(e => e.UserId).HasDatabaseName("FORM_PRABODH$userid");
+            });
+
+            modelBuilder.Entity<FormPrathamik>(entity =>
+            {
+                entity.ToTable("FORM_PRATHAMIK");
+                entity.HasKey(e => e.SrNo);
+                entity.Property(e => e.SrNo).HasDefaultValue(0).IsRequired();
+                entity.Property(e => e.RollNo);
+                entity.Property(e => e.RegionNo).HasDefaultValue(0);
+                entity.Property(e => e.Name).HasMaxLength(60);
+                entity.Property(e => e.SessionNo);
+                entity.Property(e => e.Gender).HasMaxLength(1);
+                entity.Property(e => e.FormCentre).HasMaxLength(50);
+                entity.Property(e => e.ExamCentre).HasMaxLength(50);
+                entity.Property(e => e.Marks1).HasMaxLength(50);
+                entity.Property(e => e.TotMarks);
+                entity.Property(e => e.Grade).HasMaxLength(10);
+                entity.Property(e => e.UndFlag).HasMaxLength(1);
+                entity.Property(e => e.UndClass).HasMaxLength(6);
+                entity.Property(e => e.SpecialRank).HasMaxLength(20);
+                entity.Property(e => e.Result).HasMaxLength(20);
+                entity.Property(e => e.DummyCentreCode).HasDefaultValue(0);
+                entity.Property(e => e.ResgenRun).HasDefaultValue((short)0);
+                entity.Property(e => e.UserId).HasMaxLength(15);
+
+                entity.HasIndex(e => e.DummyCentreCode).HasDatabaseName("frm_prathamik$DummyCentreCode");
+                entity.HasIndex(e => e.Name).HasDatabaseName("frm_prathamik$NAME");
+                entity.HasIndex(e => e.UserId).HasDatabaseName("frm_prathamik$userid");
+            });
+        }
+    }
+}

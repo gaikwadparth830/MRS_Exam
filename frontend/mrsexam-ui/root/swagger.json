@@ -1,0 +1,5741 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "mrsexam-backend",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/AttSheets": {
+      "get": {
+        "tags": [
+          "AttSheets"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "AttSheets"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttSheet"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttSheet"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttSheet"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/AttSheets/{id}": {
+      "get": {
+        "tags": [
+          "AttSheets"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "AttSheets"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttSheet"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttSheet"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttSheet"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "AttSheets"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/AttSheets/centre/{examCentre}": {
+      "get": {
+        "tags": [
+          "AttSheets"
+        ],
+        "parameters": [
+          {
+            "name": "examCentre",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Centers": {
+      "get": {
+        "tags": [
+          "Centers"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Centers"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Center"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Center"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Center"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Centers/paged": {
+      "get": {
+        "tags": [
+          "Centers"
+        ],
+        "parameters": [
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Centers/{id}": {
+      "get": {
+        "tags": [
+          "Centers"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Centers"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Center"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Center"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Center"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Centers"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/CentreCounts": {
+      "get": {
+        "tags": [
+          "CentreCounts"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "CentreCounts"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CentreCount"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CentreCount"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CentreCount"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/CentreCounts/{id}": {
+      "get": {
+        "tags": [
+          "CentreCounts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "CentreCounts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CentreCount"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CentreCount"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CentreCount"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "CentreCounts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/CentreCounts/centre/{centreNo}": {
+      "get": {
+        "tags": [
+          "CentreCounts"
+        ],
+        "parameters": [
+          {
+            "name": "centreNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/CentreCounts/region/{regionNo}": {
+      "get": {
+        "tags": [
+          "CentreCounts"
+        ],
+        "parameters": [
+          {
+            "name": "regionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Districts": {
+      "get": {
+        "tags": [
+          "Districts"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Districts"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/District"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/District"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/District"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Districts/paged": {
+      "get": {
+        "tags": [
+          "Districts"
+        ],
+        "parameters": [
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Districts/{id}": {
+      "get": {
+        "tags": [
+          "Districts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Districts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/District"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/District"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/District"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Districts"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Exams": {
+      "get": {
+        "tags": [
+          "Exams"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Exams"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Exam"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Exam"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Exam"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Exams/{id}": {
+      "get": {
+        "tags": [
+          "Exams"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Exams"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Exam"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Exam"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Exam"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Exams"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormBalbodhini": {
+      "get": {
+        "tags": [
+          "FormBalbodhini"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "FormBalbodhini"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormBalbodhini"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormBalbodhini"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormBalbodhini"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormBalbodhini/paged": {
+      "get": {
+        "tags": [
+          "FormBalbodhini"
+        ],
+        "parameters": [
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          },
+          {
+            "name": "sessionNo",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormBalbodhini/{id}": {
+      "get": {
+        "tags": [
+          "FormBalbodhini"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "FormBalbodhini"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormBalbodhini"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormBalbodhini"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormBalbodhini"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "FormBalbodhini"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormBalbodhini/user/{userId}": {
+      "get": {
+        "tags": [
+          "FormBalbodhini"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormBalbodhini/centre/{centreCode}": {
+      "get": {
+        "tags": [
+          "FormBalbodhini"
+        ],
+        "parameters": [
+          {
+            "name": "centreCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormBalbodhini/name/{name}": {
+      "get": {
+        "tags": [
+          "FormBalbodhini"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormBalbodhini/session/{sessionNo}": {
+      "get": {
+        "tags": [
+          "FormBalbodhini"
+        ],
+        "parameters": [
+          {
+            "name": "sessionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormBalbodhini/region/{regionNo}": {
+      "get": {
+        "tags": [
+          "FormBalbodhini"
+        ],
+        "parameters": [
+          {
+            "name": "regionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPandit": {
+      "get": {
+        "tags": [
+          "FormPandit"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "FormPandit"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPandit"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPandit"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPandit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPandit/paged": {
+      "get": {
+        "tags": [
+          "FormPandit"
+        ],
+        "parameters": [
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          },
+          {
+            "name": "sessionNo",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPandit/{rollNo}/{sessionNo}": {
+      "get": {
+        "tags": [
+          "FormPandit"
+        ],
+        "parameters": [
+          {
+            "name": "rollNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sessionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "FormPandit"
+        ],
+        "parameters": [
+          {
+            "name": "rollNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sessionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPandit"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPandit"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPandit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "FormPandit"
+        ],
+        "parameters": [
+          {
+            "name": "rollNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sessionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPandit/session/{sessionNo}": {
+      "get": {
+        "tags": [
+          "FormPandit"
+        ],
+        "parameters": [
+          {
+            "name": "sessionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPandit/user/{userId}": {
+      "get": {
+        "tags": [
+          "FormPandit"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPandit/centre/{centreCode}": {
+      "get": {
+        "tags": [
+          "FormPandit"
+        ],
+        "parameters": [
+          {
+            "name": "centreCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPandit/name/{name}": {
+      "get": {
+        "tags": [
+          "FormPandit"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPrabodh": {
+      "get": {
+        "tags": [
+          "FormPrabodh"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "FormPrabodh"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPrabodh"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPrabodh"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPrabodh"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPrabodh/paged": {
+      "get": {
+        "tags": [
+          "FormPrabodh"
+        ],
+        "parameters": [
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          },
+          {
+            "name": "sessionNo",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPrabodh/{id}": {
+      "get": {
+        "tags": [
+          "FormPrabodh"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "FormPrabodh"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPrabodh"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPrabodh"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPrabodh"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "FormPrabodh"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPrabodh/user/{userId}": {
+      "get": {
+        "tags": [
+          "FormPrabodh"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPrabodh/centre/{centreCode}": {
+      "get": {
+        "tags": [
+          "FormPrabodh"
+        ],
+        "parameters": [
+          {
+            "name": "centreCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPrabodh/name/{name}": {
+      "get": {
+        "tags": [
+          "FormPrabodh"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPrabodh/session/{sessionNo}": {
+      "get": {
+        "tags": [
+          "FormPrabodh"
+        ],
+        "parameters": [
+          {
+            "name": "sessionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPrabodh/region/{regionNo}": {
+      "get": {
+        "tags": [
+          "FormPrabodh"
+        ],
+        "parameters": [
+          {
+            "name": "regionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPrathamik": {
+      "get": {
+        "tags": [
+          "FormPrathamik"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "FormPrathamik"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPrathamik"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPrathamik"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPrathamik"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPrathamik/paged": {
+      "get": {
+        "tags": [
+          "FormPrathamik"
+        ],
+        "parameters": [
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          },
+          {
+            "name": "sessionNo",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPrathamik/{id}": {
+      "get": {
+        "tags": [
+          "FormPrathamik"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "FormPrathamik"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPrathamik"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPrathamik"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPrathamik"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "FormPrathamik"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPrathamik/user/{userId}": {
+      "get": {
+        "tags": [
+          "FormPrathamik"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPrathamik/centre/{centreCode}": {
+      "get": {
+        "tags": [
+          "FormPrathamik"
+        ],
+        "parameters": [
+          {
+            "name": "centreCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPrathamik/name/{name}": {
+      "get": {
+        "tags": [
+          "FormPrathamik"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPrathamik/session/{sessionNo}": {
+      "get": {
+        "tags": [
+          "FormPrathamik"
+        ],
+        "parameters": [
+          {
+            "name": "sessionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPrathamik/region/{regionNo}": {
+      "get": {
+        "tags": [
+          "FormPrathamik"
+        ],
+        "parameters": [
+          {
+            "name": "regionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPraveen": {
+      "get": {
+        "tags": [
+          "FormPraveen"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "FormPraveen"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPraveen"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPraveen"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPraveen"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPraveen/paged": {
+      "get": {
+        "tags": [
+          "FormPraveen"
+        ],
+        "parameters": [
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          },
+          {
+            "name": "sessionNo",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPraveen/{rollNo}/{regionNo}/{sessionNo}": {
+      "get": {
+        "tags": [
+          "FormPraveen"
+        ],
+        "parameters": [
+          {
+            "name": "rollNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "regionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sessionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "FormPraveen"
+        ],
+        "parameters": [
+          {
+            "name": "rollNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "regionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sessionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPraveen"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPraveen"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPraveen"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "FormPraveen"
+        ],
+        "parameters": [
+          {
+            "name": "rollNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "regionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sessionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPraveen/session/{sessionNo}": {
+      "get": {
+        "tags": [
+          "FormPraveen"
+        ],
+        "parameters": [
+          {
+            "name": "sessionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPraveen/region/{regionNo}": {
+      "get": {
+        "tags": [
+          "FormPraveen"
+        ],
+        "parameters": [
+          {
+            "name": "regionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPraveen/user/{userId}": {
+      "get": {
+        "tags": [
+          "FormPraveen"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPraveen/centre/{centreCode}": {
+      "get": {
+        "tags": [
+          "FormPraveen"
+        ],
+        "parameters": [
+          {
+            "name": "centreCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPraveen/name/{name}": {
+      "get": {
+        "tags": [
+          "FormPraveen"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPraveshika": {
+      "get": {
+        "tags": [
+          "FormPraveshika"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "FormPraveshika"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPraveshika"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPraveshika"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPraveshika"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPraveshika/paged": {
+      "get": {
+        "tags": [
+          "FormPraveshika"
+        ],
+        "parameters": [
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          },
+          {
+            "name": "sessionNo",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPraveshika/{id}": {
+      "get": {
+        "tags": [
+          "FormPraveshika"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "FormPraveshika"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPraveshika"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPraveshika"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPraveshika"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "FormPraveshika"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPraveshika/user/{userId}": {
+      "get": {
+        "tags": [
+          "FormPraveshika"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPraveshika/centre/{centreCode}": {
+      "get": {
+        "tags": [
+          "FormPraveshika"
+        ],
+        "parameters": [
+          {
+            "name": "centreCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPraveshika/name/{name}": {
+      "get": {
+        "tags": [
+          "FormPraveshika"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPraveshika/session/{sessionNo}": {
+      "get": {
+        "tags": [
+          "FormPraveshika"
+        ],
+        "parameters": [
+          {
+            "name": "sessionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPraveshika/region/{regionNo}": {
+      "get": {
+        "tags": [
+          "FormPraveshika"
+        ],
+        "parameters": [
+          {
+            "name": "regionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormSubodh": {
+      "get": {
+        "tags": [
+          "FormSubodh"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "FormSubodh"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormSubodh"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormSubodh"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormSubodh"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormSubodh/paged": {
+      "get": {
+        "tags": [
+          "FormSubodh"
+        ],
+        "parameters": [
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          },
+          {
+            "name": "sessionNo",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormSubodh/{id}": {
+      "get": {
+        "tags": [
+          "FormSubodh"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "FormSubodh"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormSubodh"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormSubodh"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormSubodh"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "FormSubodh"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormSubodh/user/{userId}": {
+      "get": {
+        "tags": [
+          "FormSubodh"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormSubodh/centre/{centreCode}": {
+      "get": {
+        "tags": [
+          "FormSubodh"
+        ],
+        "parameters": [
+          {
+            "name": "centreCode",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormSubodh/name/{name}": {
+      "get": {
+        "tags": [
+          "FormSubodh"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormSubodh/session/{sessionNo}": {
+      "get": {
+        "tags": [
+          "FormSubodh"
+        ],
+        "parameters": [
+          {
+            "name": "sessionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormSubodh/region/{regionNo}": {
+      "get": {
+        "tags": [
+          "FormSubodh"
+        ],
+        "parameters": [
+          {
+            "name": "regionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Grades": {
+      "get": {
+        "tags": [
+          "Grades"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Grades"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Grade"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Grade"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Grade"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Grades/{id}": {
+      "get": {
+        "tags": [
+          "Grades"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Grades"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Grade"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Grade"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Grade"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Grades"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Institutions": {
+      "get": {
+        "tags": [
+          "Institutions"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Institutions"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Institution"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Institution"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Institution"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Institutions/{id}": {
+      "get": {
+        "tags": [
+          "Institutions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Institutions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Institution"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Institution"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Institution"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Institutions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Papers": {
+      "get": {
+        "tags": [
+          "Papers"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Papers"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Paper"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Paper"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Paper"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Papers/paged": {
+      "get": {
+        "tags": [
+          "Papers"
+        ],
+        "parameters": [
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          },
+          {
+            "name": "examNo",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Papers/exam/{examNo}": {
+      "get": {
+        "tags": [
+          "Papers"
+        ],
+        "parameters": [
+          {
+            "name": "examNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Papers/{paperNo}/{examNo}": {
+      "get": {
+        "tags": [
+          "Papers"
+        ],
+        "parameters": [
+          {
+            "name": "paperNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "examNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Papers"
+        ],
+        "parameters": [
+          {
+            "name": "paperNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "examNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Paper"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Paper"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Paper"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Papers"
+        ],
+        "parameters": [
+          {
+            "name": "paperNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "examNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Parameters": {
+      "get": {
+        "tags": [
+          "Parameters"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Parameters"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Parameter"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Parameter"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Parameter"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Parameters/{id}": {
+      "get": {
+        "tags": [
+          "Parameters"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Parameters"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Parameter"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Parameter"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Parameter"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Parameters"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Parameters/first": {
+      "get": {
+        "tags": [
+          "Parameters"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Regions": {
+      "get": {
+        "tags": [
+          "Regions"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Regions"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Region"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Region"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Region"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Regions/paged": {
+      "get": {
+        "tags": [
+          "Regions"
+        ],
+        "parameters": [
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Regions/{id}": {
+      "get": {
+        "tags": [
+          "Regions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Regions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Region"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Region"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Region"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Regions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Results": {
+      "get": {
+        "tags": [
+          "Results"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Results"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Result"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Result"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Result"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Results/{id}": {
+      "get": {
+        "tags": [
+          "Results"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Results"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Result"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Result"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Result"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Results"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Sessions": {
+      "get": {
+        "tags": [
+          "Sessions"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Sessions"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Session"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Session"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Session"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Sessions/paged": {
+      "get": {
+        "tags": [
+          "Sessions"
+        ],
+        "parameters": [
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Sessions/{id}": {
+      "get": {
+        "tags": [
+          "Sessions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Sessions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Session"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Session"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Session"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Sessions"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/TotForms": {
+      "get": {
+        "tags": [
+          "TotForms"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "TotForms"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotForm"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotForm"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotForm"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/TotForms/{id}": {
+      "get": {
+        "tags": [
+          "TotForms"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "TotForms"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotForm"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotForm"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotForm"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "TotForms"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/TotForms/user/{userId}": {
+      "get": {
+        "tags": [
+          "TotForms"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/TotForms/exam/{exam}": {
+      "get": {
+        "tags": [
+          "TotForms"
+        ],
+        "parameters": [
+          {
+            "name": "exam",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Users/{id}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/User"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Users/validate": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/WeatherForecast": {
+      "get": {
+        "tags": [
+          "WeatherForecast"
+        ],
+        "operationId": "GetWeatherForecast",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WeatherForecast"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WeatherForecast"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WeatherForecast"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AttSheet": {
+        "type": "object",
+        "properties": {
+          "attSheetId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "examCentre": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "col1RollNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "col2RollNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Center": {
+        "required": [
+          "centreNo"
+        ],
+        "type": "object",
+        "properties": {
+          "centreNo": {
+            "maxLength": 10,
+            "minLength": 1,
+            "type": "string"
+          },
+          "addressTo": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "centreName": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "districtName": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "add1": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "add2": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "city": {
+            "maxLength": 35,
+            "type": "string",
+            "nullable": true
+          },
+          "pincode": {
+            "maxLength": 6,
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "maxLength": 15,
+            "type": "string",
+            "nullable": true
+          },
+          "panditFlag": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "closeFlag": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CentreCount": {
+        "type": "object",
+        "properties": {
+          "centreCountId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "centreNo": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "centreName": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "fromGroup1": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "toGroup1": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "fromGroup2": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "toGroup2": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "other": {
+            "maxLength": 255,
+            "type": "string",
+            "nullable": true
+          },
+          "regionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "District": {
+        "required": [
+          "districtName"
+        ],
+        "type": "object",
+        "properties": {
+          "districtName": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string"
+          },
+          "regionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "districtCity": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "shortName": {
+            "maxLength": 10,
+            "type": "string",
+            "nullable": true
+          },
+          "seatDistrictNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Exam": {
+        "required": [
+          "examNo"
+        ],
+        "type": "object",
+        "properties": {
+          "examNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "examName": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "noOfPapers": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "fees": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "attSheetPrinted": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "resultGenFlag": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "minTotalKhand1": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "minTotalKhand2": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "class1Marks": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "class2Marks": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "class3Marks": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "distMarks": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormBalbodhini": {
+        "required": [
+          "srNo"
+        ],
+        "type": "object",
+        "properties": {
+          "srNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rollNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "regionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "name": {
+            "maxLength": 60,
+            "type": "string",
+            "nullable": true
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "gender": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "formCentre": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "examCentre": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "marks1": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "totMarks": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "grade": {
+            "maxLength": 10,
+            "type": "string",
+            "nullable": true
+          },
+          "undFlag": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "undClass": {
+            "maxLength": 6,
+            "type": "string",
+            "nullable": true
+          },
+          "specialRank": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "result": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "dummyCentreCode": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "resgenRun": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "districtName": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "userId": {
+            "maxLength": 15,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormPandit": {
+        "required": [
+          "rollNo",
+          "sessionNo"
+        ],
+        "type": "object",
+        "properties": {
+          "rollNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "maxLength": 60,
+            "type": "string",
+            "nullable": true
+          },
+          "formCentre": {
+            "maxLength": 10,
+            "type": "string",
+            "nullable": true
+          },
+          "examCentre": {
+            "maxLength": 10,
+            "type": "string",
+            "nullable": true
+          },
+          "rollNo1": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "sessionNo1": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "marks1": {
+            "maxLength": 3,
+            "type": "string",
+            "nullable": true
+          },
+          "rollNo2": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "sessionNo2": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "marks2": {
+            "maxLength": 3,
+            "type": "string",
+            "nullable": true
+          },
+          "rollNo3": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "sessionNo3": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "marks3": {
+            "maxLength": 3,
+            "type": "string",
+            "nullable": true
+          },
+          "rollNo4": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "sessionNo4": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "marks4": {
+            "maxLength": 3,
+            "type": "string",
+            "nullable": true
+          },
+          "rollNo5": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "sessionNo5": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "marks5": {
+            "maxLength": 3,
+            "type": "string",
+            "nullable": true
+          },
+          "rollNo6": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "sessionNo6": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "marks6": {
+            "maxLength": 3,
+            "type": "string",
+            "nullable": true
+          },
+          "oralRollNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "oralSessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "oralMarks": {
+            "maxLength": 3,
+            "type": "string",
+            "nullable": true
+          },
+          "optMarks": {
+            "maxLength": 3,
+            "type": "string",
+            "nullable": true
+          },
+          "khand1TotMarks": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "khand2TotMarks": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "totMarks": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "grade": {
+            "maxLength": 10,
+            "type": "string",
+            "nullable": true
+          },
+          "undFlag": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "undClass": {
+            "maxLength": 4,
+            "type": "string",
+            "nullable": true
+          },
+          "specialRank": {
+            "maxLength": 10,
+            "type": "string",
+            "nullable": true
+          },
+          "khandAppearing": {
+            "maxLength": 2,
+            "type": "string",
+            "nullable": true
+          },
+          "bothKhandFlag": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "othKhandRollNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "concessionFlag": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "resDeclFlag": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "result": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "add1": {
+            "maxLength": 80,
+            "type": "string",
+            "nullable": true
+          },
+          "add2": {
+            "maxLength": 80,
+            "type": "string",
+            "nullable": true
+          },
+          "add3": {
+            "maxLength": 80,
+            "type": "string",
+            "nullable": true
+          },
+          "dummyCentreCode": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "userId": {
+            "maxLength": 15,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormPrabodh": {
+        "required": [
+          "srNo"
+        ],
+        "type": "object",
+        "properties": {
+          "srNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rollNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "regionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "name": {
+            "maxLength": 60,
+            "type": "string",
+            "nullable": true
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "gender": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "formCentre": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "examCentre": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "marks1": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "marks2": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "marks3": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "oralMarks": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "regLang": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "totMarks": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "grade": {
+            "maxLength": 15,
+            "type": "string",
+            "nullable": true
+          },
+          "specialRank": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "result": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "dummyCentreCode": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "resgenRun": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "userId": {
+            "maxLength": 15,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormPrathamik": {
+        "required": [
+          "srNo"
+        ],
+        "type": "object",
+        "properties": {
+          "srNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rollNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "regionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "name": {
+            "maxLength": 60,
+            "type": "string",
+            "nullable": true
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "gender": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "formCentre": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "examCentre": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "marks1": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "totMarks": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "grade": {
+            "maxLength": 10,
+            "type": "string",
+            "nullable": true
+          },
+          "undFlag": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "undClass": {
+            "maxLength": 6,
+            "type": "string",
+            "nullable": true
+          },
+          "specialRank": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "result": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "dummyCentreCode": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "resgenRun": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "userId": {
+            "maxLength": 15,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormPraveen": {
+        "required": [
+          "regionNo",
+          "rollNo",
+          "sessionNo"
+        ],
+        "type": "object",
+        "properties": {
+          "rollNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "regionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "maxLength": 60,
+            "type": "string",
+            "nullable": true
+          },
+          "formCentre": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "examCentre": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "marks1": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "marks2": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "marks3": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "marks4": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "oralMarks": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "regLang": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "totMarks": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "grade": {
+            "maxLength": 8,
+            "type": "string",
+            "nullable": true
+          },
+          "undFlag": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "undClass": {
+            "maxLength": 6,
+            "type": "string",
+            "nullable": true
+          },
+          "specialRank": {
+            "maxLength": 10,
+            "type": "string",
+            "nullable": true
+          },
+          "result": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "dummyCentreCode": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "userId": {
+            "maxLength": 15,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormPraveshika": {
+        "required": [
+          "srNo"
+        ],
+        "type": "object",
+        "properties": {
+          "srNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rollNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "regionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "name": {
+            "maxLength": 60,
+            "type": "string",
+            "nullable": true
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "gender": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "formCentre": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "examCentre": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "marks1": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "marks2": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "totMarks": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "grade": {
+            "maxLength": 10,
+            "type": "string",
+            "nullable": true
+          },
+          "undFlag": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "undClass": {
+            "maxLength": 6,
+            "type": "string",
+            "nullable": true
+          },
+          "specialRank": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "result": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "dummyCentreCode": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "resgenRun": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "userId": {
+            "maxLength": 15,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FormSubodh": {
+        "required": [
+          "srNo"
+        ],
+        "type": "object",
+        "properties": {
+          "srNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rollNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "regionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "name": {
+            "maxLength": 60,
+            "type": "string",
+            "nullable": true
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "gender": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "formCentre": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "examCentre": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "marks1": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "marks2": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "totMarks": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "grade": {
+            "maxLength": 10,
+            "type": "string",
+            "nullable": true
+          },
+          "undFlag": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "undClass": {
+            "maxLength": 6,
+            "type": "string",
+            "nullable": true
+          },
+          "specialRank": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "result": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "dummyCentreCode": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "resgenRun": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "userId": {
+            "maxLength": 15,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Grade": {
+        "required": [
+          "gradeNo"
+        ],
+        "type": "object",
+        "properties": {
+          "gradeNo": {
+            "maxLength": 10,
+            "minLength": 1,
+            "type": "string"
+          },
+          "gradeName": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "gradeNameCert": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Institution": {
+        "type": "object",
+        "properties": {
+          "institutionId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "instName": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "instAdd": {
+            "maxLength": 55,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Paper": {
+        "required": [
+          "examNo",
+          "paperNo"
+        ],
+        "type": "object",
+        "properties": {
+          "paperNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "examNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "paperName": {
+            "maxLength": 40,
+            "type": "string",
+            "nullable": true
+          },
+          "passingMarks": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "exemptionMarks": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "minMarks": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Parameter": {
+        "type": "object",
+        "properties": {
+          "parameterId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "centreAddressTo": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "sessionMonth11": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "sessionMonth12": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "sessionMonth21": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "sessionMonth22": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "instName": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "instAdd": {
+            "maxLength": 55,
+            "type": "string",
+            "nullable": true
+          },
+          "listOfCentres": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "centreNo": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "centreName": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "centreAdd": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "pageNo": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "rightHead": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "centreHeadPandit": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "centre": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "headingAttsheet": {
+            "type": "string",
+            "nullable": true
+          },
+          "rollNo": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "paper1": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "paper2": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "paper3": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "paper4": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "paper5": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "paper6": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "date": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "rightFoot": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "from": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "to": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "centreHeadPraveen": {
+            "maxLength": 200,
+            "type": "string",
+            "nullable": true
+          },
+          "applicantName": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "examCentre": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "rollNo1": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "session": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "ssmaTimeStamp": {
+            "type": "string",
+            "format": "byte",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Region": {
+        "required": [
+          "regionNo"
+        ],
+        "type": "object",
+        "properties": {
+          "regionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "regionName": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          },
+          "seatRegionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "regionNameEng": {
+            "maxLength": 50,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Result": {
+        "type": "object",
+        "properties": {
+          "resultId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "resultValue": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "exam": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Session": {
+        "required": [
+          "sessionNo"
+        ],
+        "type": "object",
+        "properties": {
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "resultDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "resultPrinted": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "closeFlag": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "month": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "defa": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "resgenPandit": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "resgenPraveen": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "resgenPrabodh": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "resgenSubodh": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "resgenPraveshika": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "resgenPrathamik": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "resgenBalbodhini": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          },
+          "backup": {
+            "maxLength": 1,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TotForm": {
+        "type": "object",
+        "properties": {
+          "totFormsId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "userId": {
+            "maxLength": 10,
+            "type": "string",
+            "nullable": true
+          },
+          "exam": {
+            "maxLength": 15,
+            "type": "string",
+            "nullable": true
+          },
+          "totForms": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "User": {
+        "required": [
+          "userId"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "maxLength": 10,
+            "minLength": 1,
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 10,
+            "type": "string",
+            "nullable": true
+          },
+          "userKey": {
+            "maxLength": 5,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "WeatherForecast": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "temperatureC": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "temperatureF": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "summary": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

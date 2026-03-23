@@ -1,0 +1,59 @@
+﻿using Microsoft.EntityFrameworkCore;
+using mrsexam_backend.Models;
+
+namespace mrsexam_backend
+{
+    public sealed class MrsexamContext : DbContext
+    {
+        public MrsexamContext(DbContextOptions<MrsexamContext> options)
+            : base(options)
+        {
+        }
+
+        public DbSet<Center> Centres { get; set; } = null!;
+        public DbSet<Region> Regions { get; set; } = null!;
+        public DbSet<User> Users { get; set; } = null!;
+
+        // Optionally override to configure the model:
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Center>(entity =>
+            {
+                entity.HasKey(e => e.CentreNo);
+                entity.Property(e => e.CentreNo).HasMaxLength(10).IsRequired();
+                entity.Property(e => e.AddressTo).HasMaxLength(50);
+                entity.Property(e => e.CentreName).HasMaxLength(100);
+                entity.Property(e => e.DistrictName).HasMaxLength(50);
+                entity.Property(e => e.Add1).HasMaxLength(50);
+                entity.Property(e => e.Add2).HasMaxLength(50);
+                entity.Property(e => e.City).HasMaxLength(35);
+                entity.Property(e => e.Pincode).HasMaxLength(6);
+                entity.Property(e => e.Phone).HasMaxLength(15);
+                entity.Property(e => e.PanditFlag).HasMaxLength(1).HasDefaultValue("N");
+                entity.Property(e => e.CloseFlag).HasMaxLength(1).HasDefaultValue("N");
+            });
+
+            modelBuilder.Entity<Region>(entity =>
+            {
+                entity.ToTable("REGION");
+                entity.HasKey(e => e.RegionNo);
+                entity.Property(e => e.RegionNo).HasDefaultValue(0).IsRequired();
+                entity.Property(e => e.RegionName).HasMaxLength(50);
+                entity.Property(e => e.SeatRegionNo).HasDefaultValue(0);
+                entity.Property(e => e.RegionNameEng).HasMaxLength(50);
+            });
+
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.ToTable("USERS");
+                entity.HasKey(e => e.UserId);
+                entity.Property(e => e.UserId).HasMaxLength(10).IsRequired();
+                entity.Property(e => e.Password).HasMaxLength(10);
+                entity.Property(e => e.UserKey).HasMaxLength(5);
+                entity.HasIndex(e => e.UserKey).HasDatabaseName("USERS$KEY");
+            });
+        }
+    }
+}

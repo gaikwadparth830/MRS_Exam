@@ -1,0 +1,19 @@
+﻿using Microsoft.EntityFrameworkCore;
+
+internal sealed class MrexamContext : DbContext
+{
+    public MrexamContext(DbContextOptions<MrexamContext> options)
+        : base(options)
+    {
+    }
+
+    // Add DbSet<T> properties when you have entity classes, for example:
+    // public DbSet<Exam> Exams { get; set; } = null!;
+
+    // Optionally override to configure the model:
+    // protected override void OnModelCreating(ModelBuilder modelBuilder)
+    // {
+    //     base.OnModelCreating(modelBuilder);
+    //     // modelBuilder.Entity<Exam>(...);
+    // }
+}

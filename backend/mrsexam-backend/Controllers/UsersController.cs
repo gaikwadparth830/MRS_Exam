@@ -1,0 +1,103 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using mrsexam_backend.Models;
+
+namespace mrsexam_backend.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public sealed class UsersController : ControllerBase
+    {
+        private readonly MrsexamContext _db;
+
+        public UsersController(MrsexamContext db) => _db = db;
+
+        // GET: api/users
+        [HttpGet]
+        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+        {
+            var list = await _db.Users.AsNoTracking().ToListAsync(cancellationToken);
+            return Ok(list);
+        }
+
+        // GET: api/users/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(string id, CancellationToken cancellationToken)
+        {
+            var item = await _db.Users.AsNoTracking().FirstOrDefaultAsync(c => c.UserId == id, cancellationToken);
+            if (item is null) return NotFound();
+            return Ok(item);
+        }
+
+        // POST: api/users/validate
+        [HttpPost("validate")]
+        public async Task<IActionResult> ValidateUser([FromBody] LoginRequest request, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(request.UserId) || string.IsNullOrWhiteSpace(request.Password))
+            {
+                return BadRequest(new { success = false, message = "UserId and Password are required" });
+            }
+
+            var user = await _db.Users.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.UserId == request.UserId && u.Password == request.Password, cancellationToken);
+
+            if (user is null)
+            {
+                return Ok(new { success = false, message = "Invalid credentials" });
+            }
+
+            return Ok(new 
+            { 
+                success = true, 
+                message = "Login successful",
+                userId = user.UserId,
+                userKey = user.UserKey
+            });
+        }
+
+        // POST: api/users
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] User model, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            _db.Users.Add(model);
+            await _db.SaveChangesAsync(cancellationToken);
+
+            return CreatedAtAction(nameof(Get), new { id = model.UserId }, model);
+        }
+
+        // PUT: api/users/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(string id, [FromBody] User model, CancellationToken cancellationToken)
+        {
+            if (id != model.UserId) return BadRequest();
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var exists = await _db.Users.AnyAsync(e => e.UserId == id, cancellationToken);
+            if (!exists) return NotFound();
+
+            _db.Entry(model).State = EntityState.Modified;
+            await _db.SaveChangesAsync(cancellationToken);
+            return NoContent();
+        }
+
+        // DELETE: api/users/{id}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken)
+        {
+            var item = await _db.Users.FindAsync(new object[] { id }, cancellationToken);
+            if (item is null) return NotFound();
+
+            _db.Users.Remove(item);
+            await _db.SaveChangesAsync(cancellationToken);
+            return NoContent();
+        }
+    }
+
+    public sealed class LoginRequest
+    {
+        public string UserId { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}

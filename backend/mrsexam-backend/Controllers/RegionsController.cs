@@ -1,0 +1,106 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using mrsexam_backend.Models;
+
+namespace mrsexam_backend.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public sealed class RegionsController : ControllerBase
+    {
+        private readonly MrsexamContext _db;
+
+        public RegionsController(MrsexamContext db) => _db = db;
+
+        // GET: api/regions
+        [HttpGet]
+        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+        {
+            var list = await _db.Regions.AsNoTracking().ToListAsync(cancellationToken);
+            return Ok(list);
+        }
+
+        // GET: api/regions/paged?pageNumber=1&pageSize=50
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetPaged(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 50,
+            CancellationToken cancellationToken = default)
+        {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 50;
+            if (pageSize > 1000) pageSize = 1000;
+
+            var totalCount = await _db.Regions.CountAsync(cancellationToken);
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            var items = await _db.Regions
+                .AsNoTracking()
+                .OrderBy(r => r.RegionNo)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            var response = new
+            {
+                data = items,
+                pageNumber,
+                pageSize,
+                totalCount,
+                totalPages,
+                hasNextPage = pageNumber < totalPages,
+                hasPreviousPage = pageNumber > 1
+            };
+
+            return Ok(response);
+        }
+
+        // GET: api/regions/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(int id, CancellationToken cancellationToken)
+        {
+            var item = await _db.Regions.AsNoTracking().FirstOrDefaultAsync(c => c.RegionNo == id, cancellationToken);
+            if (item is null) return NotFound();
+            return Ok(item);
+        }
+
+        // POST: api/regions
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] Region model, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            _db.Regions.Add(model);
+            await _db.SaveChangesAsync(cancellationToken);
+
+            return CreatedAtAction(nameof(Get), new { id = model.RegionNo }, model);
+        }
+
+        // PUT: api/regions/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] Region model, CancellationToken cancellationToken)
+        {
+            if (id != model.RegionNo) return BadRequest();
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var exists = await _db.Regions.AnyAsync(e => e.RegionNo == id, cancellationToken);
+            if (!exists) return NotFound();
+
+            _db.Entry(model).State = EntityState.Modified;
+            await _db.SaveChangesAsync(cancellationToken);
+            return NoContent();
+        }
+
+        // DELETE: api/regions/{id}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+        {
+            var item = await _db.Regions.FindAsync(new object[] { id }, cancellationToken);
+            if (item is null) return NotFound();
+
+            _db.Regions.Remove(item);
+            await _db.SaveChangesAsync(cancellationToken);
+            return NoContent();
+        }
+    }
+}
