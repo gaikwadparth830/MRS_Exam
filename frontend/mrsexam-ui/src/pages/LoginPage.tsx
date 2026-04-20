@@ -1,5 +1,16 @@
 import { useMemo, useState } from 'react'
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
 
+import monoLogo from '../assets/MONO.png'
 import { usePost } from '../hooks'
 
 type LoginRequest = {
@@ -78,43 +89,71 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
   }
 
   return (
-    <main className="login-page">
-      <section className="login-card" aria-label="Login form">
-        <p className="eyebrow">MRS Exam Portal</p>
-        <h1>Sign in</h1>
-        <p className="subtitle">Use your credentials to continue.</p>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'grid',
+        placeItems: 'center',
+        p: 3,
+        background:
+          'radial-gradient(circle at 10% 20%, rgba(21, 94, 117, 0.2), transparent 42%), radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.25), transparent 38%), #eef3fb',
+      }}
+    >
+      <Container maxWidth="sm">
+        <Paper elevation={8} sx={{ p: { xs: 3, md: 4 }, borderRadius: 3 }}>
+          <Stack spacing={2.25}>
+            <Box
+              component="img"
+              src={monoLogo}
+              alt="MRS Mono logo"
+              sx={{ width: 84, height: 84, objectFit: 'contain' }}
+            />
+            <Typography variant="overline" color="primary" fontWeight={700}>
+              MRS Exam Portal
+            </Typography>
+            <Typography variant="h4" component="h1" fontWeight={700}>
+              Sign in
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Use your credentials to continue.
+            </Typography>
 
-        <form className="login-form" onSubmit={onSubmit}>
-          <label htmlFor="userId">User ID</label>
-          <input
-            id="userId"
-            name="userId"
-            value={form.userId}
-            onChange={(event) => onChange('userId', event.target.value)}
-            autoComplete="username"
-            placeholder="Enter user ID"
-          />
+            <Box component="form" onSubmit={onSubmit} noValidate>
+              <Stack spacing={2}>
+                <TextField
+                  id="userId"
+                  name="userId"
+                  label="User ID"
+                  value={form.userId}
+                  onChange={(event) => onChange('userId', event.target.value)}
+                  autoComplete="username"
+                  placeholder="Enter user ID"
+                  fullWidth
+                />
+                <TextField
+                  id="password"
+                  name="password"
+                  type="password"
+                  label="Password"
+                  value={form.password ?? ''}
+                  onChange={(event) => onChange('password', event.target.value)}
+                  autoComplete="current-password"
+                  placeholder="Enter password"
+                  fullWidth
+                />
 
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            value={form.password ?? ''}
-            onChange={(event) => onChange('password', event.target.value)}
-            autoComplete="current-password"
-            placeholder="Enter password"
-          />
+                <Button type="submit" variant="contained" size="large" disabled={isLoading}>
+                  {isLoading ? 'Signing in...' : 'Login'}
+                </Button>
+              </Stack>
+            </Box>
 
-          <button type="submit" disabled={isLoading}>
-            {isLoading ? 'Signing in...' : 'Login'}
-          </button>
-        </form>
-
-        {validationError ? <p className="message error">{validationError}</p> : null}
-        {error ? <p className="message error">{error}</p> : null}
-        {apiMessage ? <p className="message success">{apiMessage}</p> : null}
-      </section>
-    </main>
+            {validationError ? <Alert severity="error">{validationError}</Alert> : null}
+            {error ? <Alert severity="error">{error}</Alert> : null}
+            {apiMessage ? <Alert severity="success">{apiMessage}</Alert> : null}
+          </Stack>
+        </Paper>
+      </Container>
+    </Box>
   )
 }

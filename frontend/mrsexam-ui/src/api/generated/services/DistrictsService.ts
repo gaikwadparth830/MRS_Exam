@@ -37,6 +37,26 @@ export class DistrictsService {
      * @returns any OK
      * @throws ApiError
      */
+    public static getApiDistrictsPaged({
+        pageNumber = 1,
+        pageSize = 50,
+    }: {
+        pageNumber?: number,
+        pageSize?: number,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/Districts/paged',
+            query: {
+                'pageNumber': pageNumber,
+                'pageSize': pageSize,
+            },
+        });
+    }
+    /**
+     * @returns any OK
+     * @throws ApiError
+     */
     public static getApiDistricts1({
         id,
     }: {

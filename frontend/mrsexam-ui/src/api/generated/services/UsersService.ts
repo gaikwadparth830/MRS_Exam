@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { LoginRequest } from '../models/LoginRequest';
 import type { User } from '../models/User';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -86,6 +87,22 @@ export class UsersService {
             path: {
                 'id': id,
             },
+        });
+    }
+    /**
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static postApiUsersValidate({
+        requestBody,
+    }: {
+        requestBody?: LoginRequest,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/Users/validate',
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
 }

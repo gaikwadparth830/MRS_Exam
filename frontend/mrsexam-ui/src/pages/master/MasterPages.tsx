@@ -1,4 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Paper as MuiPaper,
+  Select,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+} from '@mui/material'
 
 import {
   CentersService,
@@ -375,12 +396,30 @@ const centerCrud: CrudConfig<Center> = {
   keyFields: ['centreNo'],
   fields: [
     { key: 'centreNo', label: 'Center No', type: 'text', required: true },
+    { key: 'addressTo', label: 'Address To', type: 'text' },
     { key: 'centreName', label: 'Center Name', type: 'text' },
     { key: 'districtName', label: 'District Name', type: 'text' },
+    { key: 'add1', label: 'Add1', type: 'text' },
+    { key: 'add2', label: 'Add2', type: 'text' },
     { key: 'city', label: 'City', type: 'text' },
     { key: 'pincode', label: 'Pincode', type: 'text' },
+    { key: 'phone', label: 'Phone', type: 'text' },
+    { key: 'panditFlag', label: 'Pandit Flag', type: 'text' },
+    { key: 'closeFlag', label: 'Close Flag', type: 'text' },
   ],
-  createEmpty: () => ({ centreNo: '', centreName: '', districtName: '', city: '', pincode: '' }),
+  createEmpty: () => ({
+    centreNo: '',
+    addressTo: '',
+    centreName: '',
+    districtName: '',
+    add1: '',
+    add2: '',
+    city: '',
+    pincode: '',
+    phone: '',
+    panditFlag: '',
+    closeFlag: '',
+  }),
   list: async (query) => fetchPagedList<Center>('/api/Centers/paged', query),
   create: async (payload) => {
     await CentersService.postApiCenters({ requestBody: payload })
@@ -523,6 +562,10 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
 
   const [rows, setRows] = useState<object[]>([])
   const [form, setForm] = useState<object>(config.createEmpty())
+  const [regionOptions, setRegionOptions] = useState<Region[]>([])
+  const [districtNameOptions, setDistrictNameOptions] = useState<string[]>([])
+  const [centerNoOptions, setCenterNoOptions] = useState<string[]>([])
+  const [centerSearchValue, setCenterSearchValue] = useState('')
   const [editingKey, setEditingKey] = useState<string | null>(null)
   const [pageNumber, setPageNumber] = useState(1)
   const [pageSize, setPageSize] = useState(10)
@@ -563,6 +606,99 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
       }
     }
   }
+
+  useEffect(() => {
+    if (config.title !== 'District Master') {
+      setRegionOptions([])
+      return
+    }
+
+    let isMounted = true
+
+    const loadRegionOptions = async () => {
+      try {
+        const payload = await RegionsService.getApiRegions()
+        const normalized = normalizePagedResponse<Region>(payload, { pageNumber: 1, pageSize: 500 })
+
+        if (isMounted) {
+          setRegionOptions(normalized.items)
+        }
+      } catch {
+        if (isMounted) {
+          setRegionOptions([])
+        }
+      }
+    }
+
+    void loadRegionOptions()
+
+    return () => {
+      isMounted = false
+    }
+  }, [config.title])
+
+  useEffect(() => {
+    if (config.title !== 'Center Master') {
+      setDistrictNameOptions([])
+      setCenterNoOptions([])
+      setCenterSearchValue('')
+      return
+    }
+
+    let isMounted = true
+
+    const loadDistrictNameOptions = async () => {
+      try {
+        const payload = await DistrictsService.getApiDistricts()
+        const normalized = normalizePagedResponse<District>(payload, { pageNumber: 1, pageSize: 1000 })
+
+        const districtNames = Array.from(
+          new Set(
+            normalized.items
+              .map((district) => district.districtName?.trim() ?? '')
+              .filter((name): name is string => name.length > 0),
+          ),
+        )
+
+        if (isMounted) {
+          setDistrictNameOptions(districtNames)
+        }
+      } catch {
+        if (isMounted) {
+          setDistrictNameOptions([])
+        }
+      }
+    }
+
+    const loadCenterNoOptions = async () => {
+      try {
+        const payload = await CentersService.getApiCenters()
+        const normalized = normalizePagedResponse<Center>(payload, { pageNumber: 1, pageSize: 2000 })
+        const centerNos = Array.from(
+          new Set(
+            normalized.items
+              .map((center) => center.centreNo?.trim() ?? '')
+              .filter((centerNo): centerNo is string => centerNo.length > 0),
+          ),
+        )
+
+        if (isMounted) {
+          setCenterNoOptions(centerNos)
+        }
+      } catch {
+        if (isMounted) {
+          setCenterNoOptions([])
+        }
+      }
+    }
+
+    void loadDistrictNameOptions()
+    void loadCenterNoOptions()
+
+    return () => {
+      isMounted = false
+    }
+  }, [config.title])
 
   useEffect(() => {
     const didConfigChange = previousConfigTitle.current !== config.title
@@ -616,6 +752,87 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
         regionName: translated,
       }
     })
+  }
+
+  const transliterateFormField = async (
+    fieldKey: string,
+    rawValue: string,
+    appendSpace: boolean,
+  ) => {
+    const requestId = ++transliterationRequestId.current
+    const normalizedValue = rawValue.trim()
+
+    if (!normalizedValue) {
+      return
+    }
+
+    const byGoogle = await fetchGoogleMarathiTransliteration(normalizedValue)
+    const translated = byGoogle ?? transliterateEnglishToDevanagari(normalizedValue)
+
+    if (requestId !== transliterationRequestId.current) {
+      return
+    }
+
+    setForm((current) => {
+      const currentFieldValue = String((current as Record<string, unknown>)[fieldKey] ?? '')
+      if (currentFieldValue !== rawValue) {
+        return current
+      }
+
+      return {
+        ...current,
+        [fieldKey]: appendSpace ? `${translated} ` : translated,
+      }
+    })
+  }
+
+  const onFieldKeyDown = (key: string, event: React.KeyboardEvent<HTMLElement>) => {
+    const isDistrictMaster = config.title === 'District Master'
+    const isCenterMaster = config.title === 'Center Master'
+    const isDistrictNameField = key === 'districtName'
+    const isShortNameField = key === 'shortName'
+
+    const centerTransliterationFields = new Set([
+      'centreNo',
+      'addressTo',
+      'centreName',
+      'add1',
+      'add2',
+      'city',
+    ])
+
+    const isCenterTransliterationField = centerTransliterationFields.has(key)
+
+    if (!isDistrictMaster && !isCenterMaster) {
+      return
+    }
+
+    if (isDistrictMaster && !isDistrictNameField && !isShortNameField) {
+      return
+    }
+
+    if (isCenterMaster && !isCenterTransliterationField) {
+      return
+    }
+
+    const shouldTransliterate = isDistrictMaster
+      ? (isDistrictNameField ? event.key === 'Enter' || event.key === ' ' : event.key === ' ')
+      : event.key === 'Enter' || event.key === ' '
+
+    if (!shouldTransliterate) {
+      return
+    }
+
+    event.preventDefault()
+    const inputTarget = event.target as HTMLInputElement | null
+    const rawValue = inputTarget?.value ?? ''
+    const appendSpace = event.key === ' '
+
+    const targetField = isDistrictMaster
+      ? (isShortNameField ? 'shortName' : 'districtName')
+      : key
+
+    void transliterateFormField(targetField, rawValue, appendSpace)
   }
 
   const onChange = (key: string, type: FieldType, rawValue: string) => {
@@ -709,132 +926,346 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
     }
   }
 
+  const searchCenterByNo = async (rawCenterNo: string) => {
+    const centerNo = rawCenterNo.trim()
+
+    if (!centerNo) {
+      await loadRows({ pageNumber, pageSize })
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const payload = await CentersService.getApiCenters1({ id: centerNo })
+      let foundItems: Center[] = []
+
+      if (Array.isArray(payload)) {
+        foundItems = payload as Center[]
+      } else if (payload && typeof payload === 'object') {
+        const objectPayload = payload as Record<string, unknown>
+
+        if (typeof objectPayload.centreNo === 'string') {
+          foundItems = [payload as Center]
+        } else {
+          foundItems = normalizePagedResponse<Center>(payload, { pageNumber: 1, pageSize: 10 }).items
+        }
+      }
+
+      setRows(foundItems as object[])
+      setTotalCount(foundItems.length)
+      setPageNumber(1)
+    } catch {
+      setRows([])
+      setTotalCount(0)
+      setPageNumber(1)
+      setError('No center found for the given Center No.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const onCenterSearch = async () => {
+    if (config.title !== 'Center Master') {
+      return
+    }
+
+    await searchCenterByNo(centerSearchValue)
+  }
+
+  const onClearCenterSearch = async () => {
+    setCenterSearchValue('')
+    await loadRows({ pageNumber, pageSize })
+  }
+
   return (
-    <section className="master-page" aria-label={`${config.title} page`}>
-      <header className="master-page-head">
-        <h2>{config.title}</h2>
-        <p>{config.description}</p>
-      </header>
+    <Box sx={{ maxWidth: 1200 }} aria-label={`${config.title} page`}>
+      <Card elevation={1}>
+        <CardContent>
+          <Stack spacing={3}>
+            <Box>
+              <Typography variant="h5" component="h2" fontWeight={700}>
+                {config.title}
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
+                {config.description}
+              </Typography>
+            </Box>
 
-      <form className="crud-form" onSubmit={onSubmit}>
-        {config.fields.map((field) => {
-          const value = (form as Record<string, unknown>)[field.key]
-          const isKeyField = config.keyFields.includes(field.key as never)
+            <Box component="form" onSubmit={onSubmit}>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gap: 2,
+                  gridTemplateColumns: {
+                    xs: '1fr',
+                    sm: 'repeat(2, minmax(0, 1fr))',
+                    lg: 'repeat(3, minmax(0, 1fr))',
+                  },
+                }}
+              >
+                {config.fields.map((field) => {
+                  const value = (form as Record<string, unknown>)[field.key]
+                  const isKeyField = config.keyFields.includes(field.key as never)
+                  const isDistrictRegionField = config.title === 'District Master' && field.key === 'regionNo'
+                  const isCenterDistrictField = config.title === 'Center Master' && field.key === 'districtName'
+                  const isCenterFlagField =
+                    config.title === 'Center Master'
+                    && (field.key === 'panditFlag' || field.key === 'closeFlag')
 
-          return (
-            <label key={field.key} className="crud-field">
-              <span>{field.label}</span>
-              <input
-                type={field.type === 'number' ? 'number' : 'text'}
-                value={value === null || value === undefined ? '' : String(value)}
-                onChange={(event) => onChange(field.key, field.type, event.target.value)}
-                disabled={Boolean(editingKey && isKeyField)}
-              />
-            </label>
-          )
-        })}
+                  return (
+                    <Box key={field.key}>
+                      {isDistrictRegionField ? (
+                        <FormControl fullWidth>
+                          <InputLabel id="district-region-no-label">Region No</InputLabel>
+                          <Select
+                            labelId="district-region-no-label"
+                            label="Region No"
+                            value={value === null || value === undefined ? '' : Number(value)}
+                            onChange={(event) => onChange(field.key, 'number', String(event.target.value))}
+                            disabled={Boolean(editingKey && isKeyField)}
+                          >
+                            <MenuItem value="">Select Region</MenuItem>
+                            {regionOptions.map((region) => (
+                              <MenuItem key={region.regionNo} value={region.regionNo}>
+                                {`${region.regionNo} - ${region.regionName?.trim() || '-'}`}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      ) : isCenterDistrictField ? (
+                        <FormControl fullWidth>
+                          <InputLabel id="center-district-name-label">District Name</InputLabel>
+                          <Select
+                            labelId="center-district-name-label"
+                            label="District Name"
+                            value={value === null || value === undefined ? '' : String(value)}
+                            onChange={(event) => onChange(field.key, 'text', String(event.target.value))}
+                            disabled={Boolean(editingKey && isKeyField)}
+                          >
+                            <MenuItem value="">Select District</MenuItem>
+                            {districtNameOptions.map((districtName) => (
+                              <MenuItem key={districtName} value={districtName}>
+                                {districtName}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      ) : isCenterFlagField ? (
+                        <FormControl fullWidth>
+                          <InputLabel id={`center-flag-${field.key}-label`}>{field.label}</InputLabel>
+                          <Select
+                            labelId={`center-flag-${field.key}-label`}
+                            label={field.label}
+                            value={value === null || value === undefined ? '' : String(value)}
+                            onChange={(event) => onChange(field.key, 'text', String(event.target.value))}
+                            disabled={Boolean(editingKey && isKeyField)}
+                          >
+                            <MenuItem value="">Select Option</MenuItem>
+                            <MenuItem value="Y">Yes</MenuItem>
+                            <MenuItem value="N">No</MenuItem>
+                          </Select>
+                        </FormControl>
+                      ) : (
+                        <TextField
+                          type={field.type === 'number' ? 'number' : 'text'}
+                          label={field.label}
+                          value={value === null || value === undefined ? '' : String(value)}
+                          onChange={(event) => onChange(field.key, field.type, event.target.value)}
+                          onKeyDown={
+                            field.type === 'text'
+                              ? (event) => onFieldKeyDown(field.key, event)
+                              : undefined
+                          }
+                          disabled={Boolean(editingKey && isKeyField)}
+                          fullWidth
+                        />
+                      )}
+                    </Box>
+                  )
+                })}
+              </Box>
 
-        <div className="crud-actions">
-          <button type="submit" disabled={loading}>
-            {editingKey ? 'Update' : 'Create'}
-          </button>
-          <button type="button" className="secondary" onClick={resetForm} disabled={loading}>
-            Reset
-          </button>
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => void loadRows({ pageNumber, pageSize })}
-            disabled={loading}
-          >
-            Refresh
-          </button>
-        </div>
-      </form>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 2 }}>
+                <Button type="submit" variant="contained" disabled={loading}>
+                  {editingKey ? 'Update' : 'Create'}
+                </Button>
+                <Button type="button" variant="outlined" onClick={resetForm} disabled={loading}>
+                  Reset
+                </Button>
+                <Button
+                  type="button"
+                  variant="outlined"
+                  onClick={() => void loadRows({ pageNumber, pageSize })}
+                  disabled={loading}
+                >
+                  Refresh
+                </Button>
+              </Stack>
+            </Box>
 
-      {error ? <p className="crud-message error">{error}</p> : null}
-      {success ? <p className="crud-message success">{success}</p> : null}
+            {config.title === 'Center Master' ? (
+              <MuiPaper variant="outlined" sx={{ p: 2 }}>
+                <Stack
+                  direction={{ xs: 'column', md: 'row' }}
+                  spacing={1.5}
+                  alignItems={{ xs: 'stretch', md: 'center' }}
+                >
+                  <TextField
+                    label="Search by Center No"
+                    value={centerSearchValue}
+                    onChange={(event) => setCenterSearchValue(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault()
+                        void onCenterSearch()
+                      }
+                    }}
+                    sx={{ minWidth: { xs: '100%', md: 260 } }}
+                  />
 
-      <div className="crud-table-wrap">
-        <table className="crud-table">
-          <thead>
-            <tr>
-              {config.fields.map((field) => (
-                <th key={field.key}>{field.label}</th>
-              ))}
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length > 0 ? (
-              rows.map((row) => {
-                const rowKey = toKeyString(row, config.keyFields as never)
+                  <FormControl sx={{ minWidth: { xs: '100%', md: 260 } }}>
+                    <InputLabel id="center-search-no-label">Center No List</InputLabel>
+                    <Select
+                      labelId="center-search-no-label"
+                      label="Center No List"
+                      value={centerSearchValue}
+                      onChange={(event) => {
+                        const selected = String(event.target.value)
+                        setCenterSearchValue(selected)
+                        void searchCenterByNo(selected)
+                      }}
+                    >
+                      <MenuItem value="">Select Center No</MenuItem>
+                      {centerNoOptions.map((centerNo) => (
+                        <MenuItem key={centerNo} value={centerNo}>
+                          {centerNo}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
 
-                return (
-                  <tr key={rowKey}>
-                    {config.fields.map((field) => (
-                      <td key={field.key}>{formatValue((row as Record<string, unknown>)[field.key])}</td>
-                    ))}
-                    <td className="row-actions">
-                      <button type="button" className="link-btn" onClick={() => onEdit(row)}>
-                        Edit
-                      </button>
-                      <button type="button" className="link-btn danger" onClick={() => void onDelete(row)}>
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })
-            ) : (
-              <tr>
-                <td colSpan={config.fields.length + 1}>No records found.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                  <Stack direction="row" spacing={1.5}>
+                    <Button type="button" variant="contained" onClick={() => void onCenterSearch()} disabled={loading}>
+                      Search
+                    </Button>
+                    <Button type="button" variant="outlined" onClick={() => void onClearCenterSearch()} disabled={loading}>
+                      Clear
+                    </Button>
+                  </Stack>
+                </Stack>
+              </MuiPaper>
+            ) : null}
 
-      <div className="pagination-bar" aria-label="Master list pagination">
-        <div className="pagination-meta">
-          Showing page {pageNumber} of {totalPages} ({totalCount} records)
-        </div>
-        <div className="pagination-controls">
-          <label>
-            Page Size
-            <select
-              value={pageSize}
-              onChange={(event) => {
-                setPageSize(Number(event.target.value))
-                setPageNumber(1)
-              }}
-              disabled={loading}
+            {error ? <Alert severity="error">{error}</Alert> : null}
+            {success ? <Alert severity="success">{success}</Alert> : null}
+
+            <MuiPaper variant="outlined">
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      {config.fields.map((field) => (
+                        <TableCell key={field.key} sx={{ fontWeight: 700 }}>{field.label}</TableCell>
+                      ))}
+                      <TableCell sx={{ fontWeight: 700 }}>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {rows.length > 0 ? (
+                      rows.map((row) => {
+                        const rowKey = toKeyString(row, config.keyFields as never)
+
+                        return (
+                          <TableRow key={rowKey} hover>
+                            {config.fields.map((field) => (
+                              <TableCell key={field.key}>{formatValue((row as Record<string, unknown>)[field.key])}</TableCell>
+                            ))}
+                            <TableCell>
+                              <Stack direction="row" spacing={1}>
+                                <Button type="button" size="small" onClick={() => onEdit(row)}>
+                                  Edit
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="small"
+                                  color="error"
+                                  onClick={() => void onDelete(row)}
+                                >
+                                  Delete
+                                </Button>
+                              </Stack>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={config.fields.length + 1}>
+                          <Typography variant="body2" color="text.secondary">
+                            No records found.
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </MuiPaper>
+
+            <Stack
+              direction={{ xs: 'column', md: 'row' }}
+              spacing={2}
+              alignItems={{ xs: 'stretch', md: 'center' }}
+              justifyContent="space-between"
+              aria-label="Master list pagination"
             >
-              <option value={10}>10</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-          </label>
+              <Typography variant="body2" color="text.secondary">
+                Showing page {pageNumber} of {totalPages} ({totalCount} records)
+              </Typography>
 
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => setPageNumber((current) => Math.max(1, current - 1))}
-            disabled={loading || pageNumber <= 1}
-          >
-            Prev
-          </button>
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => setPageNumber((current) => Math.min(totalPages, current + 1))}
-            disabled={loading || pageNumber >= totalPages}
-          >
-            Next
-          </button>
-        </div>
-      </div>
-    </section>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <FormControl size="small" sx={{ minWidth: 130 }}>
+                  <InputLabel id="page-size-select-label">Page Size</InputLabel>
+                  <Select
+                    labelId="page-size-select-label"
+                    value={String(pageSize)}
+                    label="Page Size"
+                    onChange={(event) => {
+                      setPageSize(Number(event.target.value))
+                      setPageNumber(1)
+                    }}
+                    disabled={loading}
+                  >
+                    <MenuItem value="10">10</MenuItem>
+                    <MenuItem value="25">25</MenuItem>
+                    <MenuItem value="50">50</MenuItem>
+                    <MenuItem value="100">100</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <Button
+                  type="button"
+                  variant="outlined"
+                  onClick={() => setPageNumber((current) => Math.max(1, current - 1))}
+                  disabled={loading || pageNumber <= 1}
+                >
+                  Prev
+                </Button>
+                <Button
+                  type="button"
+                  variant="outlined"
+                  onClick={() => setPageNumber((current) => Math.min(totalPages, current + 1))}
+                  disabled={loading || pageNumber >= totalPages}
+                >
+                  Next
+                </Button>
+              </Stack>
+            </Stack>
+          </Stack>
+        </CardContent>
+      </Card>
+    </Box>
   )
 }

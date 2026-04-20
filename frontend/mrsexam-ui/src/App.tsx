@@ -2,7 +2,6 @@ import { useCallback, useState } from 'react'
 
 import { DashboardPage } from './pages/DashboardPage'
 import { LoginPage } from './pages/LoginPage'
-import './App.css'
 
 const ACCESS_TOKEN_KEY = 'accessToken'
 

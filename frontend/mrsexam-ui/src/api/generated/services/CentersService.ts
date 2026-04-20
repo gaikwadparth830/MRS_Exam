@@ -37,6 +37,26 @@ export class CentersService {
      * @returns any OK
      * @throws ApiError
      */
+    public static getApiCentersPaged({
+        pageNumber = 1,
+        pageSize = 50,
+    }: {
+        pageNumber?: number,
+        pageSize?: number,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/Centers/paged',
+            query: {
+                'pageNumber': pageNumber,
+                'pageSize': pageSize,
+            },
+        });
+    }
+    /**
+     * @returns any OK
+     * @throws ApiError
+     */
     public static getApiCenters1({
         id,
     }: {

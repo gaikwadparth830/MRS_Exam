@@ -2471,6 +2471,22 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "mrsexam_backend.Controllers.SessionsController",
+    "Method": "SetDefaultSession",
+    "RelativePath": "api/Sessions/setdefaultsession/{id}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "mrsexam_backend.Controllers.TotFormsController",
     "Method": "GetAll",
     "RelativePath": "api/TotForms",

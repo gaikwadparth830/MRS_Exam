@@ -1,5 +1,37 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+} from '@mui/material'
+import { ChevronRightRounded, ExpandMoreRounded } from '@mui/icons-material'
 
+import {
+  type Center,
+  CentersService,
+  type FormPrathamik,
+  FormPrathamikService,
+  type Session,
+  SessionsService,
+} from '../api/generatedClient'
+import monoLogo from '../assets/MONO.png'
+import { httpClient } from '../api/httpClient'
 import { MasterMenuPage, type MasterPageKey } from './master/MasterPages'
 
 type SubMenuItem = {
@@ -74,34 +106,702 @@ const defaultMasterPage: MasterPageKey = 'Region Master'
 const defaultFormEntryExam = formEntryExamItems[0]
 const defaultMarksEntryExam = formEntryExamItems[0]
 
-const getDefaultSubMenuItem = (menu: MainMenu): string | null => {
-  if (menu === 'Master') {
-    return defaultMasterPage
+const toSessionList = (payload: unknown): Session[] => {
+  if (Array.isArray(payload)) {
+    return payload as Session[]
   }
 
+  if (payload && typeof payload === 'object') {
+    const objectPayload = payload as Record<string, unknown>
+    const candidates = [
+      objectPayload.items,
+      objectPayload.data,
+      objectPayload.results,
+      objectPayload.records,
+    ]
+    const list = candidates.find((candidate) => Array.isArray(candidate))
+    return (list ?? []) as Session[]
+  }
+
+  return []
+}
+
+const getDefaultSessionFromList = (sessions: Session[]): Session | null =>
+  sessions.find((session) => session.defa?.trim().toUpperCase() === 'Y') ?? null
+
+const toCenterList = (payload: unknown): Center[] => {
+  if (Array.isArray(payload)) {
+    return payload as Center[]
+  }
+
+  if (payload && typeof payload === 'object') {
+    const objectPayload = payload as Record<string, unknown>
+    const candidates = [
+      objectPayload.items,
+      objectPayload.data,
+      objectPayload.results,
+      objectPayload.records,
+    ]
+    const list = candidates.find((candidate) => Array.isArray(candidate))
+    return (list ?? []) as Center[]
+  }
+
+  return []
+}
+
+const toFormPrathamikList = (payload: unknown): FormPrathamik[] => {
+  if (Array.isArray(payload)) {
+    return payload as FormPrathamik[]
+  }
+
+  if (payload && typeof payload === 'object') {
+    const objectPayload = payload as Record<string, unknown>
+    const candidates = [
+      objectPayload.items,
+      objectPayload.data,
+      objectPayload.results,
+      objectPayload.records,
+    ]
+    const list = candidates.find((candidate) => Array.isArray(candidate))
+    return (list ?? []) as FormPrathamik[]
+  }
+
+  return []
+}
+
+const createEmptyPrathamikForm = (sessionNo?: number): FormPrathamik => ({
+  srNo: 0,
+  rollNo: null,
+  regionNo: null,
+  name: '',
+  sessionNo: sessionNo ?? null,
+  gender: '',
+  formCentre: '',
+  examCentre: '',
+  marks1: '',
+  totMarks: null,
+  grade: '',
+  undFlag: '',
+  undClass: '',
+  specialRank: '',
+  result: '',
+  dummyCentreCode: null,
+  resgenRun: null,
+  userId: '',
+})
+
+const normalizeGender = (value?: string | null): string => {
+  const normalized = (value ?? '').trim().toUpperCase()
+
+  if (normalized === 'M' || normalized === 'MALE') {
+    return 'Male'
+  }
+
+  if (normalized === 'F' || normalized === 'FEMALE') {
+    return 'Female'
+  }
+
+  return ''
+}
+
+const formatGender = (value?: string | null): string => {
+  const normalized = normalizeGender(value)
+  return normalized || '-'
+}
+
+type PrathamikFormEntryPanelProps = {
+  defaultSessionNo?: number
+}
+
+const PrathamikFormEntryPanel = ({ defaultSessionNo }: PrathamikFormEntryPanelProps) => {
+  const [centers, setCenters] = useState<Center[]>([])
+  const [rows, setRows] = useState<FormPrathamik[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [formData, setFormData] = useState<FormPrathamik>(() => createEmptyPrathamikForm(defaultSessionNo))
+
+  const selectedFormCenterName = useMemo(() => {
+    const selected = centers.find((center) => center.centreNo === formData.formCentre)
+    return selected?.centreName?.trim() || selected?.city?.trim() || ''
+  }, [centers, formData.formCentre])
+
+  const selectedExamCenterName = useMemo(() => {
+    const selected = centers.find((center) => center.centreNo === formData.examCentre)
+    return selected?.centreName?.trim() || selected?.city?.trim() || ''
+  }, [centers, formData.examCentre])
+
+  const loadRows = async () => {
+    if (typeof defaultSessionNo !== 'number') {
+      setRows([])
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const payload = await FormPrathamikService.getApiFormPrathamikPaged({
+        pageNumber: 1,
+        pageSize: 300,
+        sessionNo: defaultSessionNo,
+      })
+
+      setRows(toFormPrathamikList(payload))
+    } catch {
+      setError('Unable to load Prathamik records.')
+      setRows([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void loadRows()
+  }, [defaultSessionNo])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadCenters = async () => {
+      try {
+        const payload = await CentersService.getApiCenters()
+
+        if (isMounted) {
+          setCenters(toCenterList(payload))
+        }
+      } catch {
+        if (isMounted) {
+          setCenters([])
+        }
+      }
+    }
+
+    void loadCenters()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  useEffect(() => {
+    setFormData((current) => ({
+      ...current,
+      sessionNo: typeof defaultSessionNo === 'number' ? defaultSessionNo : null,
+    }))
+  }, [defaultSessionNo])
+
+  const onChangeNumber = (key: keyof FormPrathamik, value: string) => {
+    setFormData((current) => ({
+      ...current,
+      [key]: value.trim() === '' ? null : Number(value),
+    }))
+  }
+
+  const onChangeText = (key: keyof FormPrathamik, value: string) => {
+    setFormData((current) => ({
+      ...current,
+      [key]: value,
+    }))
+  }
+
+  const onChangeFormCentre = (value: string) => {
+    setFormData((current) => ({
+      ...current,
+      formCentre: value,
+      examCentre: value,
+    }))
+  }
+
+  const resetForm = () => {
+    setEditingId(null)
+    setFormData(createEmptyPrathamikForm(defaultSessionNo))
+  }
+
+  const onSave = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setError(null)
+    setSuccessMessage(null)
+
+    if (typeof defaultSessionNo !== 'number') {
+      setError('Default session is not available.')
+      return
+    }
+
+    if (!formData.rollNo || !formData.regionNo || !formData.name?.trim()) {
+      setError('Roll No, Region No and Name are required.')
+      return
+    }
+
+    if (!formData.formCentre?.trim()) {
+      setError('Form Centre is required.')
+      return
+    }
+
+    const payload: FormPrathamik = {
+      ...formData,
+      sessionNo: defaultSessionNo,
+      name: formData.name?.trim() ?? '',
+    }
+
+    try {
+      if (editingId === null) {
+        await FormPrathamikService.postApiFormPrathamik({ requestBody: payload })
+        setSuccessMessage('Prathamik record created.')
+      } else {
+        await FormPrathamikService.putApiFormPrathamik({
+          id: editingId,
+          requestBody: payload,
+        })
+        setSuccessMessage('Prathamik record updated.')
+      }
+
+      resetForm()
+      await loadRows()
+    } catch {
+      setError('Unable to save Prathamik record.')
+    }
+  }
+
+  const onEdit = (row: FormPrathamik) => {
+    setEditingId(row.srNo)
+    setError(null)
+    setSuccessMessage(null)
+    setFormData({
+      ...row,
+      gender: normalizeGender(row.gender),
+      sessionNo: typeof defaultSessionNo === 'number' ? defaultSessionNo : row.sessionNo,
+    })
+  }
+
+  const onDelete = async (id: number) => {
+    setError(null)
+    setSuccessMessage(null)
+
+    try {
+      await FormPrathamikService.deleteApiFormPrathamik({ id })
+      setSuccessMessage('Prathamik record deleted.')
+
+      if (editingId === id) {
+        resetForm()
+      }
+
+      await loadRows()
+    } catch {
+      setError('Unable to delete Prathamik record.')
+    }
+  }
+
+  return (
+    <Box aria-label="Prathamik form entry">
+      <Card elevation={1}>
+        <CardContent>
+          <Stack spacing={3}>
+            <Box>
+              <Typography variant="h5" component="h2" fontWeight={700}>
+                Form Entry - Prathamik
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
+                Showing records from form_prathamik where sessionNo = {defaultSessionNo ?? '-'}.
+              </Typography>
+            </Box>
+
+            <Box component="form" onSubmit={onSave}>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gap: 2,
+                  gridTemplateColumns: {
+                    xs: '1fr',
+                    sm: 'repeat(2, minmax(0, 1fr))',
+                    lg: 'repeat(4, minmax(0, 1fr))',
+                  },
+                }}
+              >
+                <TextField
+                  type="number"
+                  label="Sr No (for update)"
+                  value={formData.srNo ?? ''}
+                  onChange={(event) => onChangeNumber('srNo', event.target.value)}
+                  disabled={editingId !== null}
+                />
+
+                <TextField
+                  type="number"
+                  label="Roll No *"
+                  value={formData.rollNo ?? ''}
+                  onChange={(event) => onChangeNumber('rollNo', event.target.value)}
+                  required
+                />
+
+                <TextField
+                  type="number"
+                  label="Region No *"
+                  value={formData.regionNo ?? ''}
+                  onChange={(event) => onChangeNumber('regionNo', event.target.value)}
+                  required
+                />
+
+                <TextField
+                  type="text"
+                  label="Name *"
+                  value={formData.name ?? ''}
+                  onChange={(event) => onChangeText('name', event.target.value)}
+                  required
+                />
+
+                <FormControl>
+                  <InputLabel id="gender-select-label">Gender</InputLabel>
+                  <Select
+                    labelId="gender-select-label"
+                    label="Gender"
+                    value={formData.gender ?? ''}
+                    onChange={(event) => onChangeText('gender', String(event.target.value))}
+                  >
+                    <MenuItem value="">Select Gender</MenuItem>
+                    <MenuItem value="Male">Male</MenuItem>
+                    <MenuItem value="Female">Female</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <FormControl required>
+                  <InputLabel id="form-centre-select-label">Form Centre</InputLabel>
+                  <Select
+                    labelId="form-centre-select-label"
+                    label="Form Centre"
+                    value={formData.formCentre ?? ''}
+                    onChange={(event) => onChangeFormCentre(String(event.target.value))}
+                  >
+                    <MenuItem value="">Select center</MenuItem>
+                    {centers.map((center) => (
+                      <MenuItem key={center.centreNo} value={center.centreNo}>
+                        {center.centreNo}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, ml: 1.5 }}>
+                    Name: {selectedFormCenterName || '-'}
+                  </Typography>
+                </FormControl>
+
+                <FormControl disabled>
+                  <InputLabel id="exam-centre-select-label">Exam Centre</InputLabel>
+                  <Select
+                    labelId="exam-centre-select-label"
+                    label="Exam Centre"
+                    value={formData.examCentre ?? ''}
+                    onChange={(event) => onChangeText('examCentre', String(event.target.value))}
+                  >
+                    <MenuItem value="">Select center</MenuItem>
+                    {centers.map((center) => (
+                      <MenuItem key={center.centreNo} value={center.centreNo}>
+                        {center.centreNo}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, ml: 1.5 }}>
+                    Name: {selectedExamCenterName || '-'}
+                  </Typography>
+                </FormControl>
+
+                <TextField
+                  type="number"
+                  label="Total Marks"
+                  value={formData.totMarks ?? ''}
+                  onChange={(event) => onChangeNumber('totMarks', event.target.value)}
+                />
+
+                <TextField
+                  type="text"
+                  label="Grade"
+                  value={formData.grade ?? ''}
+                  onChange={(event) => onChangeText('grade', event.target.value)}
+                />
+              </Box>
+
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 2 }}>
+                <Button type="submit" variant="contained">{editingId === null ? 'Create' : 'Update'}</Button>
+                <Button type="button" variant="outlined" onClick={resetForm}>Reset</Button>
+              </Stack>
+            </Box>
+
+            {error ? <Alert severity="error">{error}</Alert> : null}
+            {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
+
+            <Paper variant="outlined">
+              <TableContainer>
+                <Table size="small" aria-label="Prathamik list">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700 }}>Sr No</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Roll No</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Region No</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Session No</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Gender</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Form Centre</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Exam Centre</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Total Marks</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Grade</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {isLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={11}>Loading...</TableCell>
+                      </TableRow>
+                    ) : rows.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={11}>No records found.</TableCell>
+                      </TableRow>
+                    ) : (
+                      rows.map((row) => (
+                        <TableRow key={row.srNo} hover>
+                          <TableCell>{row.srNo}</TableCell>
+                          <TableCell>{row.rollNo ?? '-'}</TableCell>
+                          <TableCell>{row.regionNo ?? '-'}</TableCell>
+                          <TableCell>{row.name ?? '-'}</TableCell>
+                          <TableCell>{row.sessionNo ?? '-'}</TableCell>
+                          <TableCell>{formatGender(row.gender)}</TableCell>
+                          <TableCell>{row.formCentre ?? '-'}</TableCell>
+                          <TableCell>{row.examCentre ?? '-'}</TableCell>
+                          <TableCell>{row.totMarks ?? '-'}</TableCell>
+                          <TableCell>{row.grade ?? '-'}</TableCell>
+                          <TableCell>
+                            <Stack direction="row" spacing={1}>
+                              <Button type="button" size="small" onClick={() => onEdit(row)}>Edit</Button>
+                              <Button type="button" size="small" color="error" onClick={() => onDelete(row.srNo)}>
+                                Delete
+                              </Button>
+                            </Stack>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
+          </Stack>
+        </CardContent>
+      </Card>
+    </Box>
+  )
+}
+
+type SelectSessionPanelProps = {
+  currentDefaultSession: Session | null
+  onDefaultSessionChanged: (session: Session | null) => void
+  onExit: () => void
+}
+
+const SelectSessionPanel = ({
+  currentDefaultSession,
+  onDefaultSessionChanged,
+  onExit,
+}: SelectSessionPanelProps) => {
+  const [sessions, setSessions] = useState<Session[]>([])
+  const [selectedSessionNo, setSelectedSessionNo] = useState<number | ''>(currentDefaultSession?.sessionNo ?? '')
+  const [isLoading, setIsLoading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  const loadSessions = async (): Promise<Session[]> => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const payload = await SessionsService.getApiSessions()
+      const list = toSessionList(payload)
+      setSessions(list)
+      return list
+    } catch {
+      setSessions([])
+      setError('Unable to load sessions.')
+      return []
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void loadSessions()
+  }, [])
+
+  useEffect(() => {
+    setSelectedSessionNo(currentDefaultSession?.sessionNo ?? '')
+  }, [currentDefaultSession])
+
+  const onSubmit = async () => {
+    if (selectedSessionNo === '') {
+      setError('Please select a session.')
+      return
+    }
+
+    setIsSaving(true)
+    setError(null)
+    setSuccessMessage(null)
+
+    try {
+      await SessionsService.postApiSessionsSetdefaultsession({ id: Number(selectedSessionNo) })
+
+      const updatedSessions = await loadSessions()
+      const updatedDefault =
+        updatedSessions.find((session) => session.sessionNo === Number(selectedSessionNo))
+        ?? getDefaultSessionFromList(updatedSessions)
+
+      onDefaultSessionChanged(updatedDefault ?? null)
+      setSelectedSessionNo(updatedDefault?.sessionNo ?? Number(selectedSessionNo))
+      setSuccessMessage('Default session updated successfully.')
+    } catch {
+      setError('Unable to update default session.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  return (
+    <Paper
+      elevation={2}
+      sx={{
+        p: { xs: 2, md: 3 },
+        minHeight: 320,
+        bgcolor: '#e7e9b8',
+        border: '1px solid #9a9a9a',
+      }}
+      aria-label="Select session page"
+    >
+      <Typography
+        variant="h5"
+        sx={{
+          color: '#8b0000',
+          textAlign: 'center',
+          textDecoration: 'underline',
+          fontWeight: 700,
+          mb: 5,
+        }}
+      >
+        Select Session ( Current Session is {currentDefaultSession?.sessionNo ?? '-'} )
+      </Typography>
+
+      <Stack spacing={3} sx={{ maxWidth: 560, mx: 'auto' }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center" justifyContent="center">
+          <Typography sx={{ minWidth: 140, color: '#8b0000', fontWeight: 600 }}>
+            Select Session :
+          </Typography>
+          <FormControl size="small" sx={{ minWidth: 240, bgcolor: '#ffffff' }}>
+            <InputLabel id="select-session-label">Session No</InputLabel>
+            <Select
+              labelId="select-session-label"
+              value={selectedSessionNo}
+              label="Session No"
+              onChange={(event) => {
+                setSelectedSessionNo(Number(event.target.value))
+              }}
+              disabled={isLoading || isSaving}
+            >
+              {sessions.map((session) => (
+                <MenuItem key={session.sessionNo} value={session.sessionNo}>
+                  {session.sessionNo}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
+
+        <Stack direction="row" spacing={2} justifyContent="center">
+          <Button
+            type="button"
+            variant="contained"
+            onClick={() => void onSubmit()}
+            disabled={isLoading || isSaving}
+          >
+            OK
+          </Button>
+          <Button
+            type="button"
+            variant="outlined"
+            color="inherit"
+            onClick={onExit}
+            disabled={isSaving}
+          >
+            Exit
+          </Button>
+        </Stack>
+
+        {error ? <Alert severity="error">{error}</Alert> : null}
+        {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
+      </Stack>
+    </Paper>
+  )
+}
+
+const getDefaultSubMenuItem = (menu: MainMenu): string | null => {
   return menuConfig[menu][0]?.label ?? null
 }
 
-const createDefaultSubMenuState = (): Record<MainMenu, string | null> => ({
-  Master: getDefaultSubMenuItem('Master'),
-  Supervisor: getDefaultSubMenuItem('Supervisor'),
-  Processing: getDefaultSubMenuItem('Processing'),
-  Transaction: getDefaultSubMenuItem('Transaction'),
-  Query: getDefaultSubMenuItem('Query'),
-  Utilities: getDefaultSubMenuItem('Utilities'),
-  Reports: getDefaultSubMenuItem('Reports'),
-  Help: getDefaultSubMenuItem('Help'),
-})
-
 export const DashboardPage = () => {
   const [activeMainMenu, setActiveMainMenu] = useState<MainMenu>('Master')
-  const [isSubMenuOpen, setIsSubMenuOpen] = useState(true)
-  const [activeMasterPage, setActiveMasterPage] = useState<MasterPageKey>(defaultMasterPage)
+  const [isSubMenuOpen, setIsSubMenuOpen] = useState(false)
+  const [activeMasterPage, setActiveMasterPage] = useState<MasterPageKey | null>(null)
   const [activeFormEntryExam, setActiveFormEntryExam] = useState(defaultFormEntryExam)
   const [activeMarksEntryExam, setActiveMarksEntryExam] = useState(defaultMarksEntryExam)
+  const [defaultSession, setDefaultSession] = useState<Session | null>(null)
   const [activeSubMenuByMain, setActiveSubMenuByMain] = useState<Record<MainMenu, string | null>>(
-    () => createDefaultSubMenuState(),
+    () => ({
+      Master: null,
+      Supervisor: getDefaultSubMenuItem('Supervisor'),
+      Processing: getDefaultSubMenuItem('Processing'),
+      Transaction: getDefaultSubMenuItem('Transaction'),
+      Query: getDefaultSubMenuItem('Query'),
+      Utilities: null,
+      Reports: getDefaultSubMenuItem('Reports'),
+      Help: getDefaultSubMenuItem('Help'),
+    }),
   )
+
+  useEffect(() => {
+    let isMounted = true
+
+    const loadDefaultSession = async () => {
+      try {
+        const directPayload = await SessionsService.getApiSessions()
+        const directMatch = getDefaultSessionFromList(toSessionList(directPayload))
+
+        if (directMatch) {
+          if (isMounted) {
+            setDefaultSession(directMatch)
+          }
+          return
+        }
+
+        const pagedResponse = await httpClient.get('/api/Sessions/paged', {
+          params: {
+            pageNumber: 1,
+            pageSize: 500,
+          },
+        })
+        const pagedMatch = getDefaultSessionFromList(toSessionList(pagedResponse.data))
+
+        if (isMounted) {
+          setDefaultSession(pagedMatch)
+        }
+      } catch {
+        if (isMounted) {
+          setDefaultSession(null)
+        }
+      }
+    }
+
+    void loadDefaultSession()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const activeSubMenuItems = useMemo(
     () => menuConfig[activeMainMenu],
@@ -117,6 +817,14 @@ export const DashboardPage = () => {
       setActiveSubMenuByMain((current) => ({
         ...current,
         Master: defaultMasterPage,
+      }))
+      return
+    }
+
+    if (item === 'Utilities') {
+      setActiveSubMenuByMain((current) => ({
+        ...current,
+        Utilities: null,
       }))
       return
     }
@@ -143,6 +851,8 @@ export const DashboardPage = () => {
         ...current,
         Master: item,
       }))
+      // Close submenu immediately for Master items
+      setIsSubMenuOpen(false)
       return
     }
 
@@ -153,11 +863,18 @@ export const DashboardPage = () => {
 
     if (activeMainMenu === 'Transaction' && item === 'Form Entry') {
       setActiveFormEntryExam(defaultFormEntryExam)
+      // Keep submenu open for items with children to allow exam selection
+      return
     }
 
     if (activeMainMenu === 'Transaction' && item === 'Marks Entry') {
       setActiveMarksEntryExam(defaultMarksEntryExam)
+      // Keep submenu open for items with children to allow exam selection
+      return
     }
+
+    // Close submenu for all other items
+    setIsSubMenuOpen(false)
   }
 
   const onSelectTransactionExam = (parentItem: 'Form Entry' | 'Marks Entry', exam: string) => {
@@ -168,53 +885,85 @@ export const DashboardPage = () => {
 
     if (parentItem === 'Form Entry') {
       setActiveFormEntryExam(exam)
-      return
+    } else {
+      setActiveMarksEntryExam(exam)
     }
 
-    setActiveMarksEntryExam(exam)
+    // Close submenu after exam selection
+    setIsSubMenuOpen(false)
   }
 
   const selectedSubMenu = activeSubMenuByMain[activeMainMenu]
 
+  const onExitSelectSession = () => {
+    setActiveSubMenuByMain((current) => ({
+      ...current,
+      Utilities: null,
+    }))
+  }
+
   return (
-    <main className="dashboard-page">
-      <div className="menu-shell">
-        <aside className="sidebar" aria-label="Main menu panel">
-          <h1 className="sidebar-title">MRS Exam</h1>
-          <nav className="main-menu-vertical" aria-label="Primary navigation">
+    <Box sx={{ minHeight: '100vh', p: { xs: 1.5, md: 2.5 }, pr: 0, bgcolor: '#e8edf5' }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 2,
+          gridTemplateColumns: isSubMenuOpen
+            ? { xs: '1fr', md: '220px 260px 1fr' }
+            : { xs: '1fr', md: '220px 1fr' },
+          alignItems: 'start',
+        }}
+      >
+        <Paper elevation={2} sx={{ p: 2, bgcolor: '#22354e', color: '#e2ebf6' }} aria-label="Main menu panel">
+          <Box
+            component="img"
+            src={monoLogo}
+            alt="MRS Mono logo"
+            sx={{ width: 72, height: 72, objectFit: 'contain', mb: 1 }}
+          />
+          <Typography variant="h5" component="h1" sx={{ mb: 2, color: '#ffffff', fontWeight: 700 }}>
+            MRS Exam
+          </Typography>
+          <Stack spacing={1} aria-label="Primary navigation">
             {mainMenuItems.map((item) => {
               const isActive = item === activeMainMenu
 
               return (
-                <button
+                <Button
                   key={item}
                   type="button"
-                  className={`menu-chip ${isActive ? 'active' : ''}`}
+                  fullWidth
                   onClick={() => onSelectMainMenu(item)}
+                  variant={isActive ? 'contained' : 'text'}
+                  color={isActive ? 'primary' : 'inherit'}
+                  endIcon={isActive && isSubMenuOpen ? <ExpandMoreRounded /> : <ChevronRightRounded />}
+                  sx={{ justifyContent: 'space-between' }}
                 >
-                  <span>{item}</span>
-                  <span className="menu-arrow">{isActive && isSubMenuOpen ? '▾' : '▸'}</span>
-                </button>
+                  {item}
+                </Button>
               )
             })}
-          </nav>
-        </aside>
+          </Stack>
+        </Paper>
 
         {isSubMenuOpen ? (
-          <section className="submenu-panel" aria-label="Sub menu panel">
-            <div className="submenu-head">
-              <h2>{activeMainMenu}</h2>
-              <button
+          <Paper elevation={2} sx={{ p: 2, bgcolor: '#425f84', color: '#f2f6fc' }} aria-label="Sub menu panel">
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
+              <Typography variant="h6" sx={{ color: 'inherit', fontWeight: 700 }}>
+                {activeMainMenu}
+              </Typography>
+              <Button
                 type="button"
-                className="collapse-toggle"
+                variant="outlined"
+                color="inherit"
                 onClick={() => setIsSubMenuOpen(false)}
                 aria-label="Close submenu"
               >
                 Close
-              </button>
-            </div>
+              </Button>
+            </Stack>
 
-            <ul id="active-submenu-list" className="submenu-list">
+            <Stack spacing={1} id="active-submenu-list">
               {activeSubMenuItems.length > 0 ? (
                 activeSubMenuItems.map((item) => {
                   const isActive = activeMainMenu === 'Master'
@@ -224,81 +973,170 @@ export const DashboardPage = () => {
                   const showChildren = activeMainMenu === 'Transaction' && hasChildren && isActive
 
                   return (
-                    <li key={item.label}>
-                      <button
+                    <Box key={item.label}>
+                      <Button
                         type="button"
-                        className={`submenu-link ${isActive ? 'active' : ''}`}
+                        fullWidth
+                        variant={isActive ? 'contained' : 'text'}
+                        color={isActive ? 'primary' : 'inherit'}
                         onClick={() => onSelectSubMenu(item.label)}
+                        sx={{ justifyContent: 'flex-start' }}
                       >
                         {item.label}
-                      </button>
+                      </Button>
 
                       {showChildren ? (
-                        <ul className="submenu-children" aria-label={`${item.label} exam submenu`}>
+                        <Stack spacing={0.75} sx={{ mt: 1, pl: 2 }} aria-label={`${item.label} exam submenu`}>
                           {(item.children ?? []).map((child) => {
                             const isChildActive = item.label === 'Form Entry'
                               ? child === activeFormEntryExam
                               : child === activeMarksEntryExam
 
                             return (
-                              <li key={child}>
-                                <button
-                                  type="button"
-                                  className={`submenu-child-link ${isChildActive ? 'active' : ''}`}
-                                  onClick={() => onSelectTransactionExam(item.label as 'Form Entry' | 'Marks Entry', child)}
-                                >
-                                  {child}
-                                </button>
-                              </li>
+                              <Button
+                                key={child}
+                                type="button"
+                                size="small"
+                                variant={isChildActive ? 'contained' : 'outlined'}
+                                color="inherit"
+                                onClick={() => onSelectTransactionExam(item.label as 'Form Entry' | 'Marks Entry', child)}
+                                sx={{ justifyContent: 'flex-start' }}
+                              >
+                                {child}
+                              </Button>
                             )
                           })}
-                        </ul>
+                        </Stack>
                       ) : null}
-                    </li>
+                    </Box>
                   )
                 })
               ) : (
-                <li>No submenu items configured.</li>
+                <Typography variant="body2" sx={{ color: 'inherit', opacity: 0.85 }}>
+                  No submenu items configured.
+                </Typography>
               )}
-            </ul>
-          </section>
-        ) : (
-          <button
-            type="button"
-            className="open-submenu"
-            onClick={() => setIsSubMenuOpen(true)}
-          >
-            Open {activeMainMenu} Menu
-          </button>
-        )}
+            </Stack>
+          </Paper>
+        ) : null}
 
-        <section className="content-placeholder" aria-label="Workspace area">
-          {activeMainMenu === 'Master' ? (
+        <Box aria-label="Workspace area">
+          <Paper
+            elevation={2}
+            sx={{
+              mb: 2,
+              px: 2.5,
+              py: 1.5,
+              bgcolor: '#22354e',
+              color: '#e2ebf6',
+            }}
+            aria-label="Top navigation bar"
+          >
+            <Stack
+              direction={{ xs: 'column', md: 'row' }}
+              justifyContent="space-between"
+              alignItems={{ xs: 'flex-start', md: 'center' }}
+              spacing={1.5}
+            >
+              <Box>
+                <Typography
+                  variant="overline"
+                  sx={{ color: 'inherit', opacity: 0.78, letterSpacing: 1.1 }}
+                >
+                  Workspace
+                </Typography>
+                <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 700 }}>
+                  {activeMainMenu}
+                </Typography>
+              </Box>
+
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={1.5}
+                alignItems={{ xs: 'flex-start', sm: 'center' }}
+              >
+                {!isSubMenuOpen ? (
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    color="inherit"
+                    onClick={() => setIsSubMenuOpen(true)}
+                    sx={{ borderColor: 'rgba(226, 235, 246, 0.4)' }}
+                  >
+                    Open {activeMainMenu} Menu
+                  </Button>
+                ) : null}
+
+                {defaultSession ? (
+                  <Stack direction="row" spacing={3} alignItems="center" aria-label="Default session info">
+                    <Box>
+                      <Typography variant="caption" sx={{ color: 'inherit', opacity: 0.78, display: 'block' }}>
+                        Session No
+                      </Typography>
+                      <Typography variant="subtitle2" sx={{ color: '#ffffff', fontWeight: 700 }}>
+                        {defaultSession.sessionNo}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="caption" sx={{ color: 'inherit', opacity: 0.78, display: 'block' }}>
+                        Month
+                      </Typography>
+                      <Typography variant="subtitle2" sx={{ color: '#ffffff', fontWeight: 700 }}>
+                        {defaultSession.month?.trim() || '-'}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                ) : null}
+              </Stack>
+            </Stack>
+          </Paper>
+
+          {activeMainMenu === 'Master' && activeMasterPage ? (
             <MasterMenuPage pageKey={activeMasterPage} />
+          ) : activeMainMenu === 'Utilities' && selectedSubMenu === 'Select Session' ? (
+            <SelectSessionPanel
+              currentDefaultSession={defaultSession}
+              onDefaultSessionChanged={setDefaultSession}
+              onExit={onExitSelectSession}
+            />
+          ) : activeMainMenu === 'Transaction' && selectedSubMenu === 'Form Entry' && activeFormEntryExam === 'Prathamik' ? (
+            <PrathamikFormEntryPanel defaultSessionNo={defaultSession?.sessionNo} />
           ) : activeMainMenu === 'Transaction' && selectedSubMenu === 'Form Entry' ? (
-            <section className="master-page" aria-label="Form entry placeholder">
-              <header className="master-page-head">
-                <h2>Form Entry - {activeFormEntryExam}</h2>
-                <p>{activeFormEntryExam} form entry page will be available soon.</p>
-              </header>
-            </section>
+            <Card>
+              <CardContent>
+                <Typography variant="h5" component="h2" fontWeight={700}>
+                  Form Entry - {activeFormEntryExam}
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+                  {activeFormEntryExam} form entry page will be available soon.
+                </Typography>
+              </CardContent>
+            </Card>
           ) : activeMainMenu === 'Transaction' && selectedSubMenu === 'Marks Entry' ? (
-            <section className="master-page" aria-label="Marks entry placeholder">
-              <header className="master-page-head">
-                <h2>Marks Entry - {activeMarksEntryExam}</h2>
-                <p>{activeMarksEntryExam} marks entry page will be available soon.</p>
-              </header>
-            </section>
+            <Card>
+              <CardContent>
+                <Typography variant="h5" component="h2" fontWeight={700}>
+                  Marks Entry - {activeMarksEntryExam}
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+                  {activeMarksEntryExam} marks entry page will be available soon.
+                </Typography>
+              </CardContent>
+            </Card>
           ) : (
-            <section className="master-page" aria-label="Main menu placeholder">
-              <header className="master-page-head">
-                <h2>{selectedSubMenu ?? activeMainMenu}</h2>
-                <p>Page for {selectedSubMenu ?? activeMainMenu} will be available soon.</p>
-              </header>
-            </section>
+            <Card>
+              <CardContent>
+                <Typography variant="h5" component="h2" fontWeight={700}>
+                  {selectedSubMenu ?? activeMainMenu}
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+                  Page for {selectedSubMenu ?? activeMainMenu} will be available soon.
+                </Typography>
+              </CardContent>
+            </Card>
           )}
-        </section>
-      </div>
-    </main>
+        </Box>
+      </Box>
+    </Box>
   )
 }

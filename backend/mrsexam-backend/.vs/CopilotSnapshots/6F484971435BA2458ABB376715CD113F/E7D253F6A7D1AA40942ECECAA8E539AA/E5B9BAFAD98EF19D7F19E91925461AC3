@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using mrsexam_backend.Models;
 
@@ -87,29 +87,6 @@ namespace mrsexam_backend.Controllers
             if (!exists) return NotFound();
 
             _db.Entry(model).State = EntityState.Modified;
-            await _db.SaveChangesAsync(cancellationToken);
-            return NoContent();
-        }
-
-        // POST: api/sessions/setdefaultsession/{id}
-        [HttpPost("setdefaultsession/{id}")]
-        public async Task<IActionResult> SetDefaultSession(int id, CancellationToken cancellationToken)
-        {
-            // Load all sessions
-            var sessions = await _db.Sessions.ToListAsync(cancellationToken);
-            if (sessions == null || sessions.Count == 0)
-                return NotFound();
-
-            var target = sessions.FirstOrDefault(s => s.SessionNo == id);
-            if (target is null) return NotFound();
-
-            // Update flags
-            foreach (var s in sessions)
-            {
-                s.Defa = s.SessionNo == id ? "Y" : "N";
-                _db.Entry(s).State = EntityState.Modified;
-            }
-
             await _db.SaveChangesAsync(cancellationToken);
             return NoContent();
         }

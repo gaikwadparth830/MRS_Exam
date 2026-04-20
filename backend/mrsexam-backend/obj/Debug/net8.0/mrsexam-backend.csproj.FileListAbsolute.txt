@@ -108,3 +108,4 @@ Z:\mrsexam\backend\mrsexam-backend\bin\Debug\net8.0\runtimes\win\lib\net6.0\Syst
 Z:\mrsexam\backend\mrsexam-backend\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Security.Cryptography.ProtectedData.dll
 Z:\mrsexam\backend\mrsexam-backend\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Windows.Extensions.dll
 Z:\mrsexam\backend\mrsexam-backend\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
+Z:\mrsexam\backend\mrsexam-backend\obj\Debug\net8.0\mrsexam-backend.sourcelink.json

@@ -37,6 +37,29 @@ export class PapersService {
      * @returns any OK
      * @throws ApiError
      */
+    public static getApiPapersPaged({
+        pageNumber = 1,
+        pageSize = 50,
+        examNo,
+    }: {
+        pageNumber?: number,
+        pageSize?: number,
+        examNo?: number,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/Papers/paged',
+            query: {
+                'pageNumber': pageNumber,
+                'pageSize': pageSize,
+                'examNo': examNo,
+            },
+        });
+    }
+    /**
+     * @returns any OK
+     * @throws ApiError
+     */
     public static getApiPapersExam({
         examNo,
     }: {

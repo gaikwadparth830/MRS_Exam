@@ -37,6 +37,26 @@ export class SessionsService {
      * @returns any OK
      * @throws ApiError
      */
+    public static getApiSessionsPaged({
+        pageNumber = 1,
+        pageSize = 50,
+    }: {
+        pageNumber?: number,
+        pageSize?: number,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/Sessions/paged',
+            query: {
+                'pageNumber': pageNumber,
+                'pageSize': pageSize,
+            },
+        });
+    }
+    /**
+     * @returns any OK
+     * @throws ApiError
+     */
     public static getApiSessions1({
         id,
     }: {
@@ -83,6 +103,23 @@ export class SessionsService {
         return __request(OpenAPI, {
             method: 'DELETE',
             url: '/api/Sessions/{id}',
+            path: {
+                'id': id,
+            },
+        });
+    }
+    /**
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static postApiSessionsSetdefaultsession({
+        id,
+    }: {
+        id: number,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/Sessions/setdefaultsession/{id}',
             path: {
                 'id': id,
             },
