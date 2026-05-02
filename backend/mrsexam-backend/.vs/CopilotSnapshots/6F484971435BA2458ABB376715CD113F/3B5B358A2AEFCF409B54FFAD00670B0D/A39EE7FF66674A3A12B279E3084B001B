@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using mrsexam_backend.Models;
 
@@ -127,36 +127,10 @@ namespace mrsexam_backend.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] FormPrathamik model, CancellationToken cancellationToken)
         {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .Where(s => !string.IsNullOrWhiteSpace(s));
-
-                var message = errors.Any() ? string.Join("; ", errors) : "The request body is invalid.";
-                throw new ArgumentException(message, nameof(model));
-            }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
             _db.FormPrathamiks.Add(model);
-            // Ensure UND_FLAG is stored as NULL when not provided or empty
-            if (string.IsNullOrWhiteSpace(model.UndFlag))
-            {
-                model.UndFlag = null;
-            }
-            // Ensure UND_CLASS is stored as NULL when not provided or empty
-            if (string.IsNullOrWhiteSpace(model.UndClass))
-            {
-                model.UndClass = null;
-            }
-            try
-            {
-                await _db.SaveChangesAsync(cancellationToken);
-            }
-            catch (DbUpdateException ex)
-            {
-                throw new InvalidOperationException("An error occurred while creating the record.", ex);
-            }
+            await _db.SaveChangesAsync(cancellationToken);
 
             return CreatedAtAction(nameof(Get), new { id = model.SrNo }, model);
         }

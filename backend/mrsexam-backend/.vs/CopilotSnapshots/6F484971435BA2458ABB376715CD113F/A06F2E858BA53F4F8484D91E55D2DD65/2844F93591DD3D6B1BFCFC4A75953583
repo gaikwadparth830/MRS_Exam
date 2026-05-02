@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using mrsexam_backend.Models;
 
@@ -139,16 +139,6 @@ namespace mrsexam_backend.Controllers
             }
 
             _db.FormPrathamiks.Add(model);
-            // Ensure UND_FLAG is stored as NULL when not provided or empty
-            if (string.IsNullOrWhiteSpace(model.UndFlag))
-            {
-                model.UndFlag = null;
-            }
-            // Ensure UND_CLASS is stored as NULL when not provided or empty
-            if (string.IsNullOrWhiteSpace(model.UndClass))
-            {
-                model.UndClass = null;
-            }
             try
             {
                 await _db.SaveChangesAsync(cancellationToken);

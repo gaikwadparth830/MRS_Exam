@@ -6,6 +6,7 @@ import {
 } from 'axios'
 
 const ACCESS_TOKEN_KEY = 'accessToken'
+const CURRENT_USER_ID_KEY = 'currentUserId'
 const AUTH_HEADER = 'Authorization'
 const API_LOGGING_ENABLED =
   import.meta.env.DEV || import.meta.env.VITE_API_LOGGING === 'true'
@@ -101,6 +102,7 @@ export const registerInterceptors = (client: AxiosInstance): void => {
 
       if (error.response?.status === 401) {
         localStorage.removeItem(ACCESS_TOKEN_KEY)
+        localStorage.removeItem(CURRENT_USER_ID_KEY)
       }
 
       return Promise.reject(normalizeError(error))

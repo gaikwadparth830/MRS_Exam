@@ -30,6 +30,7 @@ type LoginPageProps = {
 }
 
 const ACCESS_TOKEN_KEY = 'accessToken'
+const CURRENT_USER_ID_KEY = 'currentUserId'
 
 const getTokenFromResponse = (payload: LoginResponse | null): string | null => {
   if (!payload) {
@@ -82,6 +83,8 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
     if (token) {
       localStorage.setItem(ACCESS_TOKEN_KEY, token)
     }
+
+    localStorage.setItem(CURRENT_USER_ID_KEY, form.userId.trim())
 
     if (response) {
       onLoginSuccess()

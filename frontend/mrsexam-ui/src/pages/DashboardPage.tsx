@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
   Box,
@@ -25,6 +25,8 @@ import { ChevronRightRounded, ExpandMoreRounded } from '@mui/icons-material'
 import {
   type Center,
   CentersService,
+  type District,
+  DistrictsService,
   type FormPrathamik,
   FormPrathamikService,
   type Session,
@@ -169,6 +171,199 @@ const toFormPrathamikList = (payload: unknown): FormPrathamik[] => {
   return []
 }
 
+const transliterateEnglishToDevanagari = (input: string): string => {
+  const text = input.toLowerCase()
+
+  const vowels: Record<string, string> = {
+    ai: '\u0910',
+    au: '\u0914',
+    aa: '\u0906',
+    ee: '\u0908',
+    ii: '\u0908',
+    oo: '\u090A',
+    uu: '\u090A',
+    ri: '\u090B',
+    a: '\u0905',
+    i: '\u0907',
+    u: '\u0909',
+    e: '\u090F',
+    o: '\u0913',
+  }
+
+  const matras: Record<string, string> = {
+    ai: '\u0948',
+    au: '\u094C',
+    aa: '\u093E',
+    ee: '\u0940',
+    ii: '\u0940',
+    oo: '\u0942',
+    uu: '\u0942',
+    ri: '\u0943',
+    a: '',
+    i: '\u093F',
+    u: '\u0941',
+    e: '\u0947',
+    o: '\u094B',
+  }
+
+  const consonants: Record<string, string> = {
+    ksh: '\u0915\u094D\u0937',
+    chh: '\u091B',
+    th: '\u0925',
+    dh: '\u0927',
+    ph: '\u092B',
+    bh: '\u092D',
+    sh: '\u0936',
+    kh: '\u0916',
+    gh: '\u0918',
+    ch: '\u091A',
+    jh: '\u091D',
+    ng: '\u0919',
+    ny: '\u091E',
+    tr: '\u0924\u094D\u0930',
+    gy: '\u091C\u094D\u091E',
+    k: '\u0915',
+    g: '\u0917',
+    c: '\u0915',
+    j: '\u091C',
+    t: '\u0924',
+    d: '\u0926',
+    n: '\u0928',
+    p: '\u092A',
+    b: '\u092C',
+    m: '\u092E',
+    y: '\u092F',
+    r: '\u0930',
+    l: '\u0932',
+    v: '\u0935',
+    w: '\u0935',
+    s: '\u0938',
+    h: '\u0939',
+    q: '\u0915',
+    x: '\u0915\u094D\u0938',
+    f: '\u092B',
+    z: '\u091C',
+  }
+
+  const vowelTokens = ['ai', 'au', 'aa', 'ee', 'ii', 'oo', 'uu', 'ri', 'a', 'i', 'u', 'e', 'o']
+  const consonantTokens = [
+    'ksh',
+    'chh',
+    'th',
+    'dh',
+    'ph',
+    'bh',
+    'sh',
+    'kh',
+    'gh',
+    'ch',
+    'jh',
+    'ng',
+    'ny',
+    'tr',
+    'gy',
+    'k',
+    'g',
+    'c',
+    'j',
+    't',
+    'd',
+    'n',
+    'p',
+    'b',
+    'm',
+    'y',
+    'r',
+    'l',
+    'v',
+    'w',
+    's',
+    'h',
+    'q',
+    'x',
+    'f',
+    'z',
+  ]
+
+  let output = ''
+  let index = 0
+
+  while (index < text.length) {
+    const current = text[index]
+
+    if (!/[a-z]/.test(current)) {
+      output += input[index]
+      index += 1
+      continue
+    }
+
+    const consonantToken = consonantTokens.find((token) => text.startsWith(token, index))
+    if (consonantToken) {
+      const base = consonants[consonantToken]
+      const nextIndex = index + consonantToken.length
+      const vowelToken = vowelTokens.find((token) => text.startsWith(token, nextIndex))
+
+      if (vowelToken) {
+        output += `${base}${matras[vowelToken]}`
+        index = nextIndex + vowelToken.length
+      } else {
+        output += base
+        index = nextIndex
+      }
+
+      continue
+    }
+
+    const vowelToken = vowelTokens.find((token) => text.startsWith(token, index))
+    if (vowelToken) {
+      output += vowels[vowelToken]
+      index += vowelToken.length
+      continue
+    }
+
+    output += input[index]
+    index += 1
+  }
+
+  return output
+}
+
+const fetchGoogleMarathiTransliteration = async (input: string): Promise<string | null> => {
+  const query = input.trim()
+  if (!query) {
+    return ''
+  }
+
+  const url = `https://inputtools.google.com/request?itc=mr-t-i0-und&num=1&cp=0&cs=1&ie=utf-8&oe=utf-8&app=demopage&text=${encodeURIComponent(query)}`
+
+  try {
+    const response = await fetch(url)
+    if (!response.ok) {
+      return null
+    }
+
+    const payload = (await response.json()) as unknown
+    if (!Array.isArray(payload) || payload[0] !== 'SUCCESS') {
+      return null
+    }
+
+    const data = payload[1]
+    if (!Array.isArray(data) || data.length === 0 || !Array.isArray(data[0])) {
+      return null
+    }
+
+    const firstEntry = data[0] as unknown[]
+    const suggestions = firstEntry[1]
+    if (!Array.isArray(suggestions) || suggestions.length === 0 || typeof suggestions[0] !== 'string') {
+      return null
+    }
+
+    return suggestions[0]
+  } catch {
+    return null
+  }
+}
+
 const createEmptyPrathamikForm = (sessionNo?: number): FormPrathamik => ({
   srNo: 0,
   rollNo: null,
@@ -190,37 +385,58 @@ const createEmptyPrathamikForm = (sessionNo?: number): FormPrathamik => ({
   userId: '',
 })
 
-const normalizeGender = (value?: string | null): string => {
+const toGenderCode = (value?: string | null): string => {
   const normalized = (value ?? '').trim().toUpperCase()
 
   if (normalized === 'M' || normalized === 'MALE') {
-    return 'Male'
+    return 'M'
   }
 
   if (normalized === 'F' || normalized === 'FEMALE') {
-    return 'Female'
+    return 'F'
   }
 
   return ''
 }
 
 const formatGender = (value?: string | null): string => {
-  const normalized = normalizeGender(value)
-  return normalized || '-'
+  const normalized = toGenderCode(value)
+
+  if (normalized === 'M') {
+    return 'Male'
+  }
+
+  if (normalized === 'F') {
+    return 'Female'
+  }
+
+  return '-'
 }
 
 type PrathamikFormEntryPanelProps = {
   defaultSessionNo?: number
 }
 
+const CURRENT_USER_ID_KEY = 'currentUserId'
+
 const PrathamikFormEntryPanel = ({ defaultSessionNo }: PrathamikFormEntryPanelProps) => {
   const [centers, setCenters] = useState<Center[]>([])
+  const [districts, setDistricts] = useState<District[]>([])
   const [rows, setRows] = useState<FormPrathamik[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [formData, setFormData] = useState<FormPrathamik>(() => createEmptyPrathamikForm(defaultSessionNo))
+  const transliterationRequestId = useRef(0)
+
+  const regionNoByDistrictName = useMemo(() => {
+    return new Map(
+      districts
+        .filter((district) => district.districtName.trim().length > 0)
+        .map((district) => [district.districtName.trim(), district.regionNo ?? null]),
+    )
+  }, [districts])
 
   const selectedFormCenterName = useMemo(() => {
     const selected = centers.find((center) => center.centreNo === formData.formCentre)
@@ -231,6 +447,8 @@ const PrathamikFormEntryPanel = ({ defaultSessionNo }: PrathamikFormEntryPanelPr
     const selected = centers.find((center) => center.centreNo === formData.examCentre)
     return selected?.centreName?.trim() || selected?.city?.trim() || ''
   }, [centers, formData.examCentre])
+
+  const currentLoginUserId = localStorage.getItem(CURRENT_USER_ID_KEY)?.trim() ?? ''
 
   const loadRows = async () => {
     if (typeof defaultSessionNo !== 'number') {
@@ -286,6 +504,33 @@ const PrathamikFormEntryPanel = ({ defaultSessionNo }: PrathamikFormEntryPanelPr
   }, [])
 
   useEffect(() => {
+    let isMounted = true
+
+    const loadDistricts = async () => {
+      try {
+        const payload = await DistrictsService.getApiDistricts()
+
+        if (isMounted) {
+          const list = Array.isArray(payload)
+            ? (payload as District[])
+            : (((payload as Record<string, unknown>)?.items ?? []) as District[])
+          setDistricts(list)
+        }
+      } catch {
+        if (isMounted) {
+          setDistricts([])
+        }
+      }
+    }
+
+    void loadDistricts()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  useEffect(() => {
     setFormData((current) => ({
       ...current,
       sessionNo: typeof defaultSessionNo === 'number' ? defaultSessionNo : null,
@@ -306,11 +551,56 @@ const PrathamikFormEntryPanel = ({ defaultSessionNo }: PrathamikFormEntryPanelPr
     }))
   }
 
+  const transliterateName = async (rawValue: string, appendSpace: boolean) => {
+    const normalizedValue = rawValue.trim()
+    const requestId = ++transliterationRequestId.current
+
+    if (!normalizedValue) {
+      return
+    }
+
+    const byGoogle = await fetchGoogleMarathiTransliteration(normalizedValue)
+    const translated = byGoogle ?? transliterateEnglishToDevanagari(normalizedValue)
+
+    if (requestId !== transliterationRequestId.current) {
+      return
+    }
+
+    setFormData((current) => {
+      if ((current.name ?? '') !== rawValue) {
+        return current
+      }
+
+      return {
+        ...current,
+        name: appendSpace ? `${translated} ` : translated,
+      }
+    })
+  }
+
+  const onNameKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key !== 'Enter' && event.key !== ' ') {
+      return
+    }
+
+    event.preventDefault()
+    const inputTarget = event.target as HTMLInputElement | null
+    const rawValue = inputTarget?.value ?? ''
+    const appendSpace = event.key === ' '
+
+    void transliterateName(rawValue, appendSpace)
+  }
+
   const onChangeFormCentre = (value: string) => {
+    const selectedCenter = centers.find((center) => center.centreNo === value)
+    const districtName = selectedCenter?.districtName?.trim() ?? ''
+    const regionNo = districtName ? (regionNoByDistrictName.get(districtName) ?? null) : null
+
     setFormData((current) => ({
       ...current,
       formCentre: value,
       examCentre: value,
+      regionNo,
     }))
   }
 
@@ -329,8 +619,8 @@ const PrathamikFormEntryPanel = ({ defaultSessionNo }: PrathamikFormEntryPanelPr
       return
     }
 
-    if (!formData.rollNo || !formData.regionNo || !formData.name?.trim()) {
-      setError('Roll No, Region No and Name are required.')
+    if (!formData.regionNo || !formData.name?.trim()) {
+      setError('Region No and Name are required.')
       return
     }
 
@@ -343,6 +633,8 @@ const PrathamikFormEntryPanel = ({ defaultSessionNo }: PrathamikFormEntryPanelPr
       ...formData,
       sessionNo: defaultSessionNo,
       name: formData.name?.trim() ?? '',
+      undClass: editingId === null ? null : formData.undClass,
+      userId: currentLoginUserId || formData.userId?.trim() || '',
     }
 
     try {
@@ -370,7 +662,7 @@ const PrathamikFormEntryPanel = ({ defaultSessionNo }: PrathamikFormEntryPanelPr
     setSuccessMessage(null)
     setFormData({
       ...row,
-      gender: normalizeGender(row.gender),
+      gender: toGenderCode(row.gender),
       sessionNo: typeof defaultSessionNo === 'number' ? defaultSessionNo : row.sessionNo,
     })
   }
@@ -421,18 +713,10 @@ const PrathamikFormEntryPanel = ({ defaultSessionNo }: PrathamikFormEntryPanelPr
               >
                 <TextField
                   type="number"
-                  label="Sr No (for update)"
-                  value={formData.srNo ?? ''}
-                  onChange={(event) => onChangeNumber('srNo', event.target.value)}
-                  disabled={editingId !== null}
-                />
-
-                <TextField
-                  type="number"
-                  label="Roll No *"
+                  label="Roll No"
                   value={formData.rollNo ?? ''}
                   onChange={(event) => onChangeNumber('rollNo', event.target.value)}
-                  required
+                  disabled
                 />
 
                 <TextField
@@ -441,6 +725,7 @@ const PrathamikFormEntryPanel = ({ defaultSessionNo }: PrathamikFormEntryPanelPr
                   value={formData.regionNo ?? ''}
                   onChange={(event) => onChangeNumber('regionNo', event.target.value)}
                   required
+                  disabled
                 />
 
                 <TextField
@@ -448,6 +733,7 @@ const PrathamikFormEntryPanel = ({ defaultSessionNo }: PrathamikFormEntryPanelPr
                   label="Name *"
                   value={formData.name ?? ''}
                   onChange={(event) => onChangeText('name', event.target.value)}
+                  onKeyDown={onNameKeyDown}
                   required
                 />
 
@@ -460,8 +746,8 @@ const PrathamikFormEntryPanel = ({ defaultSessionNo }: PrathamikFormEntryPanelPr
                     onChange={(event) => onChangeText('gender', String(event.target.value))}
                   >
                     <MenuItem value="">Select Gender</MenuItem>
-                    <MenuItem value="Male">Male</MenuItem>
-                    <MenuItem value="Female">Female</MenuItem>
+                    <MenuItem value="M">Male</MenuItem>
+                    <MenuItem value="F">Female</MenuItem>
                   </Select>
                 </FormControl>
 
@@ -505,19 +791,6 @@ const PrathamikFormEntryPanel = ({ defaultSessionNo }: PrathamikFormEntryPanelPr
                   </Typography>
                 </FormControl>
 
-                <TextField
-                  type="number"
-                  label="Total Marks"
-                  value={formData.totMarks ?? ''}
-                  onChange={(event) => onChangeNumber('totMarks', event.target.value)}
-                />
-
-                <TextField
-                  type="text"
-                  label="Grade"
-                  value={formData.grade ?? ''}
-                  onChange={(event) => onChangeText('grade', event.target.value)}
-                />
               </Box>
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 2 }}>
