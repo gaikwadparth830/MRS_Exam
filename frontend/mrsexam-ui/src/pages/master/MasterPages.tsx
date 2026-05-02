@@ -469,12 +469,20 @@ const paperCrud: CrudConfig<Paper> = {
   keyFields: ['paperNo', 'examNo'],
   fields: [
     { key: 'paperNo', label: 'Paper No', type: 'number', required: true },
-    { key: 'examNo', label: 'Exam No', type: 'number', required: true },
+    { key: 'examNo', label: 'Exam Name', type: 'number', required: true },
     { key: 'paperName', label: 'Paper Name', type: 'text' },
     { key: 'passingMarks', label: 'Passing Marks', type: 'number' },
+    { key: 'exemptionMarks', label: 'Exemption Marks', type: 'number' },
     { key: 'minMarks', label: 'Min Marks', type: 'number' },
   ],
-  createEmpty: () => ({ paperNo: 0, examNo: 0, paperName: '', passingMarks: null, minMarks: null }),
+  createEmpty: () => ({
+    paperNo: 0,
+    examNo: 0,
+    paperName: '',
+    passingMarks: null,
+    exemptionMarks: null,
+    minMarks: null,
+  }),
   list: async (query) => fetchPagedList<Paper>('/api/Papers/paged', query),
   create: async (payload) => {
     await PapersService.postApiPapers({ requestBody: payload })
@@ -565,6 +573,7 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
   const [regionOptions, setRegionOptions] = useState<Region[]>([])
   const [districtNameOptions, setDistrictNameOptions] = useState<string[]>([])
   const [centerNoOptions, setCenterNoOptions] = useState<string[]>([])
+  const [examOptions, setExamOptions] = useState<Exam[]>([])
   const [centerSearchValue, setCenterSearchValue] = useState('')
   const [editingKey, setEditingKey] = useState<string | null>(null)
   const [pageNumber, setPageNumber] = useState(1)
@@ -576,6 +585,10 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
   const defaultPageNumber = 1
   const defaultPageSize = 10
+  const examNameByNo = useMemo(
+    () => new Map(examOptions.map((exam) => [exam.examNo, exam.examName?.trim() || String(exam.examNo)])),
+    [examOptions],
+  )
 
   const loadRows = async (query: PaginationQuery = { pageNumber, pageSize }) => {
     const requestId = ++listRequestId.current
@@ -701,6 +714,36 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
   }, [config.title])
 
   useEffect(() => {
+    if (config.title !== 'Paper Master') {
+      setExamOptions([])
+      return
+    }
+
+    let isMounted = true
+
+    const loadExamOptions = async () => {
+      try {
+        const payload = await ExamsService.getApiExams()
+        const normalized = normalizePagedResponse<Exam>(payload, { pageNumber: 1, pageSize: 1000 })
+
+        if (isMounted) {
+          setExamOptions(normalized.items)
+        }
+      } catch {
+        if (isMounted) {
+          setExamOptions([])
+        }
+      }
+    }
+
+    void loadExamOptions()
+
+    return () => {
+      isMounted = false
+    }
+  }, [config.title])
+
+  useEffect(() => {
     const didConfigChange = previousConfigTitle.current !== config.title
     if (didConfigChange) {
       previousConfigTitle.current = config.title
@@ -789,8 +832,14 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
   const onFieldKeyDown = (key: string, event: React.KeyboardEvent<HTMLElement>) => {
     const isDistrictMaster = config.title === 'District Master'
     const isCenterMaster = config.title === 'Center Master'
+    const isExamMaster = config.title === 'Exam Master'
+    const isPaperMaster = config.title === 'Paper Master'
+    const isSessionMaster = config.title === 'Session Master'
     const isDistrictNameField = key === 'districtName'
     const isShortNameField = key === 'shortName'
+    const isExamNameField = key === 'examName'
+    const isPaperNameField = key === 'paperName'
+    const isSessionMonthField = key === 'month'
 
     const centerTransliterationFields = new Set([
       'centreNo',
@@ -803,7 +852,7 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
 
     const isCenterTransliterationField = centerTransliterationFields.has(key)
 
-    if (!isDistrictMaster && !isCenterMaster) {
+    if (!isDistrictMaster && !isCenterMaster && !isExamMaster && !isPaperMaster && !isSessionMaster) {
       return
     }
 
@@ -815,8 +864,20 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
       return
     }
 
+    if (isExamMaster && !isExamNameField) {
+      return
+    }
+
+    if (isPaperMaster && !isPaperNameField) {
+      return
+    }
+
+    if (isSessionMaster && !isSessionMonthField) {
+      return
+    }
+
     const shouldTransliterate = isDistrictMaster
-      ? (isDistrictNameField ? event.key === 'Enter' || event.key === ' ' : event.key === ' ')
+      ? event.key === 'Enter' || event.key === ' '
       : event.key === 'Enter' || event.key === ' '
 
     if (!shouldTransliterate) {
@@ -868,7 +929,9 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
       }
 
       const value = (form as Record<string, unknown>)[field.key]
-      if (value === null || value === undefined || value === '') {
+      const isEmptyPaperExamSelection = config.title === 'Paper Master' && field.key === 'examNo' && Number(value) <= 0
+
+      if (value === null || value === undefined || value === '' || isEmptyPaperExamSelection) {
         setError(`${field.label} is required.`)
         return
       }
@@ -1010,6 +1073,7 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
                   const isKeyField = config.keyFields.includes(field.key as never)
                   const isDistrictRegionField = config.title === 'District Master' && field.key === 'regionNo'
                   const isCenterDistrictField = config.title === 'Center Master' && field.key === 'districtName'
+                  const isPaperExamField = config.title === 'Paper Master' && field.key === 'examNo'
                   const isCenterFlagField =
                     config.title === 'Center Master'
                     && (field.key === 'panditFlag' || field.key === 'closeFlag')
@@ -1065,6 +1129,28 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
                             <MenuItem value="">Select Option</MenuItem>
                             <MenuItem value="Y">Yes</MenuItem>
                             <MenuItem value="N">No</MenuItem>
+                          </Select>
+                        </FormControl>
+                      ) : isPaperExamField ? (
+                        <FormControl fullWidth>
+                          <InputLabel id="paper-exam-no-label">{field.label}</InputLabel>
+                          <Select
+                            labelId="paper-exam-no-label"
+                            label={field.label}
+                            value={typeof value === 'number' && value > 0 ? Number(value) : ''}
+                            onChange={(event) => onChange(field.key, 'number', String(event.target.value))}
+                            disabled={Boolean(editingKey && isKeyField)}
+                          >
+                            <MenuItem value="">Select Exam</MenuItem>
+                            {examOptions.map((exam) => {
+                              const examLabel = exam.examName?.trim() || String(exam.examNo)
+
+                              return (
+                                <MenuItem key={exam.examNo} value={exam.examNo}>
+                                  {`${examLabel} (${exam.examNo})`}
+                                </MenuItem>
+                              )
+                            })}
                           </Select>
                         </FormControl>
                       ) : (
@@ -1179,9 +1265,20 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
 
                         return (
                           <TableRow key={rowKey} hover>
-                            {config.fields.map((field) => (
-                              <TableCell key={field.key}>{formatValue((row as Record<string, unknown>)[field.key])}</TableCell>
-                            ))}
+                            {config.fields.map((field) => {
+                              const rawValue = (row as Record<string, unknown>)[field.key]
+                              const isPaperExamField = config.title === 'Paper Master' && field.key === 'examNo'
+
+                              if (isPaperExamField) {
+                                const examNo = Number(rawValue)
+                                const examName = examNameByNo.get(examNo)
+                                const displayValue = examName ? `${examName} (${examNo})` : formatValue(rawValue)
+
+                                return <TableCell key={field.key}>{displayValue}</TableCell>
+                              }
+
+                              return <TableCell key={field.key}>{formatValue(rawValue)}</TableCell>
+                            })}
                             <TableCell>
                               <Stack direction="row" spacing={1}>
                                 <Button type="button" size="small" onClick={() => onEdit(row)}>
