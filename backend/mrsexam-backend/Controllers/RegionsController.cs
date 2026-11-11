@@ -69,6 +69,8 @@ namespace mrsexam_backend.Controllers
         public async Task<IActionResult> Create([FromBody] Region model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!TryNormalizeRegion(model, out var error))
+                return BadRequest(new { message = error });
 
             _db.Regions.Add(model);
             await _db.SaveChangesAsync(cancellationToken);
@@ -82,6 +84,8 @@ namespace mrsexam_backend.Controllers
         {
             if (id != model.RegionNo) return BadRequest();
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!TryNormalizeRegion(model, out var error))
+                return BadRequest(new { message = error });
 
             var exists = await _db.Regions.AnyAsync(e => e.RegionNo == id, cancellationToken);
             if (!exists) return NotFound();
@@ -91,12 +95,38 @@ namespace mrsexam_backend.Controllers
             return NoContent();
         }
 
+        private static bool TryNormalizeRegion(Region model, out string? error)
+        {
+            model.RegionName = model.RegionName?.Trim();
+            // DB CHECK disallows zero-length strings; blank English name must be NULL.
+            var eng = model.RegionNameEng?.Trim();
+            model.RegionNameEng = string.IsNullOrEmpty(eng) ? null : eng;
+
+            if (string.IsNullOrWhiteSpace(model.RegionName))
+            {
+                error = "Region Name (Marathi) is required and cannot be blank.";
+                return false;
+            }
+
+            error = null;
+            return true;
+        }
+
         // DELETE: api/regions/{id}
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
             var item = await _db.Regions.FindAsync(new object[] { id }, cancellationToken);
             if (item is null) return NotFound();
+
+            var hasDistricts = await _db.Districts.AnyAsync(d => d.RegionNo == id, cancellationToken);
+            if (hasDistricts)
+            {
+                return Conflict(new
+                {
+                    message = $"Cannot delete Region {id} because districts are linked to it. Remove or reassign those districts first."
+                });
+            }
 
             _db.Regions.Remove(item);
             await _db.SaveChangesAsync(cancellationToken);

@@ -1,71 +1,107 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using mrsexam_backend.Models;
+using mrsexam_backend.Dtos;
+using mrsexam_backend.Services;
 
 namespace mrsexam_backend.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/results")]
     public sealed class ResultsController : ControllerBase
     {
-        private readonly MrsexamContext _db;
+        private readonly ResultService _results;
+        private readonly SessionService _sessions;
 
-        public ResultsController(MrsexamContext db) => _db = db;
+        public ResultsController(ResultService results, SessionService sessions)
+        {
+            _results = results;
+            _sessions = sessions;
+        }
 
-        // GET: api/results
         [HttpGet]
-        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+        public async Task<IActionResult> List([FromQuery] int regionNo, CancellationToken cancellationToken)
         {
-            var list = await _db.Results.AsNoTracking().ToListAsync(cancellationToken);
-            return Ok(list);
+            try
+            {
+                return Ok(await _results.ListAsync(regionNo, cancellationToken));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
-        // GET: api/results/{id}
-        [HttpGet("{id}")]
-        public async Task<IActionResult> Get(int id, CancellationToken cancellationToken)
+        [HttpPost("generate")]
+        public async Task<IActionResult> Generate([FromBody] GenerateResultRequest request, CancellationToken cancellationToken)
         {
-            var item = await _db.Results.AsNoTracking().FirstOrDefaultAsync(c => c.ResultId == id, cancellationToken);
-            if (item is null) return NotFound();
-            return Ok(item);
+            try
+            {
+                return Ok(await _results.GenerateAsync(request.RegionNo, cancellationToken));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { rule = "FR-060", message = ex.Message });
+            }
         }
 
-        // POST: api/results
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] Result model, CancellationToken cancellationToken)
+        [HttpPost("ranks")]
+        public async Task<IActionResult> Ranks(CancellationToken cancellationToken)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            _db.Results.Add(model);
-            await _db.SaveChangesAsync(cancellationToken);
-
-            return CreatedAtAction(nameof(Get), new { id = model.ResultId }, model);
+            try
+            {
+                return Ok(await _results.FindRanksAsync(cancellationToken));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { rule = "FR-065", message = ex.Message });
+            }
         }
 
-        // PUT: api/results/{id}
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Result model, CancellationToken cancellationToken)
+        [HttpPost("lock/reset")]
+        public async Task<IActionResult> ResetLock(CancellationToken cancellationToken)
         {
-            if (id != model.ResultId) return BadRequest();
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            var exists = await _db.Results.AnyAsync(e => e.ResultId == id, cancellationToken);
-            if (!exists) return NotFound();
-
-            _db.Entry(model).State = EntityState.Modified;
-            await _db.SaveChangesAsync(cancellationToken);
-            return NoContent();
+            try
+            {
+                await _sessions.ResetBalbodhiniLockAsync(cancellationToken);
+                return Ok(new { resgenBalbodhini = "N" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { rule = "FR-070", message = ex.Message });
+            }
         }
 
-        // DELETE: api/results/{id}
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+        [HttpGet("correction")]
+        public async Task<IActionResult> Correction([FromQuery] int regionNo, [FromQuery] short rollNo, CancellationToken cancellationToken)
         {
-            var item = await _db.Results.FindAsync(new object[] { id }, cancellationToken);
-            if (item is null) return NotFound();
+            try
+            {
+                return Ok(await _results.GetCorrectionAsync(regionNo, rollNo, cancellationToken));
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { rule = "FR-071", message = ex.Message });
+            }
+        }
 
-            _db.Results.Remove(item);
-            await _db.SaveChangesAsync(cancellationToken);
-            return NoContent();
+        [HttpPut("correction")]
+        public async Task<IActionResult> SaveCorrection([FromBody] CorrectionSaveRequest request, CancellationToken cancellationToken)
+        {
+            try
+            {
+                return Ok(await _results.SaveCorrectionAsync(request, cancellationToken));
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { rule = "FR-072", message = ex.Message });
+            }
         }
     }
 }

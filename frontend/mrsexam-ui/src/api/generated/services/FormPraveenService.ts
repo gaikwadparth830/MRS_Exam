@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { BatchInsertRequest } from '../models/BatchInsertRequest';
 import type { FormPraveen } from '../models/FormPraveen';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -29,6 +30,30 @@ export class FormPraveenService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/FormPraveen',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static postApiFormPraveenBatchInsert({
+        regionNo,
+        sessionNo,
+        requestBody,
+    }: {
+        regionNo: number,
+        sessionNo: number,
+        requestBody?: BatchInsertRequest,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/FormPraveen/batch-insert/{regionNo}/{sessionNo}',
+            path: {
+                'regionNo': regionNo,
+                'sessionNo': sessionNo,
+            },
             body: requestBody,
             mediaType: 'application/json',
         });
@@ -212,6 +237,33 @@ export class FormPraveenService {
             path: {
                 'name': name,
             },
+        });
+    }
+    /**
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static postApiFormPraveenInsertAfter({
+        previousRollNo,
+        regionNo,
+        sessionNo,
+        requestBody,
+    }: {
+        previousRollNo: number,
+        regionNo: number,
+        sessionNo: number,
+        requestBody?: FormPraveen,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/FormPraveen/insert-after/{previousRollNo}/{regionNo}/{sessionNo}',
+            path: {
+                'previousRollNo': previousRollNo,
+                'regionNo': regionNo,
+                'sessionNo': sessionNo,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
 }

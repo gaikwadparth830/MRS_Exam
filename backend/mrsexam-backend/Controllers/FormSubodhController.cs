@@ -20,6 +20,70 @@ namespace mrsexam_backend.Controllers
             return Ok(list);
         }
 
+        // PATCH: api/formsubodh/update-marks
+        [HttpPatch("update-marks")]
+        public async Task<IActionResult> UpdateMarks([FromBody] Models.UpdateMarksRequest req, CancellationToken cancellationToken)
+        {
+            if (req.RollNo is null || req.SessionNo is null) return BadRequest("rollNo and sessionNo are required");
+
+            var item = await _db.FormSubodhs.FirstOrDefaultAsync(f => f.RollNo == req.RollNo && f.SessionNo == req.SessionNo, cancellationToken);
+            if (item is null) return NotFound();
+
+            if (req.Marks1 != null) item.Marks1 = req.Marks1;
+            if (req.Marks2 != null) item.Marks2 = req.Marks2;
+            if (req.TotMarks.HasValue) item.TotMarks = req.TotMarks;
+            if (req.Grade != null) item.Grade = req.Grade;
+            if (req.Result != null) item.Result = req.Result;
+            if (req.UndFlag != null) item.UndFlag = req.UndFlag;
+            if (req.UndClass != null) item.UndClass = req.UndClass;
+
+            await _db.SaveChangesAsync(cancellationToken);
+            return NoContent();
+        }
+
+        // POST: api/formsubodh/batch-insert
+        [HttpPost("batch-insert")]
+        public async Task<IActionResult> BatchInsert([FromBody] Models.BatchInsertRequest request, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (request.EndRollNo < request.StartRollNo)
+                return BadRequest("EndRollNo must be greater than or equal to StartRollNo.");
+
+            var duplicates = await _db.FormSubodhs
+                .AnyAsync(f => f.RegionNo == request.RegionNo && f.RollNo >= request.StartRollNo && f.RollNo <= request.EndRollNo, cancellationToken);
+
+            if (duplicates)
+                return Conflict("Duplicate roll numbers found in the specified region.");
+
+            var entities = new List<FormSubodh>();
+            for (var r = request.StartRollNo; r <= request.EndRollNo; r++)
+            {
+                entities.Add(new FormSubodh
+                {
+                    SrNo = 0,
+                    RollNo = (short)r,
+                    RegionNo = request.RegionNo,
+                    SessionNo = (short)request.SessionNo,
+                    Name = r == request.StartRollNo ? request.StartName : (r == request.EndRollNo ? request.EndName : null),
+                    FormCentre = request.CentreCode,
+                    ExamCentre = request.CentreCode,
+                    DummyCentreCode = 0
+                });
+            }
+
+            await _db.FormSubodhs.AddRangeAsync(entities, cancellationToken);
+            try
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("Batch insert failed.", ex);
+            }
+
+            return Ok(new { inserted = entities.Count });
+        }
+
         // GET: api/formsubodh/paged?pageNumber=1&pageSize=50
         // GET: api/formsubodh/paged?pageNumber=1&pageSize=50&sessionNo=123
         [HttpGet("paged")]
@@ -133,6 +197,40 @@ namespace mrsexam_backend.Controllers
             await _db.SaveChangesAsync(cancellationToken);
 
             return CreatedAtAction(nameof(Get), new { id = model.SrNo }, model);
+        }
+
+        // POST: api/formsubodh/insert-after/{previousSrNo}
+        [HttpPost("insert-after/{previousSrNo}")]
+        public async Task<IActionResult> InsertAfter(int previousSrNo, [FromBody] FormSubodh model, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var lastSrNo = await _db.FormSubodhs.Select(f => (int?)f.SrNo).MaxAsync(cancellationToken) ?? 0;
+            var newSrNo = (previousSrNo >= 0 && previousSrNo <= lastSrNo) ? previousSrNo + 1 : lastSrNo + 1;
+
+            await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                if (newSrNo <= lastSrNo)
+                {
+                    await _db.Database.ExecuteSqlRawAsync(
+                        "UPDATE FORM_SUBODH SET SRNO = SRNO + 1 WHERE SRNO >= {0}",
+                        new object[] { newSrNo },
+                        cancellationToken);
+                }
+
+                model.SrNo = newSrNo;
+                _db.FormSubodhs.Add(model);
+                await _db.SaveChangesAsync(cancellationToken);
+                await tx.CommitAsync(cancellationToken);
+
+                return CreatedAtAction(nameof(Get), new { id = model.SrNo }, model);
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync(cancellationToken);
+                throw new InvalidOperationException("An error occurred while inserting the record.", ex);
+            }
         }
 
         // PUT: api/formsubodh/{id}

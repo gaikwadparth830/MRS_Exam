@@ -10,7 +10,7 @@
         "projectUniqueName": "Z:\\mrsexam\\backend\\mrsexam-backend\\mrsexam-backend.csproj",
         "projectName": "mrsexam-backend",
         "projectPath": "Z:\\mrsexam\\backend\\mrsexam-backend\\mrsexam-backend.csproj",
-        "packagesPath": "C:\\Users\\hemal\\.nuget\\packages\\",
+        "packagesPath": "C:\\Users\\hemal\\AppData\\Local\\Temp\\cursor-sandbox-cache\\7e05bdd03deb9ba760e0ef09ca415b5b\\nuget",
         "outputPath": "Z:\\mrsexam\\backend\\mrsexam-backend\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
@@ -31,6 +31,7 @@
         },
         "frameworks": {
           "net8.0": {
+            "framework": "net8.0",
             "targetAlias": "net8.0",
             "projectReferences": {}
           }
@@ -45,10 +46,11 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.100"
+        "SdkAnalysisLevel": "10.0.300"
       },
       "frameworks": {
         "net8.0": {
+          "framework": "net8.0",
           "targetAlias": "net8.0",
           "dependencies": {
             "EmptyControllerAndViewScaffolder": {
@@ -97,7 +99,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.103/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.302/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

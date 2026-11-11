@@ -9,8 +9,59 @@ namespace mrsexam_backend.Controllers
     public sealed class FormPrathamikController : ControllerBase
     {
         private readonly MrsexamContext _db;
+        private readonly ILogger<FormPrathamikController> _logger;
 
-        public FormPrathamikController(MrsexamContext db) => _db = db;
+        public FormPrathamikController(MrsexamContext db, ILogger<FormPrathamikController> logger)
+        {
+            _db = db;
+            _logger = logger;
+        }
+
+        // POST: api/formprathamik/batch-insert
+        [HttpPost("batch-insert")]
+        public async Task<IActionResult> BatchInsert([FromBody] Models.BatchInsertRequest request, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            if (request.EndRollNo < request.StartRollNo)
+                return BadRequest("EndRollNo must be greater than or equal to StartRollNo.");
+
+            // Check for duplicate roll numbers in the same region
+            var duplicates = await _db.FormPrathamiks
+                .AnyAsync(f => f.RegionNo == request.RegionNo && f.RollNo >= request.StartRollNo && f.RollNo <= request.EndRollNo, cancellationToken);
+
+            if (duplicates)
+                return Conflict("Duplicate roll numbers found in the specified region.");
+
+            var entities = new List<FormPrathamik>();
+            for (var r = request.StartRollNo; r <= request.EndRollNo; r++)
+            {
+                entities.Add(new FormPrathamik
+                {
+                    SrNo = 0, // will be set by Create path or DB default - but keep 0
+                    RollNo = (short)r,
+                    RegionNo = request.RegionNo,
+                    SessionNo = (short)request.SessionNo,
+                    Name = r == request.StartRollNo ? request.StartName : (r == request.EndRollNo ? request.EndName : null),
+                    FormCentre = request.CentreCode,
+                    ExamCentre = request.CentreCode,
+                    DummyCentreCode = 0
+                });
+            }
+
+            await _db.FormPrathamiks.AddRangeAsync(entities, cancellationToken);
+            try
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "BatchInsert failed");
+                throw new InvalidOperationException("Batch insert failed.", ex);
+            }
+
+            return Ok(new { inserted = entities.Count });
+        }
 
         // GET: api/formprathamik
         [HttpGet]
@@ -123,6 +174,23 @@ namespace mrsexam_backend.Controllers
             return Ok(list);
         }
 
+        /* PSEUDOCODE / PLAN (detailed)
+         - Validate ModelState as before; collect errors and throw ArgumentException if invalid.
+         - Determine the current maximum SrNo in the FormPrathamiks table:
+             - Use EF Core to query MaxAsync for SrNo, projecting to nullable int to handle empty table.
+             - If no rows exist, treat max as 0.
+         - Set model.SrNo = (maxSrNo ?? 0) + 1 so new record gets lastSrNo + 1.
+         - Normalize optional string fields:
+             - If model.UndFlag is null/whitespace, set it to null.
+             - If model.UndClass is null/whitespace, set it to null.
+         - Add the model to the DbSet and save changes.
+         - Catch DbUpdateException and rethrow as InvalidOperationException with context (preserve inner).
+         - Return CreatedAtAction pointing to the Get endpoint with the newly assigned SrNo.
+         - Notes:
+             - This is a simple last+1 strategy; concurrent inserts may cause unique key conflicts.
+             - Rely on existing DbUpdateException handling; callers can retry if necessary.
+        */
+
         // POST: api/formprathamik
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] FormPrathamik model, CancellationToken cancellationToken)
@@ -138,7 +206,13 @@ namespace mrsexam_backend.Controllers
                 throw new ArgumentException(message, nameof(model));
             }
 
-            _db.FormPrathamiks.Add(model);
+            // Compute last SrNo and assign model.SrNo = last + 1
+            var lastSrNo = await _db.FormPrathamiks
+                .Select(f => (int?)f.SrNo)
+                .MaxAsync(cancellationToken) ?? 0;
+
+            model.SrNo = lastSrNo + 1;
+
             // Ensure UND_FLAG is stored as NULL when not provided or empty
             if (string.IsNullOrWhiteSpace(model.UndFlag))
             {
@@ -149,6 +223,9 @@ namespace mrsexam_backend.Controllers
             {
                 model.UndClass = null;
             }
+
+            _db.FormPrathamiks.Add(model);
+
             try
             {
                 await _db.SaveChangesAsync(cancellationToken);
@@ -159,6 +236,84 @@ namespace mrsexam_backend.Controllers
             }
 
             return CreatedAtAction(nameof(Get), new { id = model.SrNo }, model);
+        }
+
+        // POST: api/formprathamik/insert-after/{previousSrNo}
+        [HttpPost("insert-after/{previousSrNo}")]
+        public async Task<IActionResult> InsertAfter(int previousSrNo, [FromBody] FormPrathamik model, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .Where(s => !string.IsNullOrWhiteSpace(s));
+
+                var message = errors.Any() ? string.Join("; ", errors) : "The request body is invalid.";
+                throw new ArgumentException(message, nameof(model));
+            }
+
+            // Normalize optional fields
+            if (string.IsNullOrWhiteSpace(model.UndFlag)) model.UndFlag = null;
+            if (string.IsNullOrWhiteSpace(model.UndClass)) model.UndClass = null;
+
+            var lastSrNo = await _db.FormPrathamiks.Select(f => (int?)f.SrNo).MaxAsync(cancellationToken) ?? 0;
+            var newSrNo = (previousSrNo >= 0 && previousSrNo <= lastSrNo) ? previousSrNo + 1 : lastSrNo + 1;
+
+            var strategy = _db.Database.CreateExecutionStrategy();
+            const int offset = 1000000;
+            try
+            {
+                await strategy.ExecuteAsync(async () =>
+                {
+                    await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
+                    try
+                    {
+                        if (newSrNo <= lastSrNo)
+                        {
+                            // Phase 1: move existing SRNOs to a high range to avoid PK conflicts
+                            await _db.Database.ExecuteSqlRawAsync(
+                                "UPDATE FORM_PRATHAMIK SET SRNO = SRNO + {0} WHERE SRNO >= {1}",
+                                new object[] { offset, newSrNo },
+                                cancellationToken);
+                        }
+
+                        model.SrNo = newSrNo;
+                        _db.FormPrathamiks.Add(model);
+                        await _db.SaveChangesAsync(cancellationToken);
+
+                        if (newSrNo <= lastSrNo)
+                        {
+                            // Phase 2: shift the moved rows back down but increased by 1
+                            await _db.Database.ExecuteSqlRawAsync(
+                                "UPDATE FORM_PRATHAMIK SET SRNO = SRNO - {0} + 1 WHERE SRNO >= {1}",
+                                new object[] { offset, offset + newSrNo },
+                                cancellationToken);
+                            await _db.SaveChangesAsync(cancellationToken);
+                        }
+
+                        await tx.CommitAsync(cancellationToken);
+                    }
+                    catch
+                    {
+                        await tx.RollbackAsync(cancellationToken);
+                        throw;
+                    }
+                });
+
+                return CreatedAtAction(nameof(Get), new { id = model.SrNo }, model);
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    _logger?.LogError(ex, "InsertAfter failed for previousSrNo {PreviousSrNo}", previousSrNo);
+                }
+                catch { }
+
+                var baseEx = ex.GetBaseException();
+                return Problem(detail: baseEx.Message, statusCode: 500);
+            }
         }
 
         // PUT: api/formprathamik/{id}

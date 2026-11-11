@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { BatchInsertRequest } from '../models/BatchInsertRequest';
 import type { FormBalbodhini } from '../models/FormBalbodhini';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -29,6 +30,22 @@ export class FormBalbodhiniService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/FormBalbodhini',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static postApiFormBalbodhiniBatchInsert({
+        requestBody,
+    }: {
+        requestBody?: BatchInsertRequest,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/FormBalbodhini/batch-insert',
             body: requestBody,
             mediaType: 'application/json',
         });
@@ -194,6 +211,27 @@ export class FormBalbodhiniService {
             path: {
                 'regionNo': regionNo,
             },
+        });
+    }
+    /**
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static postApiFormBalbodhiniInsertAfter({
+        previousSrNo,
+        requestBody,
+    }: {
+        previousSrNo: number,
+        requestBody?: FormBalbodhini,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/FormBalbodhini/insert-after/{previousSrNo}',
+            path: {
+                'previousSrNo': previousSrNo,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
 }

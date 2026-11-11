@@ -1,0 +1,291 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using mrsexam_backend.Models;
+
+namespace mrsexam_backend.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public sealed class FormPrathamikController : ControllerBase
+    {
+        private readonly MrsexamContext _db;
+        private readonly ILogger<FormPrathamikController> _logger;
+
+        public FormPrathamikController(MrsexamContext db, ILogger<FormPrathamikController> logger)
+        {
+            _db = db;
+            _logger = logger;
+        }
+
+        // GET: api/formprathamik
+        [HttpGet]
+        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+        {
+            var list = await _db.FormPrathamiks.AsNoTracking().ToListAsync(cancellationToken);
+            return Ok(list);
+        }
+
+        // GET: api/formprathamik/paged?pageNumber=1&pageSize=50
+        // GET: api/formprathamik/paged?pageNumber=1&pageSize=50&sessionNo=123
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetPaged(
+            [FromQuery] int pageNumber = 1, 
+            [FromQuery] int pageSize = 50,
+            [FromQuery] short? sessionNo = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 50;
+            if (pageSize > 1000) pageSize = 1000; // Max limit
+
+            var query = _db.FormPrathamiks.AsNoTracking();
+
+            if (sessionNo.HasValue)
+            {
+                query = query.Where(f => f.SessionNo == sessionNo.Value);
+            }
+
+            var totalCount = await query.CountAsync(cancellationToken);
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            var items = await query
+                .OrderBy(f => f.SrNo)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            var response = new
+            {
+                data = items,
+                pageNumber,
+                pageSize,
+                totalCount,
+                totalPages,
+                hasNextPage = pageNumber < totalPages,
+                hasPreviousPage = pageNumber > 1,
+                sessionNo
+            };
+
+            return Ok(response);
+        }
+
+        // GET: api/formprathamik/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(int id, CancellationToken cancellationToken)
+        {
+            var item = await _db.FormPrathamiks.AsNoTracking().FirstOrDefaultAsync(c => c.SrNo == id, cancellationToken);
+            if (item is null) return NotFound();
+            return Ok(item);
+        }
+
+        // GET: api/formprathamik/user/{userId}
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetByUser(string userId, CancellationToken cancellationToken)
+        {
+            var list = await _db.FormPrathamiks.AsNoTracking()
+                .Where(f => f.UserId == userId)
+                .ToListAsync(cancellationToken);
+            return Ok(list);
+        }
+
+        // GET: api/formprathamik/centre/{centreCode}
+        [HttpGet("centre/{centreCode}")]
+        public async Task<IActionResult> GetByCentre(int centreCode, CancellationToken cancellationToken)
+        {
+            var list = await _db.FormPrathamiks.AsNoTracking()
+                .Where(f => f.DummyCentreCode == centreCode)
+                .ToListAsync(cancellationToken);
+            return Ok(list);
+        }
+
+        // GET: api/formprathamik/name/{name}
+        [HttpGet("name/{name}")]
+        public async Task<IActionResult> GetByName(string name, CancellationToken cancellationToken)
+        {
+            var list = await _db.FormPrathamiks.AsNoTracking()
+                .Where(f => f.Name != null && f.Name.Contains(name))
+                .ToListAsync(cancellationToken);
+            return Ok(list);
+        }
+
+        // GET: api/formprathamik/session/{sessionNo}
+        [HttpGet("session/{sessionNo}")]
+        public async Task<IActionResult> GetBySession(short sessionNo, CancellationToken cancellationToken)
+        {
+            var list = await _db.FormPrathamiks.AsNoTracking()
+                .Where(f => f.SessionNo == sessionNo)
+                .ToListAsync(cancellationToken);
+            return Ok(list);
+        }
+
+        // GET: api/formprathamik/region/{regionNo}
+        [HttpGet("region/{regionNo}")]
+        public async Task<IActionResult> GetByRegion(int regionNo, CancellationToken cancellationToken)
+        {
+            var list = await _db.FormPrathamiks.AsNoTracking()
+                .Where(f => f.RegionNo == regionNo)
+                .ToListAsync(cancellationToken);
+            return Ok(list);
+        }
+
+        /* PSEUDOCODE / PLAN (detailed)
+         - Validate ModelState as before; collect errors and throw ArgumentException if invalid.
+         - Determine the current maximum SrNo in the FormPrathamiks table:
+             - Use EF Core to query MaxAsync for SrNo, projecting to nullable int to handle empty table.
+             - If no rows exist, treat max as 0.
+         - Set model.SrNo = (maxSrNo ?? 0) + 1 so new record gets lastSrNo + 1.
+         - Normalize optional string fields:
+             - If model.UndFlag is null/whitespace, set it to null.
+             - If model.UndClass is null/whitespace, set it to null.
+         - Add the model to the DbSet and save changes.
+         - Catch DbUpdateException and rethrow as InvalidOperationException with context (preserve inner).
+         - Return CreatedAtAction pointing to the Get endpoint with the newly assigned SrNo.
+         - Notes:
+             - This is a simple last+1 strategy; concurrent inserts may cause unique key conflicts.
+             - Rely on existing DbUpdateException handling; callers can retry if necessary.
+        */
+
+        // POST: api/formprathamik
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] FormPrathamik model, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .Where(s => !string.IsNullOrWhiteSpace(s));
+
+                var message = errors.Any() ? string.Join("; ", errors) : "The request body is invalid.";
+                throw new ArgumentException(message, nameof(model));
+            }
+
+            // Compute last SrNo and assign model.SrNo = last + 1
+            var lastSrNo = await _db.FormPrathamiks
+                .Select(f => (int?)f.SrNo)
+                .MaxAsync(cancellationToken) ?? 0;
+
+            model.SrNo = lastSrNo + 1;
+
+            // Ensure UND_FLAG is stored as NULL when not provided or empty
+            if (string.IsNullOrWhiteSpace(model.UndFlag))
+            {
+                model.UndFlag = null;
+            }
+            // Ensure UND_CLASS is stored as NULL when not provided or empty
+            if (string.IsNullOrWhiteSpace(model.UndClass))
+            {
+                model.UndClass = null;
+            }
+
+            _db.FormPrathamiks.Add(model);
+
+            try
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new InvalidOperationException("An error occurred while creating the record.", ex);
+            }
+
+            return CreatedAtAction(nameof(Get), new { id = model.SrNo }, model);
+        }
+
+        // POST: api/formprathamik/insert-after/{previousSrNo}
+        [HttpPost("insert-after/{previousSrNo}")]
+        public async Task<IActionResult> InsertAfter(int previousSrNo, [FromBody] FormPrathamik model, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .Where(s => !string.IsNullOrWhiteSpace(s));
+
+                var message = errors.Any() ? string.Join("; ", errors) : "The request body is invalid.";
+                throw new ArgumentException(message, nameof(model));
+            }
+
+            // Normalize optional fields
+            if (string.IsNullOrWhiteSpace(model.UndFlag)) model.UndFlag = null;
+            if (string.IsNullOrWhiteSpace(model.UndClass)) model.UndClass = null;
+
+            var lastSrNo = await _db.FormPrathamiks.Select(f => (int?)f.SrNo).MaxAsync(cancellationToken) ?? 0;
+            var newSrNo = (previousSrNo >= 0 && previousSrNo <= lastSrNo) ? previousSrNo + 1 : lastSrNo + 1;
+
+            await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
+            const int offset = 1000000;
+            try
+            {
+                if (newSrNo <= lastSrNo)
+                {
+                    // Phase 1: move existing SRNOs to a high range to avoid PK conflicts
+                    await _db.Database.ExecuteSqlRawAsync(
+                        "UPDATE FORM_PRATHAMIK SET SRNO = SRNO + {0} WHERE SRNO >= {1}",
+                        new object[] { offset, newSrNo },
+                        cancellationToken);
+                }
+
+                model.SrNo = newSrNo;
+                _db.FormPrathamiks.Add(model);
+                await _db.SaveChangesAsync(cancellationToken);
+
+                if (newSrNo <= lastSrNo)
+                {
+                    // Phase 2: shift the moved rows back down but increased by 1
+                    await _db.Database.ExecuteSqlRawAsync(
+                        "UPDATE FORM_PRATHAMIK SET SRNO = SRNO - {0} + 1 WHERE SRNO >= {1}",
+                        new object[] { offset, offset + newSrNo },
+                        cancellationToken);
+                    await _db.SaveChangesAsync(cancellationToken);
+                }
+
+                await tx.CommitAsync(cancellationToken);
+                return CreatedAtAction(nameof(Get), new { id = model.SrNo }, model);
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync(cancellationToken);
+                try
+                {
+                    _logger?.LogError(ex, "InsertAfter failed for previousSrNo {PreviousSrNo}", previousSrNo);
+                }
+                catch
+                {
+                    // Swallow logging errors to avoid masking original exception
+                }
+
+                var baseEx = ex.GetBaseException();
+                return Problem(detail: baseEx.Message, statusCode: 500);
+            }
+        }
+
+        // PUT: api/formprathamik/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] FormPrathamik model, CancellationToken cancellationToken)
+        {
+            if (id != model.SrNo) return BadRequest();
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var exists = await _db.FormPrathamiks.AnyAsync(e => e.SrNo == id, cancellationToken);
+            if (!exists) return NotFound();
+
+            _db.Entry(model).State = EntityState.Modified;
+            await _db.SaveChangesAsync(cancellationToken);
+            return NoContent();
+        }
+
+        // DELETE: api/formprathamik/{id}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+        {
+            var item = await _db.FormPrathamiks.FindAsync(new object[] { id }, cancellationToken);
+            if (item is null) return NotFound();
+
+            _db.FormPrathamiks.Remove(item);
+            await _db.SaveChangesAsync(cancellationToken);
+            return NoContent();
+        }
+    }
+}

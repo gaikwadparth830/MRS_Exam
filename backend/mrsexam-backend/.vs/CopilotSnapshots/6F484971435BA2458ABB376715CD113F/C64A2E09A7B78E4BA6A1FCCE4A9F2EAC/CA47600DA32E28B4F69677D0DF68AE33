@@ -1,0 +1,25 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace mrsexam_backend.Models
+{
+    public sealed class BatchInsertRequest
+    {
+        [Required]
+        public int SessionNo { get; set; }
+
+        public int? CentreCode { get; set; }
+
+        [Required]
+        public int RegionNo { get; set; }
+
+        [Required]
+        public int StartRollNo { get; set; }
+
+        public string? StartName { get; set; }
+
+        [Required]
+        public int EndRollNo { get; set; }
+
+        public string? EndName { get; set; }
+    }
+}

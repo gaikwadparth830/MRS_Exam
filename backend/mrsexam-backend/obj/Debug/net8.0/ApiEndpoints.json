@@ -565,6 +565,22 @@
   },
   {
     "ContainingType": "mrsexam_backend.Controllers.FormBalbodhiniController",
+    "Method": "BatchInsert",
+    "RelativePath": "api/FormBalbodhini/batch-insert",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "mrsexam_backend.Models.BatchInsertRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "mrsexam_backend.Controllers.FormBalbodhiniController",
     "Method": "GetByCentre",
     "RelativePath": "api/FormBalbodhini/centre/{centreCode}",
     "HttpMethod": "GET",
@@ -574,6 +590,27 @@
       {
         "Name": "centreCode",
         "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "mrsexam_backend.Controllers.FormBalbodhiniController",
+    "Method": "InsertAfter",
+    "RelativePath": "api/FormBalbodhini/insert-after/{previousSrNo}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "previousSrNo",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "model",
+        "Type": "mrsexam_backend.Models.FormBalbodhini",
         "IsRequired": true
       }
     ],
@@ -648,6 +685,22 @@
       {
         "Name": "sessionNo",
         "Type": "System.Int16",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "mrsexam_backend.Controllers.FormBalbodhiniController",
+    "Method": "UpdateMarks",
+    "RelativePath": "api/FormBalbodhini/update-marks",
+    "HttpMethod": "PATCH",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "req",
+        "Type": "mrsexam_backend.Models.UpdateMarksRequest",
         "IsRequired": true
       }
     ],
@@ -765,6 +818,22 @@
   },
   {
     "ContainingType": "mrsexam_backend.Controllers.FormPanditController",
+    "Method": "BatchInsert",
+    "RelativePath": "api/FormPandit/batch-insert",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "mrsexam_backend.Models.BatchInsertRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "mrsexam_backend.Controllers.FormPanditController",
     "Method": "GetByCentre",
     "RelativePath": "api/FormPandit/centre/{centreCode}",
     "HttpMethod": "GET",
@@ -774,6 +843,32 @@
       {
         "Name": "centreCode",
         "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "mrsexam_backend.Controllers.FormPanditController",
+    "Method": "InsertAfter",
+    "RelativePath": "api/FormPandit/insert-after/{previousRollNo}/{sessionNo}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "previousRollNo",
+        "Type": "System.Int16",
+        "IsRequired": true
+      },
+      {
+        "Name": "sessionNo",
+        "Type": "System.Int16",
+        "IsRequired": true
+      },
+      {
+        "Name": "model",
+        "Type": "mrsexam_backend.Models.FormPandit",
         "IsRequired": true
       }
     ],
@@ -832,6 +927,22 @@
       {
         "Name": "sessionNo",
         "Type": "System.Int16",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "mrsexam_backend.Controllers.FormPanditController",
+    "Method": "UpdateMarks",
+    "RelativePath": "api/FormPandit/update-marks",
+    "HttpMethod": "PATCH",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "req",
+        "Type": "mrsexam_backend.Models.UpdateMarksRequest",
         "IsRequired": true
       }
     ],
@@ -934,6 +1045,22 @@
   },
   {
     "ContainingType": "mrsexam_backend.Controllers.FormPrabodhController",
+    "Method": "BatchInsert",
+    "RelativePath": "api/FormPrabodh/batch-insert",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "mrsexam_backend.Models.BatchInsertRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "mrsexam_backend.Controllers.FormPrabodhController",
     "Method": "GetByCentre",
     "RelativePath": "api/FormPrabodh/centre/{centreCode}",
     "HttpMethod": "GET",
@@ -943,6 +1070,27 @@
       {
         "Name": "centreCode",
         "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "mrsexam_backend.Controllers.FormPrabodhController",
+    "Method": "InsertAfter",
+    "RelativePath": "api/FormPrabodh/insert-after/{previousSrNo}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "previousSrNo",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "model",
+        "Type": "mrsexam_backend.Models.FormPrabodh",
         "IsRequired": true
       }
     ],
@@ -1017,6 +1165,22 @@
       {
         "Name": "sessionNo",
         "Type": "System.Int16",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "mrsexam_backend.Controllers.FormPrabodhController",
+    "Method": "UpdateMarks",
+    "RelativePath": "api/FormPrabodh/update-marks",
+    "HttpMethod": "PATCH",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "req",
+        "Type": "mrsexam_backend.Models.UpdateMarksRequest",
         "IsRequired": true
       }
     ],
@@ -1119,6 +1283,22 @@
   },
   {
     "ContainingType": "mrsexam_backend.Controllers.FormPrathamikController",
+    "Method": "BatchInsert",
+    "RelativePath": "api/FormPrathamik/batch-insert",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "mrsexam_backend.Models.BatchInsertRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "mrsexam_backend.Controllers.FormPrathamikController",
     "Method": "GetByCentre",
     "RelativePath": "api/FormPrathamik/centre/{centreCode}",
     "HttpMethod": "GET",
@@ -1128,6 +1308,27 @@
       {
         "Name": "centreCode",
         "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "mrsexam_backend.Controllers.FormPrathamikController",
+    "Method": "InsertAfter",
+    "RelativePath": "api/FormPrathamik/insert-after/{previousSrNo}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "previousSrNo",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "model",
+        "Type": "mrsexam_backend.Models.FormPrathamik",
         "IsRequired": true
       }
     ],
@@ -1334,6 +1535,32 @@
   },
   {
     "ContainingType": "mrsexam_backend.Controllers.FormPraveenController",
+    "Method": "BatchInsert",
+    "RelativePath": "api/FormPraveen/batch-insert/{regionNo}/{sessionNo}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "regionNo",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "sessionNo",
+        "Type": "System.Int16",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "mrsexam_backend.Models.BatchInsertRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "mrsexam_backend.Controllers.FormPraveenController",
     "Method": "GetByCentre",
     "RelativePath": "api/FormPraveen/centre/{centreCode}",
     "HttpMethod": "GET",
@@ -1343,6 +1570,37 @@
       {
         "Name": "centreCode",
         "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "mrsexam_backend.Controllers.FormPraveenController",
+    "Method": "InsertAfter",
+    "RelativePath": "api/FormPraveen/insert-after/{previousRollNo}/{regionNo}/{sessionNo}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "previousRollNo",
+        "Type": "System.Int16",
+        "IsRequired": true
+      },
+      {
+        "Name": "regionNo",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "sessionNo",
+        "Type": "System.Int16",
+        "IsRequired": true
+      },
+      {
+        "Name": "model",
+        "Type": "mrsexam_backend.Models.FormPraveen",
         "IsRequired": true
       }
     ],
@@ -1417,6 +1675,22 @@
       {
         "Name": "sessionNo",
         "Type": "System.Int16",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "mrsexam_backend.Controllers.FormPraveenController",
+    "Method": "UpdateMarks",
+    "RelativePath": "api/FormPraveen/update-marks",
+    "HttpMethod": "PATCH",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "req",
+        "Type": "mrsexam_backend.Models.UpdateMarksRequest",
         "IsRequired": true
       }
     ],
@@ -1519,6 +1793,22 @@
   },
   {
     "ContainingType": "mrsexam_backend.Controllers.FormPraveshikaController",
+    "Method": "BatchInsert",
+    "RelativePath": "api/FormPraveshika/batch-insert",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "mrsexam_backend.Models.BatchInsertRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "mrsexam_backend.Controllers.FormPraveshikaController",
     "Method": "GetByCentre",
     "RelativePath": "api/FormPraveshika/centre/{centreCode}",
     "HttpMethod": "GET",
@@ -1528,6 +1818,27 @@
       {
         "Name": "centreCode",
         "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "mrsexam_backend.Controllers.FormPraveshikaController",
+    "Method": "InsertAfter",
+    "RelativePath": "api/FormPraveshika/insert-after/{previousSrNo}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "previousSrNo",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "model",
+        "Type": "mrsexam_backend.Models.FormPraveshika",
         "IsRequired": true
       }
     ],
@@ -1602,6 +1913,22 @@
       {
         "Name": "sessionNo",
         "Type": "System.Int16",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "mrsexam_backend.Controllers.FormPraveshikaController",
+    "Method": "UpdateMarks",
+    "RelativePath": "api/FormPraveshika/update-marks",
+    "HttpMethod": "PATCH",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "req",
+        "Type": "mrsexam_backend.Models.UpdateMarksRequest",
         "IsRequired": true
       }
     ],
@@ -1704,6 +2031,22 @@
   },
   {
     "ContainingType": "mrsexam_backend.Controllers.FormSubodhController",
+    "Method": "BatchInsert",
+    "RelativePath": "api/FormSubodh/batch-insert",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "mrsexam_backend.Models.BatchInsertRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "mrsexam_backend.Controllers.FormSubodhController",
     "Method": "GetByCentre",
     "RelativePath": "api/FormSubodh/centre/{centreCode}",
     "HttpMethod": "GET",
@@ -1713,6 +2056,27 @@
       {
         "Name": "centreCode",
         "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "mrsexam_backend.Controllers.FormSubodhController",
+    "Method": "InsertAfter",
+    "RelativePath": "api/FormSubodh/insert-after/{previousSrNo}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "previousSrNo",
+        "Type": "System.Int32",
+        "IsRequired": true
+      },
+      {
+        "Name": "model",
+        "Type": "mrsexam_backend.Models.FormSubodh",
         "IsRequired": true
       }
     ],
@@ -1787,6 +2151,22 @@
       {
         "Name": "sessionNo",
         "Type": "System.Int16",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "mrsexam_backend.Controllers.FormSubodhController",
+    "Method": "UpdateMarks",
+    "RelativePath": "api/FormSubodh/update-marks",
+    "HttpMethod": "PATCH",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "req",
+        "Type": "mrsexam_backend.Models.UpdateMarksRequest",
         "IsRequired": true
       }
     ],

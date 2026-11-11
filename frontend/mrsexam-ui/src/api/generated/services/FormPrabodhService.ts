@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { BatchInsertRequest } from '../models/BatchInsertRequest';
 import type { FormPrabodh } from '../models/FormPrabodh';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -29,6 +30,22 @@ export class FormPrabodhService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/FormPrabodh',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static postApiFormPrabodhBatchInsert({
+        requestBody,
+    }: {
+        requestBody?: BatchInsertRequest,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/FormPrabodh/batch-insert',
             body: requestBody,
             mediaType: 'application/json',
         });
@@ -194,6 +211,27 @@ export class FormPrabodhService {
             path: {
                 'regionNo': regionNo,
             },
+        });
+    }
+    /**
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static postApiFormPrabodhInsertAfter({
+        previousSrNo,
+        requestBody,
+    }: {
+        previousSrNo: number,
+        requestBody?: FormPrabodh,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/FormPrabodh/insert-after/{previousSrNo}',
+            path: {
+                'previousSrNo': previousSrNo,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
 }

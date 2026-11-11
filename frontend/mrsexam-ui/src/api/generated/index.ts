@@ -8,6 +8,7 @@ export { OpenAPI } from './core/OpenAPI';
 export type { OpenAPIConfig } from './core/OpenAPI';
 
 export type { AttSheet } from './models/AttSheet';
+export type { BatchInsertRequest } from './models/BatchInsertRequest';
 export type { Center } from './models/Center';
 export type { CentreCount } from './models/CentreCount';
 export type { District } from './models/District';
@@ -32,6 +33,7 @@ export type { User } from './models/User';
 export type { WeatherForecast } from './models/WeatherForecast';
 
 export { $AttSheet } from './schemas/$AttSheet';
+export { $BatchInsertRequest } from './schemas/$BatchInsertRequest';
 export { $Center } from './schemas/$Center';
 export { $CentreCount } from './schemas/$CentreCount';
 export { $District } from './schemas/$District';

@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { BatchInsertRequest } from '../models/BatchInsertRequest';
 import type { FormPandit } from '../models/FormPandit';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -29,6 +30,22 @@ export class FormPanditService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/FormPandit',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static postApiFormPanditBatchInsert({
+        requestBody,
+    }: {
+        requestBody?: BatchInsertRequest,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/FormPandit/batch-insert',
             body: requestBody,
             mediaType: 'application/json',
         });
@@ -186,6 +203,30 @@ export class FormPanditService {
             path: {
                 'name': name,
             },
+        });
+    }
+    /**
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static postApiFormPanditInsertAfter({
+        previousRollNo,
+        sessionNo,
+        requestBody,
+    }: {
+        previousRollNo: number,
+        sessionNo: number,
+        requestBody?: FormPandit,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/FormPandit/insert-after/{previousRollNo}/{sessionNo}',
+            path: {
+                'previousRollNo': previousRollNo,
+                'sessionNo': sessionNo,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
 }

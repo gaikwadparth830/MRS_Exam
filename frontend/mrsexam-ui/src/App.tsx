@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 
-import { DashboardPage } from './pages/DashboardPage'
+import { BalbodhiniWorkspace } from './pages/BalbodhiniWorkspace'
 import { LoginPage } from './pages/LoginPage'
 
 const ACCESS_TOKEN_KEY = 'accessToken'
@@ -14,8 +14,12 @@ function App() {
     setIsAuthenticated(true)
   }, [])
 
+  const handleSignOut = useCallback(() => {
+    setIsAuthenticated(false)
+  }, [])
+
   if (isAuthenticated) {
-    return <DashboardPage />
+    return <BalbodhiniWorkspace onSignOut={handleSignOut} />
   }
 
   return <LoginPage onLoginSuccess={handleLoginSuccess} />

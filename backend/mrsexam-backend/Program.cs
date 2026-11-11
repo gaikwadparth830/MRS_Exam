@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using mrsexam_backend;
+using mrsexam_backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +10,15 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.Configure<BalbodhiniOptions>(builder.Configuration.GetSection(BalbodhiniOptions.SectionName));
+builder.Services.AddScoped<SessionService>();
+builder.Services.AddScoped<CentreResolver>();
+builder.Services.AddScoped<CandidateService>();
+builder.Services.AddScoped<RollNumberService>();
+builder.Services.AddScoped<MarksService>();
+builder.Services.AddScoped<ResultService>();
+builder.Services.AddScoped<ReportService>();
 
 builder.Services.AddCors(options =>
 {

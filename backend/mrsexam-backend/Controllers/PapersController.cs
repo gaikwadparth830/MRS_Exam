@@ -88,6 +88,7 @@ namespace mrsexam_backend.Controllers
         public async Task<IActionResult> Create([FromBody] Paper model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            NormalizePaper(model);
 
             _db.Papers.Add(model);
             await _db.SaveChangesAsync(cancellationToken);
@@ -101,6 +102,7 @@ namespace mrsexam_backend.Controllers
         {
             if (paperNo != model.PaperNo || examNo != model.ExamNo) return BadRequest();
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            NormalizePaper(model);
 
             var exists = await _db.Papers.AnyAsync(e => e.PaperNo == paperNo && e.ExamNo == examNo, cancellationToken);
             if (!exists) return NotFound();
@@ -108,6 +110,13 @@ namespace mrsexam_backend.Controllers
             _db.Entry(model).State = EntityState.Modified;
             await _db.SaveChangesAsync(cancellationToken);
             return NoContent();
+        }
+
+        private static void NormalizePaper(Paper model)
+        {
+            // DB CHECK disallows zero-length strings; blank optional fields must be NULL.
+            var paperName = model.PaperName?.Trim();
+            model.PaperName = string.IsNullOrEmpty(paperName) ? null : paperName;
         }
 
         // DELETE: api/papers/{paperNo}/{examNo}

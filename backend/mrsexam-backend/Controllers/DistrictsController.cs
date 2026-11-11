@@ -69,9 +69,18 @@ namespace mrsexam_backend.Controllers
         public async Task<IActionResult> Create([FromBody] District model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!TryNormalizeDistrict(model, out var error))
+                return BadRequest(new { message = error });
 
             _db.Districts.Add(model);
-            await _db.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex)
+            {
+                return BadRequest(new { message = FriendlyDbMessage(ex, "Could not create district.") });
+            }
 
             return CreatedAtAction(nameof(Get), new { id = model.DistrictName }, model);
         }
@@ -82,13 +91,70 @@ namespace mrsexam_backend.Controllers
         {
             if (id != model.DistrictName) return BadRequest();
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!TryNormalizeDistrict(model, out var error))
+                return BadRequest(new { message = error });
 
             var exists = await _db.Districts.AnyAsync(e => e.DistrictName == id, cancellationToken);
             if (!exists) return NotFound();
 
             _db.Entry(model).State = EntityState.Modified;
-            await _db.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex)
+            {
+                return BadRequest(new { message = FriendlyDbMessage(ex, "Could not update district.") });
+            }
+
             return NoContent();
+        }
+
+        private static bool TryNormalizeDistrict(District model, out string? error)
+        {
+            model.DistrictName = model.DistrictName?.Trim() ?? string.Empty;
+            // DB CHECK constraints disallow zero-length strings; blank optional fields must be NULL.
+            model.ShortName = NullIfBlank(model.ShortName);
+            model.DistrictCity = NullIfBlank(model.DistrictCity);
+
+            if (string.IsNullOrWhiteSpace(model.DistrictName))
+            {
+                error = "District Name (Marathi) is required and cannot be blank.";
+                return false;
+            }
+
+            error = null;
+            return true;
+        }
+
+        private static string? NullIfBlank(string? value)
+        {
+            var trimmed = value?.Trim();
+            return string.IsNullOrEmpty(trimmed) ? null : trimmed;
+        }
+
+        private static string FriendlyDbMessage(DbUpdateException ex, string fallback)
+        {
+            var sql = ex.InnerException?.Message ?? ex.Message;
+            if (sql.Contains("DISTRICT_CITY", StringComparison.OrdinalIgnoreCase)
+                && sql.Contains("disallow_zero_length", StringComparison.OrdinalIgnoreCase))
+            {
+                return "District City cannot be blank. Enter a Marathi city name, or leave it empty (it will be stored as blank/NULL).";
+            }
+
+            if (sql.Contains("SHORT_NAME", StringComparison.OrdinalIgnoreCase)
+                && sql.Contains("disallow_zero_length", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Short Name cannot be blank. Enter a value or leave it empty.";
+            }
+
+            if (sql.Contains("DISTRICT_NAME", StringComparison.OrdinalIgnoreCase)
+                && sql.Contains("disallow_zero_length", StringComparison.OrdinalIgnoreCase))
+            {
+                return "District Name (Marathi) is required and cannot be blank.";
+            }
+
+            return fallback;
         }
 
         // DELETE: api/districts/{id}

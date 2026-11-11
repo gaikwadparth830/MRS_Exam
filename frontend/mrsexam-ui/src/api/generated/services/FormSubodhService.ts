@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { BatchInsertRequest } from '../models/BatchInsertRequest';
 import type { FormSubodh } from '../models/FormSubodh';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -29,6 +30,22 @@ export class FormSubodhService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/FormSubodh',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static postApiFormSubodhBatchInsert({
+        requestBody,
+    }: {
+        requestBody?: BatchInsertRequest,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/FormSubodh/batch-insert',
             body: requestBody,
             mediaType: 'application/json',
         });
@@ -194,6 +211,27 @@ export class FormSubodhService {
             path: {
                 'regionNo': regionNo,
             },
+        });
+    }
+    /**
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static postApiFormSubodhInsertAfter({
+        previousSrNo,
+        requestBody,
+    }: {
+        previousSrNo: number,
+        requestBody?: FormSubodh,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/FormSubodh/insert-after/{previousSrNo}',
+            path: {
+                'previousSrNo': previousSrNo,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
 }

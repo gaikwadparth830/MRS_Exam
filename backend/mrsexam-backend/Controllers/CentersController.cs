@@ -69,9 +69,18 @@ namespace mrsexam_backend.Controllers
         public async Task<IActionResult> Create([FromBody] Center model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!TryNormalizeCenter(model, out var error))
+                return BadRequest(new { message = error });
 
             _db.Centres.Add(model);
-            await _db.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex)
+            {
+                return BadRequest(new { message = FriendlyDbMessage(ex, "Could not create center.") });
+            }
 
             return CreatedAtAction(nameof(Get), new { id = model.CentreNo }, model);
         }
@@ -82,12 +91,22 @@ namespace mrsexam_backend.Controllers
         {
             if (id != model.CentreNo) return BadRequest();
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!TryNormalizeCenter(model, out var error))
+                return BadRequest(new { message = error });
 
             var exists = await _db.Centres.AnyAsync(e => e.CentreNo == id, cancellationToken);
             if (!exists) return NotFound();
 
             _db.Entry(model).State = EntityState.Modified;
-            await _db.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex)
+            {
+                return BadRequest(new { message = FriendlyDbMessage(ex, "Could not update center.") });
+            }
+
             return NoContent();
         }
 
@@ -101,6 +120,54 @@ namespace mrsexam_backend.Controllers
             _db.Centres.Remove(item);
             await _db.SaveChangesAsync(cancellationToken);
             return NoContent();
+        }
+
+        private static bool TryNormalizeCenter(Center model, out string? error)
+        {
+            model.CentreNo = model.CentreNo?.Trim() ?? string.Empty;
+            model.AddressTo = NullIfBlank(model.AddressTo);
+            model.CentreName = NullIfBlank(model.CentreName);
+            model.DistrictName = NullIfBlank(model.DistrictName);
+            model.Add1 = NullIfBlank(model.Add1);
+            model.Add2 = NullIfBlank(model.Add2);
+            model.City = NullIfBlank(model.City);
+            model.Pincode = NullIfBlank(model.Pincode);
+            model.Phone = NullIfBlank(model.Phone);
+            model.PanditFlag = NullIfBlank(model.PanditFlag);
+            model.CloseFlag = NullIfBlank(model.CloseFlag);
+
+            if (string.IsNullOrWhiteSpace(model.CentreNo))
+            {
+                error = "Center No is required and cannot be blank.";
+                return false;
+            }
+
+            // Allow Marathi + digits/slash codes such as ठा/001 (max 10 chars in DB).
+            if (model.CentreNo.Length > 10)
+            {
+                error = "Center No cannot exceed 10 characters (example: ठा/001).";
+                return false;
+            }
+
+            error = null;
+            return true;
+        }
+
+        private static string? NullIfBlank(string? value)
+        {
+            var trimmed = value?.Trim();
+            return string.IsNullOrEmpty(trimmed) ? null : trimmed;
+        }
+
+        private static string FriendlyDbMessage(DbUpdateException ex, string fallback)
+        {
+            var sql = ex.InnerException?.Message ?? ex.Message;
+            if (sql.Contains("disallow_zero_length", StringComparison.OrdinalIgnoreCase))
+            {
+                return "One or more text fields are blank. Enter a value or leave the field empty.";
+            }
+
+            return fallback;
         }
     }
 }

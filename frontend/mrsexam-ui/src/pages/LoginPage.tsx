@@ -19,9 +19,12 @@ type LoginRequest = {
 }
 
 type LoginResponse = {
+  success?: boolean
   token?: string
   accessToken?: string
   userKey?: string
+  userId?: string
+  isSupervisor?: boolean
   message?: string
 }
 
@@ -31,37 +34,25 @@ type LoginPageProps = {
 
 const ACCESS_TOKEN_KEY = 'accessToken'
 const CURRENT_USER_ID_KEY = 'currentUserId'
+const IS_SUPERVISOR_KEY = 'isSupervisor'
 
 const getTokenFromResponse = (payload: LoginResponse | null): string | null => {
-  if (!payload) {
-    return null
-  }
-
+  if (!payload) return null
   return payload.accessToken ?? payload.token ?? payload.userKey ?? null
 }
 
 export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
-  const [form, setForm] = useState<LoginRequest>({
-    userId: '',
-    password: '',
-  })
+  const [form, setForm] = useState<LoginRequest>({ userId: '', password: '' })
   const [validationError, setValidationError] = useState<string | null>(null)
+  const { post, error, isLoading } = usePost<LoginResponse, LoginRequest>('/api/Users/validate')
 
-  const { post, data, error, isLoading } = usePost<LoginResponse, LoginRequest>('/api/Users/validate')
-
-  const apiMessage = useMemo(() => {
-    if (!data) {
-      return null
-    }
-
-    return data.message ?? 'Login request submitted successfully.'
-  }, [data])
+  const subtitle = useMemo(
+    () => 'Sign in to continue Balbodhini examination office work.',
+    [],
+  )
 
   const onChange = (field: keyof LoginRequest, value: string) => {
-    setForm((current) => ({
-      ...current,
-      [field]: value,
-    }))
+    setForm((current) => ({ ...current, [field]: value }))
   }
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -73,22 +64,21 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
     }
 
     setValidationError(null)
-
     const response = await post({
       userId: form.userId.trim(),
       password: form.password,
     })
 
+    if (!response || response.success === false) {
+      setValidationError(response?.message ?? 'Invalid credentials.')
+      return
+    }
+
     const token = getTokenFromResponse(response)
-    if (token) {
-      localStorage.setItem(ACCESS_TOKEN_KEY, token)
-    }
-
-    localStorage.setItem(CURRENT_USER_ID_KEY, form.userId.trim())
-
-    if (response) {
-      onLoginSuccess()
-    }
+    if (token) localStorage.setItem(ACCESS_TOKEN_KEY, token)
+    localStorage.setItem(CURRENT_USER_ID_KEY, (response.userId ?? form.userId).trim().toUpperCase())
+    localStorage.setItem(IS_SUPERVISOR_KEY, response.isSupervisor ? 'Y' : 'N')
+    onLoginSuccess()
   }
 
   return (
@@ -99,27 +89,53 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
         placeItems: 'center',
         p: 3,
         background:
-          'radial-gradient(circle at 10% 20%, rgba(21, 94, 117, 0.2), transparent 42%), radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.25), transparent 38%), #eef3fb',
+          'radial-gradient(circle at 12% 18%, rgba(11, 79, 108, 0.18), transparent 40%), radial-gradient(circle at 88% 12%, rgba(180, 83, 9, 0.14), transparent 34%), linear-gradient(160deg, #f7fafc 0%, #e7eef3 55%, #d9e5ec 100%)',
       }}
     >
       <Container maxWidth="sm">
-        <Paper elevation={8} sx={{ p: { xs: 3, md: 4 }, borderRadius: 3 }}>
-          <Stack spacing={2.25}>
-            <Box
-              component="img"
-              src={monoLogo}
-              alt="MRS Mono logo"
-              sx={{ width: 84, height: 84, objectFit: 'contain' }}
-            />
-            <Typography variant="overline" color="primary" fontWeight={700}>
-              MRS Exam Portal
-            </Typography>
-            <Typography variant="h4" component="h1" fontWeight={700}>
-              Sign in
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Use your credentials to continue.
-            </Typography>
+        <Paper
+          sx={{
+            p: { xs: 3, md: 4.5 },
+            borderRadius: 3,
+            boxShadow: '0 24px 48px rgba(18, 38, 58, 0.12)',
+            overflow: 'hidden',
+            position: 'relative',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              inset: '0 auto auto 0',
+              width: '100%',
+              height: 5,
+              background: 'linear-gradient(90deg, #0b4f6c 0%, #1a6f92 55%, #b45309 100%)',
+            },
+          }}
+        >
+          <Stack spacing={2.5}>
+            <Stack direction="row" spacing={1.75} alignItems="center">
+              <Box
+                component="img"
+                src={monoLogo}
+                alt="MRS Mono logo"
+                sx={{ width: 64, height: 64, objectFit: 'contain' }}
+              />
+              <Box>
+                <Typography variant="overline" color="primary" fontWeight={700}>
+                  Maharashtra Rashtrabhasha Sabha
+                </Typography>
+                <Typography variant="h4" component="h1">
+                  MRS Exam
+                </Typography>
+              </Box>
+            </Stack>
+
+            <Box>
+              <Typography variant="h5" fontWeight={650}>
+                Balbodhini sign in
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mt: 0.75 }}>
+                {subtitle}
+              </Typography>
+            </Box>
 
             <Box component="form" onSubmit={onSubmit} noValidate>
               <Stack spacing={2}>
@@ -130,7 +146,6 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
                   value={form.userId}
                   onChange={(event) => onChange('userId', event.target.value)}
                   autoComplete="username"
-                  placeholder="Enter user ID"
                   fullWidth
                 />
                 <TextField
@@ -141,19 +156,16 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
                   value={form.password ?? ''}
                   onChange={(event) => onChange('password', event.target.value)}
                   autoComplete="current-password"
-                  placeholder="Enter password"
                   fullWidth
                 />
-
                 <Button type="submit" variant="contained" size="large" disabled={isLoading}>
-                  {isLoading ? 'Signing in...' : 'Login'}
+                  {isLoading ? 'Signing in...' : 'Sign in'}
                 </Button>
               </Stack>
             </Box>
 
             {validationError ? <Alert severity="error">{validationError}</Alert> : null}
             {error ? <Alert severity="error">{error}</Alert> : null}
-            {apiMessage ? <Alert severity="success">{apiMessage}</Alert> : null}
           </Stack>
         </Paper>
       </Container>

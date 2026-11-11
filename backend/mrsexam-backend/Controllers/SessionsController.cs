@@ -20,6 +20,45 @@ namespace mrsexam_backend.Controllers
             return Ok(list);
         }
 
+        // GET: api/sessions/current
+        [HttpGet("current")]
+        public async Task<IActionResult> GetCurrent(CancellationToken cancellationToken)
+        {
+            var session = await _db.Sessions.AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Defa != null && s.Defa.ToUpper() == "Y", cancellationToken);
+            if (session is null) return NotFound(new { message = "Session not selected." });
+
+            var lockFlag = (session.ResgenBalbodhini ?? string.Empty).Trim().ToUpperInvariant();
+            var backupFlag = (session.Backup ?? string.Empty).Trim().ToUpperInvariant();
+
+            return Ok(new
+            {
+                session.SessionNo,
+                session.Month,
+                session.Defa,
+                session.Backup,
+                session.ResgenBalbodhini,
+                session.ResultDate,
+                isLocked = lockFlag == "Y",
+                isBackup = backupFlag == "Y"
+            });
+        }
+
+        // PUT: api/sessions/current
+        [HttpPut("current")]
+        public async Task<IActionResult> SetCurrent([FromBody] SetCurrentSessionRequest request, CancellationToken cancellationToken)
+        {
+            var sessions = await _db.Sessions.ToListAsync(cancellationToken);
+            var target = sessions.FirstOrDefault(s => s.SessionNo == request.SessionNo);
+            if (target is null) return NotFound();
+
+            foreach (var session in sessions)
+                session.Defa = session.SessionNo == request.SessionNo ? "Y" : "N";
+
+            await _db.SaveChangesAsync(cancellationToken);
+            return NoContent();
+        }
+
         // GET: api/sessions/paged?pageNumber=1&pageSize=50
         [HttpGet("paged")]
         public async Task<IActionResult> GetPaged(
@@ -69,6 +108,7 @@ namespace mrsexam_backend.Controllers
         public async Task<IActionResult> Create([FromBody] Session model, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            NormalizeSession(model);
 
             _db.Sessions.Add(model);
             await _db.SaveChangesAsync(cancellationToken);
@@ -82,6 +122,7 @@ namespace mrsexam_backend.Controllers
         {
             if (id != model.SessionNo) return BadRequest();
             if (!ModelState.IsValid) return BadRequest(ModelState);
+            NormalizeSession(model);
 
             var exists = await _db.Sessions.AnyAsync(e => e.SessionNo == id, cancellationToken);
             if (!exists) return NotFound();
@@ -89,6 +130,19 @@ namespace mrsexam_backend.Controllers
             _db.Entry(model).State = EntityState.Modified;
             await _db.SaveChangesAsync(cancellationToken);
             return NoContent();
+        }
+
+        private static void NormalizeSession(Session model)
+        {
+            // DB CHECK disallows zero-length strings; blank optional fields must be NULL.
+            model.Month = NullIfBlank(model.Month);
+            model.CloseFlag = NullIfBlank(model.CloseFlag);
+        }
+
+        private static string? NullIfBlank(string? value)
+        {
+            var trimmed = value?.Trim();
+            return string.IsNullOrEmpty(trimmed) ? null : trimmed;
         }
 
         // POST: api/sessions/setdefaultsession/{id}
@@ -125,5 +179,10 @@ namespace mrsexam_backend.Controllers
             await _db.SaveChangesAsync(cancellationToken);
             return NoContent();
         }
+    }
+
+    public sealed class SetCurrentSessionRequest
+    {
+        public int SessionNo { get; set; }
     }
 }

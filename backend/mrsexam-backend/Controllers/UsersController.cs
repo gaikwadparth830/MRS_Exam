@@ -46,12 +46,17 @@ namespace mrsexam_backend.Controllers
                 return Ok(new { success = false, message = "Invalid credentials" });
             }
 
+            var userId = (user.UserId ?? string.Empty).Trim().ToUpperInvariant();
+            var isSupervisor = string.Equals(userId, "SUPER", StringComparison.Ordinal);
+
             return Ok(new 
             { 
                 success = true, 
                 message = "Login successful",
                 userId = user.UserId,
-                userKey = user.UserKey
+                userKey = user.UserKey,
+                accessToken = user.UserKey ?? user.UserId,
+                isSupervisor
             });
         }
 

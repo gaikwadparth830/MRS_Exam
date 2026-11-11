@@ -1,0 +1,266 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using mrsexam_backend.Models;
+
+namespace mrsexam_backend.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public sealed class FormPraveshikaController : ControllerBase
+    {
+        private readonly MrsexamContext _db;
+
+        public FormPraveshikaController(MrsexamContext db) => _db = db;
+
+        // GET: api/formpraveshika
+        [HttpGet]
+        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+        {
+            var list = await _db.FormPraveshikas.AsNoTracking().ToListAsync(cancellationToken);
+            return Ok(list);
+        }
+
+        // PATCH: api/formpraveshika/update-marks
+        [HttpPatch("update-marks")]
+        public async Task<IActionResult> UpdateMarks([FromBody] Models.UpdateMarksRequest req, CancellationToken cancellationToken)
+        {
+            if (req.RollNo is null || req.SessionNo is null) return BadRequest("rollNo and sessionNo are required");
+
+            var item = await _db.FormPraveshikas.FirstOrDefaultAsync(f => f.RollNo == req.RollNo && f.SessionNo == req.SessionNo, cancellationToken);
+            if (item is null) return NotFound();
+
+            if (req.Marks1 != null) item.Marks1 = req.Marks1;
+            if (req.Marks2 != null) item.Marks2 = req.Marks2;
+            //if (req.Marks3 != null) item.Marks3 = req.Marks3;
+            //if (req.Marks4 != null) item.Marks4 = req.Marks4;
+            //if (req.Marks5 != null) item.Marks5 = req.Marks5;
+            //if (req.Marks6 != null) item.Marks6 = req.Marks6;
+            if (req.TotMarks.HasValue) item.TotMarks = req.TotMarks;
+            if (req.Grade != null) item.Grade = req.Grade;
+            if (req.Result != null) item.Result = req.Result;
+            if (req.UndFlag != null) item.UndFlag = req.UndFlag;
+            if (req.UndClass != null) item.UndClass = req.UndClass;
+
+            await _db.SaveChangesAsync(cancellationToken);
+            return NoContent();
+        }
+
+        // POST: api/formpraveshika/batch-insert
+        [HttpPost("batch-insert")]
+        public async Task<IActionResult> BatchInsert([FromBody] Models.BatchInsertRequest request, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (request.EndRollNo < request.StartRollNo)
+                return BadRequest("EndRollNo must be greater than or equal to StartRollNo.");
+
+            var duplicates = await _db.FormPraveshikas
+                .AnyAsync(f => f.RegionNo == request.RegionNo && f.RollNo >= request.StartRollNo && f.RollNo <= request.EndRollNo, cancellationToken);
+
+            if (duplicates)
+                return Conflict("Duplicate roll numbers found in the specified region.");
+
+            var entities = new List<FormPraveshika>();
+            for (var r = request.StartRollNo; r <= request.EndRollNo; r++)
+            {
+                entities.Add(new FormPraveshika
+                {
+                    SrNo = 0,
+                    RollNo = (short)r,
+                    RegionNo = request.RegionNo,
+                    SessionNo = (short)request.SessionNo,
+                    Name = r == request.StartRollNo ? request.StartName : (r == request.EndRollNo ? request.EndName : null),
+                    FormCentre = request.CentreCode,
+                    ExamCentre = request.CentreCode,
+                    DummyCentreCode = 0
+                });
+            }
+
+            await _db.FormPraveshikas.AddRangeAsync(entities, cancellationToken);
+            try
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("Batch insert failed.", ex);
+            }
+
+            return Ok(new { inserted = entities.Count });
+        }
+
+        // GET: api/formpraveshika/paged?pageNumber=1&pageSize=50&sessionNo=123
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetPaged(
+            [FromQuery] int pageNumber = 1, 
+            [FromQuery] int pageSize = 50,
+            [FromQuery] short? sessionNo = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 50;
+            if (pageSize > 1000) pageSize = 1000;
+
+            var query = _db.FormPraveshikas.AsNoTracking();
+
+            if (sessionNo.HasValue)
+            {
+                query = query.Where(f => f.SessionNo == sessionNo.Value);
+            }
+
+            var totalCount = await query.CountAsync(cancellationToken);
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            var items = await query
+                .OrderBy(f => f.SrNo)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            var response = new
+            {
+                data = items,
+                pageNumber,
+                pageSize,
+                totalCount,
+                totalPages,
+                hasNextPage = pageNumber < totalPages,
+                hasPreviousPage = pageNumber > 1,
+                sessionNo
+            };
+
+            return Ok(response);
+        }
+
+        // GET: api/formpraveshika/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(int id, CancellationToken cancellationToken)
+        {
+            var item = await _db.FormPraveshikas.AsNoTracking().FirstOrDefaultAsync(c => c.SrNo == id, cancellationToken);
+            if (item is null) return NotFound();
+            return Ok(item);
+        }
+
+        // GET: api/formpraveshika/user/{userId}
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetByUser(string userId, CancellationToken cancellationToken)
+        {
+            var list = await _db.FormPraveshikas.AsNoTracking()
+                .Where(f => f.UserId == userId)
+                .ToListAsync(cancellationToken);
+            return Ok(list);
+        }
+
+        // GET: api/formpraveshika/centre/{centreCode}
+        [HttpGet("centre/{centreCode}")]
+        public async Task<IActionResult> GetByCentre(int centreCode, CancellationToken cancellationToken)
+        {
+            var list = await _db.FormPraveshikas.AsNoTracking()
+                .Where(f => f.DummyCentreCode == centreCode)
+                .ToListAsync(cancellationToken);
+            return Ok(list);
+        }
+
+        // GET: api/formpraveshika/name/{name}
+        [HttpGet("name/{name}")]
+        public async Task<IActionResult> GetByName(string name, CancellationToken cancellationToken)
+        {
+            var list = await _db.FormPraveshikas.AsNoTracking()
+                .Where(f => f.Name != null && f.Name.Contains(name))
+                .ToListAsync(cancellationToken);
+            return Ok(list);
+        }
+
+        // GET: api/formpraveshika/session/{sessionNo}
+        [HttpGet("session/{sessionNo}")]
+        public async Task<IActionResult> GetBySession(short sessionNo, CancellationToken cancellationToken)
+        {
+            var list = await _db.FormPraveshikas.AsNoTracking()
+                .Where(f => f.SessionNo == sessionNo)
+                .ToListAsync(cancellationToken);
+            return Ok(list);
+        }
+
+        // GET: api/formpraveshika/region/{regionNo}
+        [HttpGet("region/{regionNo}")]
+        public async Task<IActionResult> GetByRegion(int regionNo, CancellationToken cancellationToken)
+        {
+            var list = await _db.FormPraveshikas.AsNoTracking()
+                .Where(f => f.RegionNo == regionNo)
+                .ToListAsync(cancellationToken);
+            return Ok(list);
+        }
+
+        // POST: api/formpraveshika
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] FormPraveshika model, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            _db.FormPraveshikas.Add(model);
+            await _db.SaveChangesAsync(cancellationToken);
+
+            return CreatedAtAction(nameof(Get), new { id = model.SrNo }, model);
+        }
+
+        // POST: api/formpraveshika/insert-after/{previousSrNo}
+        [HttpPost("insert-after/{previousSrNo}")]
+        public async Task<IActionResult> InsertAfter(int previousSrNo, [FromBody] FormPraveshika model, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var lastSrNo = await _db.FormPraveshikas.Select(f => (int?)f.SrNo).MaxAsync(cancellationToken) ?? 0;
+            var newSrNo = (previousSrNo >= 0 && previousSrNo <= lastSrNo) ? previousSrNo + 1 : lastSrNo + 1;
+
+            await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                if (newSrNo <= lastSrNo)
+                {
+                    await _db.Database.ExecuteSqlRawAsync(
+                        "UPDATE FORM_PRAVESHIKA SET SRNO = SRNO + 1 WHERE SRNO >= {0}",
+                        new object[] { newSrNo },
+                        cancellationToken);
+                }
+
+                model.SrNo = newSrNo;
+                _db.FormPraveshikas.Add(model);
+                await _db.SaveChangesAsync(cancellationToken);
+                await tx.CommitAsync(cancellationToken);
+
+                return CreatedAtAction(nameof(Get), new { id = model.SrNo }, model);
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync(cancellationToken);
+                throw new InvalidOperationException("An error occurred while inserting the record.", ex);
+            }
+        }
+
+        // PUT: api/formpraveshika/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] FormPraveshika model, CancellationToken cancellationToken)
+        {
+            if (id != model.SrNo) return BadRequest();
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var exists = await _db.FormPraveshikas.AnyAsync(e => e.SrNo == id, cancellationToken);
+            if (!exists) return NotFound();
+
+            _db.Entry(model).State = EntityState.Modified;
+            await _db.SaveChangesAsync(cancellationToken);
+            return NoContent();
+        }
+
+        // DELETE: api/formpraveshika/{id}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+        {
+            var item = await _db.FormPraveshikas.FindAsync(new object[] { id }, cancellationToken);
+            if (item is null) return NotFound();
+
+            _db.FormPraveshikas.Remove(item);
+            await _db.SaveChangesAsync(cancellationToken);
+            return NoContent();
+        }
+    }
+}

@@ -20,6 +20,74 @@ namespace mrsexam_backend.Controllers
             return Ok(list);
         }
 
+        // PATCH: api/formpandit/update-marks
+        [HttpPatch("update-marks")]
+        public async Task<IActionResult> UpdateMarks([FromBody] Models.UpdateMarksRequest req, CancellationToken cancellationToken)
+        {
+            if (req.RollNo is null || req.SessionNo is null) return BadRequest("rollNo and sessionNo are required");
+
+            var item = await _db.FormPandits.FirstOrDefaultAsync(f => f.RollNo == req.RollNo && f.SessionNo == req.SessionNo, cancellationToken);
+            if (item is null) return NotFound();
+
+            // update fields if provided
+            if (req.Marks1 != null) item.Marks1 = req.Marks1;
+            if (req.Marks2 != null) item.Marks2 = req.Marks2;
+            if (req.Marks3 != null) item.Marks3 = req.Marks3;
+            if (req.Marks4 != null) item.Marks4 = req.Marks4;
+            if (req.Marks5 != null) item.Marks5 = req.Marks5;
+            if (req.Marks6 != null) item.Marks6 = req.Marks6;
+            if (req.OralMarks != null) item.OralMarks = req.OralMarks;
+            if (req.TotMarks.HasValue) item.TotMarks = req.TotMarks;
+            if (req.Grade != null) item.Grade = req.Grade;
+            if (req.Result != null) item.Result = req.Result;
+            if (req.UndFlag != null) item.UndFlag = req.UndFlag;
+            if (req.UndClass != null) item.UndClass = req.UndClass;
+
+            await _db.SaveChangesAsync(cancellationToken);
+            return NoContent();
+        }
+
+        // POST: api/formpandit/batch-insert
+        [HttpPost("batch-insert")]
+        public async Task<IActionResult> BatchInsert([FromBody] Models.BatchInsertRequest request, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (request.EndRollNo < request.StartRollNo)
+                return BadRequest("EndRollNo must be greater than or equal to StartRollNo.");
+
+            var duplicates = await _db.FormPandits
+                .AnyAsync(f => f.SessionNo == request.SessionNo && f.RollNo >= request.StartRollNo && f.RollNo <= request.EndRollNo, cancellationToken);
+
+            if (duplicates)
+                return Conflict("Duplicate roll numbers found in the specified session.");
+
+            var entities = new List<FormPandit>();
+            for (var r = request.StartRollNo; r <= request.EndRollNo; r++)
+            {
+                entities.Add(new FormPandit
+                {
+                    RollNo = (short)r,
+                    SessionNo = (short)request.SessionNo,
+                    Name = r == request.StartRollNo ? request.StartName : (r == request.EndRollNo ? request.EndName : null),
+                    FormCentre = request.CentreCode,
+                    ExamCentre = request.CentreCode,
+                    DummyCentreCode = 0
+                });
+            }
+
+            await _db.FormPandits.AddRangeAsync(entities, cancellationToken);
+            try
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("Batch insert failed.", ex);
+            }
+
+            return Ok(new { inserted = entities.Count });
+        }
+
         // GET: api/formpandit/paged?pageNumber=1&pageSize=50&sessionNo=123
         [HttpGet("paged")]
         public async Task<IActionResult> GetPaged(
@@ -123,6 +191,41 @@ namespace mrsexam_backend.Controllers
             await _db.SaveChangesAsync(cancellationToken);
 
             return CreatedAtAction(nameof(Get), new { rollNo = model.RollNo, sessionNo = model.SessionNo }, model);
+        }
+
+        // POST: api/formpandit/insert-after/{previousRollNo}/{sessionNo}
+        [HttpPost("insert-after/{previousRollNo}/{sessionNo}")]
+        public async Task<IActionResult> InsertAfter(short previousRollNo, short sessionNo, [FromBody] FormPandit model, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var lastRollNo = await _db.FormPandits.Where(f => f.SessionNo == sessionNo).Select(f => (short?)f.RollNo).MaxAsync(cancellationToken) ?? 0;
+            var newRollNo = (previousRollNo >= 0 && previousRollNo <= lastRollNo) ? (short)(previousRollNo + 1) : (short)(lastRollNo + 1);
+
+            await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                if (newRollNo <= lastRollNo)
+                {
+                    await _db.Database.ExecuteSqlRawAsync(
+                        "UPDATE FORM_PANDIT SET ROLL_NO = ROLL_NO + 1 WHERE SESSION_NO = {0} AND ROLL_NO >= {1}",
+                        new object[] { sessionNo, newRollNo },
+                        cancellationToken);
+                }
+
+                model.RollNo = newRollNo;
+                model.SessionNo = sessionNo;
+                _db.FormPandits.Add(model);
+                await _db.SaveChangesAsync(cancellationToken);
+                await tx.CommitAsync(cancellationToken);
+
+                return CreatedAtAction(nameof(Get), new { rollNo = model.RollNo, sessionNo = model.SessionNo }, model);
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync(cancellationToken);
+                throw new InvalidOperationException("An error occurred while inserting the record.", ex);
+            }
         }
 
         // PUT: api/formpandit/{rollNo}/{sessionNo}

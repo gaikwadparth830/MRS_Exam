@@ -20,6 +20,73 @@ namespace mrsexam_backend.Controllers
             return Ok(list);
         }
 
+        // PATCH: api/formpraveen/update-marks
+        [HttpPatch("update-marks")]
+        public async Task<IActionResult> UpdateMarks([FromBody] Models.UpdateMarksRequest req, CancellationToken cancellationToken)
+        {
+            if (req.RollNo is null || req.RegionNo is null || req.SessionNo is null) return BadRequest("rollNo, regionNo and sessionNo are required");
+
+            var item = await _db.FormPraveens.FirstOrDefaultAsync(f => f.RollNo == req.RollNo && f.RegionNo == req.RegionNo && f.SessionNo == req.SessionNo, cancellationToken);
+            if (item is null) return NotFound();
+
+            if (req.Marks1 != null) item.Marks1 = req.Marks1;
+            if (req.Marks2 != null) item.Marks2 = req.Marks2;
+            if (req.Marks3 != null) item.Marks3 = req.Marks3;
+            if (req.Marks4 != null) item.Marks4 = req.Marks4;
+           // if (req.Marks5 != null) item.Marks5 = req.Marks5;
+           // if (req.Marks6 != null) item.Marks6 = req.Marks6;
+            if (req.TotMarks.HasValue) item.TotMarks = req.TotMarks;
+            if (req.Grade != null) item.Grade = req.Grade;
+            if (req.Result != null) item.Result = req.Result;
+            if (req.UndFlag != null) item.UndFlag = req.UndFlag;
+            if (req.UndClass != null) item.UndClass = req.UndClass;
+
+            await _db.SaveChangesAsync(cancellationToken);
+            return NoContent();
+        }
+
+        // POST: api/formpraveen/batch-insert
+        [HttpPost("batch-insert/{regionNo}/{sessionNo}")]
+        public async Task<IActionResult> BatchInsert(int regionNo, short sessionNo, [FromBody] Models.BatchInsertRequest request, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (request.EndRollNo < request.StartRollNo)
+                return BadRequest("EndRollNo must be greater than or equal to StartRollNo.");
+
+            var duplicates = await _db.FormPraveens
+                .AnyAsync(f => f.RegionNo == regionNo && f.SessionNo == sessionNo && f.RollNo >= request.StartRollNo && f.RollNo <= request.EndRollNo, cancellationToken);
+
+            if (duplicates)
+                return Conflict("Duplicate roll numbers found in the specified region/session.");
+
+            var entities = new List<FormPraveen>();
+            for (var r = request.StartRollNo; r <= request.EndRollNo; r++)
+            {
+                entities.Add(new FormPraveen
+                {
+                    RollNo = (short)r,
+                    RegionNo = regionNo,
+                    SessionNo = sessionNo,
+                    Name = r == request.StartRollNo ? request.StartName : (r == request.EndRollNo ? request.EndName : null),
+                    FormCentre = request.CentreCode,
+                    ExamCentre = request.CentreCode,
+                    DummyCentreCode = 0
+                });
+            }
+
+            await _db.FormPraveens.AddRangeAsync(entities, cancellationToken);
+            try
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException("Batch insert failed.", ex);
+            }
+
+            return Ok(new { inserted = entities.Count });
+        }
+
         // GET: api/formpraveen/paged?pageNumber=1&pageSize=50&sessionNo=123
         [HttpGet("paged")]
         public async Task<IActionResult> GetPaged(
@@ -133,6 +200,42 @@ namespace mrsexam_backend.Controllers
             await _db.SaveChangesAsync(cancellationToken);
 
             return CreatedAtAction(nameof(Get), new { rollNo = model.RollNo, regionNo = model.RegionNo, sessionNo = model.SessionNo }, model);
+        }
+
+        // POST: api/formpraveen/insert-after/{previousRollNo}/{regionNo}/{sessionNo}
+        [HttpPost("insert-after/{previousRollNo}/{regionNo}/{sessionNo}")]
+        public async Task<IActionResult> InsertAfter(short previousRollNo, int regionNo, short sessionNo, [FromBody] FormPraveen model, CancellationToken cancellationToken)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            var lastRollNo = await _db.FormPraveens.Where(f => f.RegionNo == regionNo && f.SessionNo == sessionNo).Select(f => (short?)f.RollNo).MaxAsync(cancellationToken) ?? 0;
+            var newRollNo = (previousRollNo >= 0 && previousRollNo <= lastRollNo) ? (short)(previousRollNo + 1) : (short)(lastRollNo + 1);
+
+            await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                if (newRollNo <= lastRollNo)
+                {
+                    await _db.Database.ExecuteSqlRawAsync(
+                        "UPDATE FORM_PRAVEEN SET ROLL_NO = ROLL_NO + 1 WHERE REGION_NO = {0} AND SESSION_NO = {1} AND ROLL_NO >= {2}",
+                        new object[] { regionNo, sessionNo, newRollNo },
+                        cancellationToken);
+                }
+
+                model.RollNo = newRollNo;
+                model.RegionNo = regionNo;
+                model.SessionNo = sessionNo;
+                _db.FormPraveens.Add(model);
+                await _db.SaveChangesAsync(cancellationToken);
+                await tx.CommitAsync(cancellationToken);
+
+                return CreatedAtAction(nameof(Get), new { rollNo = model.RollNo, regionNo = model.RegionNo, sessionNo = model.SessionNo }, model);
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync(cancellationToken);
+                throw new InvalidOperationException("An error occurred while inserting the record.", ex);
+            }
         }
 
         // PUT: api/formpraveen/{rollNo}/{regionNo}/{sessionNo}

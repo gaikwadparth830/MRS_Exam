@@ -796,6 +796,37 @@
         }
       }
     },
+    "/api/FormBalbodhini/batch-insert": {
+      "post": {
+        "tags": [
+          "FormBalbodhini"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/FormBalbodhini/paged": {
       "get": {
         "tags": [
@@ -1033,6 +1064,79 @@
         }
       }
     },
+    "/api/FormBalbodhini/update-marks": {
+      "patch": {
+        "tags": [
+          "FormBalbodhini"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarksRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarksRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarksRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormBalbodhini/insert-after/{previousSrNo}": {
+      "post": {
+        "tags": [
+          "FormBalbodhini"
+        ],
+        "parameters": [
+          {
+            "name": "previousSrNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormBalbodhini"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormBalbodhini"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormBalbodhini"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/FormPandit": {
       "get": {
         "tags": [
@@ -1063,6 +1167,68 @@
             "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/FormPandit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPandit/update-marks": {
+      "patch": {
+        "tags": [
+          "FormPandit"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarksRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarksRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarksRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPandit/batch-insert": {
+      "post": {
+        "tags": [
+          "FormPandit"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
               }
             }
           }
@@ -1315,6 +1481,57 @@
         }
       }
     },
+    "/api/FormPandit/insert-after/{previousRollNo}/{sessionNo}": {
+      "post": {
+        "tags": [
+          "FormPandit"
+        ],
+        "parameters": [
+          {
+            "name": "previousRollNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sessionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPandit"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPandit"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPandit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/FormPrabodh": {
       "get": {
         "tags": [
@@ -1345,6 +1562,68 @@
             "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/FormPrabodh"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPrabodh/update-marks": {
+      "patch": {
+        "tags": [
+          "FormPrabodh"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarksRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarksRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarksRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPrabodh/batch-insert": {
+      "post": {
+        "tags": [
+          "FormPrabodh"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
               }
             }
           }
@@ -1586,6 +1865,79 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPrabodh/insert-after/{previousSrNo}": {
+      "post": {
+        "tags": [
+          "FormPrabodh"
+        ],
+        "parameters": [
+          {
+            "name": "previousSrNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPrabodh"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPrabodh"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPrabodh"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPrathamik/batch-insert": {
+      "post": {
+        "tags": [
+          "FormPrathamik"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -1871,6 +2223,48 @@
         }
       }
     },
+    "/api/FormPrathamik/insert-after/{previousSrNo}": {
+      "post": {
+        "tags": [
+          "FormPrathamik"
+        ],
+        "parameters": [
+          {
+            "name": "previousSrNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPrathamik"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPrathamik"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPrathamik"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/FormPraveen": {
       "get": {
         "tags": [
@@ -1901,6 +2295,88 @@
             "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/FormPraveen"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPraveen/update-marks": {
+      "patch": {
+        "tags": [
+          "FormPraveen"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarksRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarksRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarksRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPraveen/batch-insert/{regionNo}/{sessionNo}": {
+      "post": {
+        "tags": [
+          "FormPraveen"
+        ],
+        "parameters": [
+          {
+            "name": "regionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sessionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
               }
             }
           }
@@ -2203,6 +2679,66 @@
         }
       }
     },
+    "/api/FormPraveen/insert-after/{previousRollNo}/{regionNo}/{sessionNo}": {
+      "post": {
+        "tags": [
+          "FormPraveen"
+        ],
+        "parameters": [
+          {
+            "name": "previousRollNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "regionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "sessionNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPraveen"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPraveen"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPraveen"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/FormPraveshika": {
       "get": {
         "tags": [
@@ -2233,6 +2769,68 @@
             "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/FormPraveshika"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPraveshika/update-marks": {
+      "patch": {
+        "tags": [
+          "FormPraveshika"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarksRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarksRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarksRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormPraveshika/batch-insert": {
+      "post": {
+        "tags": [
+          "FormPraveshika"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
               }
             }
           }
@@ -2481,6 +3079,48 @@
         }
       }
     },
+    "/api/FormPraveshika/insert-after/{previousSrNo}": {
+      "post": {
+        "tags": [
+          "FormPraveshika"
+        ],
+        "parameters": [
+          {
+            "name": "previousSrNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPraveshika"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPraveshika"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormPraveshika"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/FormSubodh": {
       "get": {
         "tags": [
@@ -2511,6 +3151,68 @@
             "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/FormSubodh"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormSubodh/update-marks": {
+      "patch": {
+        "tags": [
+          "FormSubodh"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarksRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarksRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMarksRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormSubodh/batch-insert": {
+      "post": {
+        "tags": [
+          "FormSubodh"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInsertRequest"
               }
             }
           }
@@ -2752,6 +3454,48 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/FormSubodh/insert-after/{previousSrNo}": {
+      "post": {
+        "tags": [
+          "FormSubodh"
+        ],
+        "parameters": [
+          {
+            "name": "previousSrNo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormSubodh"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormSubodh"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormSubodh"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -4204,6 +4948,46 @@
           "col2RollNo": {
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "BatchInsertRequest": {
+        "required": [
+          "endRollNo",
+          "regionNo",
+          "sessionNo",
+          "startRollNo"
+        ],
+        "type": "object",
+        "properties": {
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "centreCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "regionNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startRollNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "startName": {
+            "type": "string",
+            "nullable": true
+          },
+          "endRollNo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "endName": {
+            "type": "string",
             "nullable": true
           }
         },
@@ -5707,6 +6491,76 @@
           "totForms": {
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateMarksRequest": {
+        "type": "object",
+        "properties": {
+          "rollNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "regionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "sessionNo": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "marks1": {
+            "type": "string",
+            "nullable": true
+          },
+          "marks2": {
+            "type": "string",
+            "nullable": true
+          },
+          "marks3": {
+            "type": "string",
+            "nullable": true
+          },
+          "marks4": {
+            "type": "string",
+            "nullable": true
+          },
+          "marks5": {
+            "type": "string",
+            "nullable": true
+          },
+          "marks6": {
+            "type": "string",
+            "nullable": true
+          },
+          "oralMarks": {
+            "type": "string",
+            "nullable": true
+          },
+          "totMarks": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "grade": {
+            "type": "string",
+            "nullable": true
+          },
+          "result": {
+            "type": "string",
+            "nullable": true
+          },
+          "undFlag": {
+            "type": "string",
+            "nullable": true
+          },
+          "undClass": {
+            "type": "string",
             "nullable": true
           }
         },

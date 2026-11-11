@@ -36,6 +36,12 @@ import {
   type Session,
 } from '../../api/generatedClient'
 import { httpClient } from '../../api/httpClient'
+import { MarathiNameField, MarathiPhoneticToggle } from '../../components/MarathiNameField'
+import {
+  lookupExactMarathiSpelling,
+  marathiNameFieldSx,
+  transliterateEnglishToDevanagari as offlineTransliterate,
+} from '../../utils/marathiTransliterate'
 
 type FieldType = 'text' | 'number'
 
@@ -68,163 +74,6 @@ type PageResult<T> = {
   totalCount: number
   pageNumber: number
   pageSize: number
-}
-
-const transliterateEnglishToDevanagari = (input: string): string => {
-  const text = input.toLowerCase()
-
-  const vowels: Record<string, string> = {
-    ai: '\u0910',
-    au: '\u0914',
-    aa: '\u0906',
-    ee: '\u0908',
-    ii: '\u0908',
-    oo: '\u090A',
-    uu: '\u090A',
-    ri: '\u090B',
-    a: '\u0905',
-    i: '\u0907',
-    u: '\u0909',
-    e: '\u090F',
-    o: '\u0913',
-  }
-
-  const matras: Record<string, string> = {
-    ai: '\u0948',
-    au: '\u094C',
-    aa: '\u093E',
-    ee: '\u0940',
-    ii: '\u0940',
-    oo: '\u0942',
-    uu: '\u0942',
-    ri: '\u0943',
-    a: '',
-    i: '\u093F',
-    u: '\u0941',
-    e: '\u0947',
-    o: '\u094B',
-  }
-
-  const consonants: Record<string, string> = {
-    ksh: '\u0915\u094D\u0937',
-    chh: '\u091B',
-    th: '\u0925',
-    dh: '\u0927',
-    ph: '\u092B',
-    bh: '\u092D',
-    sh: '\u0936',
-    kh: '\u0916',
-    gh: '\u0918',
-    ch: '\u091A',
-    jh: '\u091D',
-    ng: '\u0919',
-    ny: '\u091E',
-    tr: '\u0924\u094D\u0930',
-    gy: '\u091C\u094D\u091E',
-    k: '\u0915',
-    g: '\u0917',
-    c: '\u0915',
-    j: '\u091C',
-    t: '\u0924',
-    d: '\u0926',
-    n: '\u0928',
-    p: '\u092A',
-    b: '\u092C',
-    m: '\u092E',
-    y: '\u092F',
-    r: '\u0930',
-    l: '\u0932',
-    v: '\u0935',
-    w: '\u0935',
-    s: '\u0938',
-    h: '\u0939',
-    q: '\u0915',
-    x: '\u0915\u094D\u0938',
-    f: '\u092B',
-    z: '\u091C',
-  }
-
-  const vowelTokens = ['ai', 'au', 'aa', 'ee', 'ii', 'oo', 'uu', 'ri', 'a', 'i', 'u', 'e', 'o']
-  const consonantTokens = [
-    'ksh',
-    'chh',
-    'th',
-    'dh',
-    'ph',
-    'bh',
-    'sh',
-    'kh',
-    'gh',
-    'ch',
-    'jh',
-    'ng',
-    'ny',
-    'tr',
-    'gy',
-    'k',
-    'g',
-    'c',
-    'j',
-    't',
-    'd',
-    'n',
-    'p',
-    'b',
-    'm',
-    'y',
-    'r',
-    'l',
-    'v',
-    'w',
-    's',
-    'h',
-    'q',
-    'x',
-    'f',
-    'z',
-  ]
-
-  let output = ''
-  let index = 0
-
-  while (index < text.length) {
-    const current = text[index]
-
-    if (!/[a-z]/.test(current)) {
-      output += input[index]
-      index += 1
-      continue
-    }
-
-    const consonantToken = consonantTokens.find((token) => text.startsWith(token, index))
-    if (consonantToken) {
-      const base = consonants[consonantToken]
-      const nextIndex = index + consonantToken.length
-      const vowelToken = vowelTokens.find((token) => text.startsWith(token, nextIndex))
-
-      if (vowelToken) {
-        output += `${base}${matras[vowelToken]}`
-        index = nextIndex + vowelToken.length
-      } else {
-        output += base
-        index = nextIndex
-      }
-
-      continue
-    }
-
-    const vowelToken = vowelTokens.find((token) => text.startsWith(token, index))
-    if (vowelToken) {
-      output += vowels[vowelToken]
-      index += vowelToken.length
-      continue
-    }
-
-    output += input[index]
-    index += 1
-  }
-
-  return output
 }
 
 const fetchGoogleMarathiTransliteration = async (input: string): Promise<string | null> => {
@@ -345,21 +194,32 @@ const fetchPagedList = async <T,>(path: string, query: PaginationQuery): Promise
 
 const regionCrud: CrudConfig<Region> = {
   title: 'Region Master',
-  description: 'Create, update, and remove regions.',
+  description: 'Create, update, and remove regions. Enter Region Name in Marathi manually (phonetic assist optional).',
   keyFields: ['regionNo'],
   fields: [
     { key: 'regionNo', label: 'Region No', type: 'number', required: true },
-    { key: 'regionName', label: 'Region Name', type: 'text' },
+    { key: 'regionName', label: 'Region Name (Marathi)', type: 'text', required: true },
     { key: 'seatRegionNo', label: 'Seat Region No', type: 'number' },
     { key: 'regionNameEng', label: 'Region Name (Eng)', type: 'text' },
   ],
   createEmpty: () => ({ regionNo: 0, regionName: '', seatRegionNo: null, regionNameEng: '' }),
   list: async (query) => fetchPagedList<Region>('/api/Regions/paged', query),
   create: async (payload) => {
-    await RegionsService.postApiRegions({ requestBody: payload })
+    await RegionsService.postApiRegions({
+      requestBody: {
+        ...payload,
+        regionNameEng: payload.regionNameEng?.trim() ? payload.regionNameEng.trim() : null,
+      },
+    })
   },
   update: async (payload) => {
-    await RegionsService.putApiRegions({ id: Number(payload.regionNo), requestBody: payload })
+    await RegionsService.putApiRegions({
+      id: Number(payload.regionNo),
+      requestBody: {
+        ...payload,
+        regionNameEng: payload.regionNameEng?.trim() ? payload.regionNameEng.trim() : null,
+      },
+    })
   },
   remove: async (payload) => {
     await RegionsService.deleteApiRegions({ id: Number(payload.regionNo) })
@@ -368,40 +228,62 @@ const regionCrud: CrudConfig<Region> = {
 
 const districtCrud: CrudConfig<District> = {
   title: 'District Master',
-  description: 'Create, update, and remove districts.',
+  description: 'Create, update, and remove districts. District Name, District City, and Short Name can be entered in Marathi.',
   keyFields: ['districtName'],
   fields: [
-    { key: 'districtName', label: 'District Name', type: 'text', required: true },
+    { key: 'districtName', label: 'District Name (Marathi)', type: 'text', required: true },
     { key: 'regionNo', label: 'Region No', type: 'number' },
-    { key: 'districtCity', label: 'District City', type: 'text' },
-    { key: 'shortName', label: 'Short Name', type: 'text' },
+    { key: 'districtCity', label: 'District City (Marathi)', type: 'text' },
+    { key: 'shortName', label: 'Short Name (Marathi)', type: 'text' },
     { key: 'seatDistrictNo', label: 'Seat District No', type: 'number' },
   ],
   createEmpty: () => ({ districtName: '', regionNo: null, districtCity: '', shortName: '', seatDistrictNo: null }),
   list: async (query) => fetchPagedList<District>('/api/Districts/paged', query),
   create: async (payload) => {
-    await DistrictsService.postApiDistricts({ requestBody: payload })
+    await DistrictsService.postApiDistricts({
+      requestBody: {
+        ...payload,
+        districtCity: payload.districtCity?.trim() ? payload.districtCity.trim() : null,
+        shortName: payload.shortName?.trim() ? payload.shortName.trim() : null,
+      },
+    })
   },
   update: async (payload) => {
-    await DistrictsService.putApiDistricts({ id: payload.districtName, requestBody: payload })
+    await DistrictsService.putApiDistricts({
+      id: payload.districtName,
+      requestBody: {
+        ...payload,
+        districtCity: payload.districtCity?.trim() ? payload.districtCity.trim() : null,
+        shortName: payload.shortName?.trim() ? payload.shortName.trim() : null,
+      },
+    })
   },
   remove: async (payload) => {
     await DistrictsService.deleteApiDistricts({ id: payload.districtName })
   },
 }
 
+const centerMarathiFieldKeys = new Set([
+  'centreNo',
+  'addressTo',
+  'centreName',
+  'add1',
+  'add2',
+  'city',
+])
+
 const centerCrud: CrudConfig<Center> = {
   title: 'Center Master',
-  description: 'Create, update, and remove centers.',
+  description: 'Enter center details in Marathi. Pincode and Phone stay in English. District and flags use dropdowns.',
   keyFields: ['centreNo'],
   fields: [
-    { key: 'centreNo', label: 'Center No', type: 'text', required: true },
-    { key: 'addressTo', label: 'Address To', type: 'text' },
-    { key: 'centreName', label: 'Center Name', type: 'text' },
+    { key: 'centreNo', label: 'Center No (Marathi)', type: 'text', required: true },
+    { key: 'addressTo', label: 'Address To (Marathi)', type: 'text' },
+    { key: 'centreName', label: 'Center Name (Marathi)', type: 'text' },
     { key: 'districtName', label: 'District Name', type: 'text' },
-    { key: 'add1', label: 'Add1', type: 'text' },
-    { key: 'add2', label: 'Add2', type: 'text' },
-    { key: 'city', label: 'City', type: 'text' },
+    { key: 'add1', label: 'Add1 (Marathi)', type: 'text' },
+    { key: 'add2', label: 'Add2 (Marathi)', type: 'text' },
+    { key: 'city', label: 'City (Marathi)', type: 'text' },
     { key: 'pincode', label: 'Pincode', type: 'text' },
     { key: 'phone', label: 'Phone', type: 'text' },
     { key: 'panditFlag', label: 'Pandit Flag', type: 'text' },
@@ -422,10 +304,39 @@ const centerCrud: CrudConfig<Center> = {
   }),
   list: async (query) => fetchPagedList<Center>('/api/Centers/paged', query),
   create: async (payload) => {
-    await CentersService.postApiCenters({ requestBody: payload })
+    await CentersService.postApiCenters({
+      requestBody: {
+        ...payload,
+        addressTo: payload.addressTo?.trim() ? payload.addressTo.trim() : null,
+        centreName: payload.centreName?.trim() ? payload.centreName.trim() : null,
+        districtName: payload.districtName?.trim() ? payload.districtName.trim() : null,
+        add1: payload.add1?.trim() ? payload.add1.trim() : null,
+        add2: payload.add2?.trim() ? payload.add2.trim() : null,
+        city: payload.city?.trim() ? payload.city.trim() : null,
+        pincode: payload.pincode?.trim() ? payload.pincode.trim() : null,
+        phone: payload.phone?.trim() ? payload.phone.trim() : null,
+        panditFlag: payload.panditFlag?.trim() ? payload.panditFlag.trim() : null,
+        closeFlag: payload.closeFlag?.trim() ? payload.closeFlag.trim() : null,
+      },
+    })
   },
   update: async (payload) => {
-    await CentersService.putApiCenters({ id: payload.centreNo, requestBody: payload })
+    await CentersService.putApiCenters({
+      id: payload.centreNo,
+      requestBody: {
+        ...payload,
+        addressTo: payload.addressTo?.trim() ? payload.addressTo.trim() : null,
+        centreName: payload.centreName?.trim() ? payload.centreName.trim() : null,
+        districtName: payload.districtName?.trim() ? payload.districtName.trim() : null,
+        add1: payload.add1?.trim() ? payload.add1.trim() : null,
+        add2: payload.add2?.trim() ? payload.add2.trim() : null,
+        city: payload.city?.trim() ? payload.city.trim() : null,
+        pincode: payload.pincode?.trim() ? payload.pincode.trim() : null,
+        phone: payload.phone?.trim() ? payload.phone.trim() : null,
+        panditFlag: payload.panditFlag?.trim() ? payload.panditFlag.trim() : null,
+        closeFlag: payload.closeFlag?.trim() ? payload.closeFlag.trim() : null,
+      },
+    })
   },
   remove: async (payload) => {
     await CentersService.deleteApiCenters({ id: payload.centreNo })
@@ -465,12 +376,12 @@ const examCrud: CrudConfig<Exam> = {
 
 const paperCrud: CrudConfig<Paper> = {
   title: 'Paper Master',
-  description: 'Create, update, and remove papers.',
+  description: 'Create, update, and remove papers. Enter Paper Name in Marathi.',
   keyFields: ['paperNo', 'examNo'],
   fields: [
     { key: 'paperNo', label: 'Paper No', type: 'number', required: true },
     { key: 'examNo', label: 'Exam Name', type: 'number', required: true },
-    { key: 'paperName', label: 'Paper Name', type: 'text' },
+    { key: 'paperName', label: 'Paper Name (Marathi)', type: 'text' },
     { key: 'passingMarks', label: 'Passing Marks', type: 'number' },
     { key: 'exemptionMarks', label: 'Exemption Marks', type: 'number' },
     { key: 'minMarks', label: 'Min Marks', type: 'number' },
@@ -485,10 +396,22 @@ const paperCrud: CrudConfig<Paper> = {
   }),
   list: async (query) => fetchPagedList<Paper>('/api/Papers/paged', query),
   create: async (payload) => {
-    await PapersService.postApiPapers({ requestBody: payload })
+    await PapersService.postApiPapers({
+      requestBody: {
+        ...payload,
+        paperName: payload.paperName?.trim() ? payload.paperName.trim() : null,
+      },
+    })
   },
   update: async (payload) => {
-    await PapersService.putApiPapers({ paperNo: payload.paperNo, examNo: payload.examNo, requestBody: payload })
+    await PapersService.putApiPapers({
+      paperNo: payload.paperNo,
+      examNo: payload.examNo,
+      requestBody: {
+        ...payload,
+        paperName: payload.paperName?.trim() ? payload.paperName.trim() : null,
+      },
+    })
   },
   remove: async (payload) => {
     await PapersService.deleteApiPapers({ paperNo: payload.paperNo, examNo: payload.examNo })
@@ -497,21 +420,34 @@ const paperCrud: CrudConfig<Paper> = {
 
 const sessionCrud: CrudConfig<Session> = {
   title: 'Session Master',
-  description: 'Create, update, and remove sessions.',
+  description: 'Create, update, and remove sessions. Enter Month in Marathi.',
   keyFields: ['sessionNo'],
   fields: [
     { key: 'sessionNo', label: 'Session No', type: 'number', required: true },
-    { key: 'month', label: 'Month', type: 'text' },
+    { key: 'month', label: 'Month (Marathi)', type: 'text' },
     { key: 'resultDate', label: 'Result Date', type: 'text' },
     { key: 'closeFlag', label: 'Close Flag', type: 'text' },
   ],
   createEmpty: () => ({ sessionNo: 0, month: '', resultDate: '', closeFlag: '' }),
   list: async (query) => fetchPagedList<Session>('/api/Sessions/paged', query),
   create: async (payload) => {
-    await SessionsService.postApiSessions({ requestBody: payload })
+    await SessionsService.postApiSessions({
+      requestBody: {
+        ...payload,
+        month: payload.month?.trim() ? payload.month.trim() : null,
+        closeFlag: payload.closeFlag?.trim() ? payload.closeFlag.trim() : null,
+      },
+    })
   },
   update: async (payload) => {
-    await SessionsService.putApiSessions({ id: payload.sessionNo, requestBody: payload })
+    await SessionsService.putApiSessions({
+      id: payload.sessionNo,
+      requestBody: {
+        ...payload,
+        month: payload.month?.trim() ? payload.month.trim() : null,
+        closeFlag: payload.closeFlag?.trim() ? payload.closeFlag.trim() : null,
+      },
+    })
   },
   remove: async (payload) => {
     await SessionsService.deleteApiSessions({ id: payload.sessionNo })
@@ -576,6 +512,7 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
   const [examOptions, setExamOptions] = useState<Exam[]>([])
   const [centerSearchValue, setCenterSearchValue] = useState('')
   const [editingKey, setEditingKey] = useState<string | null>(null)
+  const [phoneticAssist, setPhoneticAssist] = useState(true)
   const [pageNumber, setPageNumber] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [totalCount, setTotalCount] = useState(0)
@@ -765,38 +702,6 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config, pageNumber, pageSize])
 
-  const transliterateRegionName = async (englishName: string) => {
-    const trimmedEnglishName = englishName.trim()
-    const requestId = ++transliterationRequestId.current
-
-    if (!trimmedEnglishName) {
-      setForm((current) => ({
-        ...current,
-        regionName: '',
-      }))
-      return
-    }
-
-    const byGoogle = await fetchGoogleMarathiTransliteration(trimmedEnglishName)
-    const translated = byGoogle ?? transliterateEnglishToDevanagari(trimmedEnglishName)
-
-    if (requestId !== transliterationRequestId.current) {
-      return
-    }
-
-    setForm((current) => {
-      const currentEnglishName = String((current as Record<string, unknown>).regionNameEng ?? '').trim()
-      if (currentEnglishName !== trimmedEnglishName) {
-        return current
-      }
-
-      return {
-        ...current,
-        regionName: translated,
-      }
-    })
-  }
-
   const transliterateFormField = async (
     fieldKey: string,
     rawValue: string,
@@ -809,8 +714,9 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
       return
     }
 
-    const byGoogle = await fetchGoogleMarathiTransliteration(normalizedValue)
-    const translated = byGoogle ?? transliterateEnglishToDevanagari(normalizedValue)
+    const exact = lookupExactMarathiSpelling(normalizedValue)
+    const byGoogle = exact ? null : await fetchGoogleMarathiTransliteration(normalizedValue)
+    const translated = exact ?? byGoogle ?? offlineTransliterate(normalizedValue)
 
     if (requestId !== transliterationRequestId.current) {
       return
@@ -836,6 +742,7 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
     const isPaperMaster = config.title === 'Paper Master'
     const isSessionMaster = config.title === 'Session Master'
     const isDistrictNameField = key === 'districtName'
+    const isDistrictCityField = key === 'districtCity'
     const isShortNameField = key === 'shortName'
     const isExamNameField = key === 'examName'
     const isPaperNameField = key === 'paperName'
@@ -856,7 +763,7 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
       return
     }
 
-    if (isDistrictMaster && !isDistrictNameField && !isShortNameField) {
+    if (isDistrictMaster && !isDistrictNameField && !isDistrictCityField && !isShortNameField) {
       return
     }
 
@@ -890,7 +797,7 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
     const appendSpace = event.key === ' '
 
     const targetField = isDistrictMaster
-      ? (isShortNameField ? 'shortName' : 'districtName')
+      ? (isShortNameField ? 'shortName' : isDistrictCityField ? 'districtCity' : 'districtName')
       : key
 
     void transliterateFormField(targetField, rawValue, appendSpace)
@@ -899,18 +806,10 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
   const onChange = (key: string, type: FieldType, rawValue: string) => {
     const value = type === 'number' ? (rawValue === '' ? null : Number(rawValue)) : rawValue
 
-    setForm((current) => {
-      const next = {
-        ...current,
-        [key]: value,
-      } as Record<string, unknown>
-
-      if (config.title === 'Region Master' && key === 'regionNameEng') {
-        void transliterateRegionName(rawValue)
-      }
-
-      return next
-    })
+    setForm((current) => ({
+      ...current,
+      [key]: value,
+    }))
   }
 
   const resetForm = () => {
@@ -930,8 +829,9 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
 
       const value = (form as Record<string, unknown>)[field.key]
       const isEmptyPaperExamSelection = config.title === 'Paper Master' && field.key === 'examNo' && Number(value) <= 0
+      const isBlankText = typeof value === 'string' && value.trim() === ''
 
-      if (value === null || value === undefined || value === '' || isEmptyPaperExamSelection) {
+      if (value === null || value === undefined || value === '' || isBlankText || isEmptyPaperExamSelection) {
         setError(`${field.label} is required.`)
         return
       }
@@ -983,7 +883,9 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
 
       await loadRows({ pageNumber, pageSize })
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'Delete operation failed.')
+      const body = (requestError as { body?: { message?: unknown } } | null)?.body
+      const apiMessage = typeof body?.message === 'string' ? body.message.trim() : ''
+      setError(apiMessage || (requestError instanceof Error ? requestError.message : 'Delete operation failed.'))
     } finally {
       setLoading(false)
     }
@@ -1057,10 +959,24 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
             </Box>
 
             <Box component="form" onSubmit={onSubmit}>
+              {(config.title === 'Region Master'
+                || config.title === 'District Master'
+                || config.title === 'Center Master'
+                || config.title === 'Session Master'
+                || config.title === 'Paper Master') ? (
+                <Box sx={{ mb: 2 }}>
+                  <MarathiPhoneticToggle
+                    enabled={phoneticAssist}
+                    onChange={setPhoneticAssist}
+                  />
+                </Box>
+              ) : null}
+
               <Box
                 sx={{
                   display: 'grid',
                   gap: 2,
+                  alignItems: 'start',
                   gridTemplateColumns: {
                     xs: '1fr',
                     sm: 'repeat(2, minmax(0, 1fr))',
@@ -1074,14 +990,40 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
                   const isDistrictRegionField = config.title === 'District Master' && field.key === 'regionNo'
                   const isCenterDistrictField = config.title === 'Center Master' && field.key === 'districtName'
                   const isPaperExamField = config.title === 'Paper Master' && field.key === 'examNo'
+                  const isRegionMarathiNameField =
+                    config.title === 'Region Master' && field.key === 'regionName'
+                  const isDistrictMarathiNameField =
+                    config.title === 'District Master'
+                    && (field.key === 'districtName' || field.key === 'districtCity' || field.key === 'shortName')
+                  const isCenterMarathiTextField =
+                    config.title === 'Center Master' && centerMarathiFieldKeys.has(field.key)
+                  const isSessionMonthMarathiField =
+                    config.title === 'Session Master' && field.key === 'month'
+                  const isPaperNameMarathiField =
+                    config.title === 'Paper Master' && field.key === 'paperName'
                   const isCenterFlagField =
                     config.title === 'Center Master'
                     && (field.key === 'panditFlag' || field.key === 'closeFlag')
 
                   return (
-                    <Box key={field.key}>
-                      {isDistrictRegionField ? (
-                        <FormControl fullWidth>
+                    <Box key={field.key} sx={{ minWidth: 0, width: '100%' }}>
+                      {isRegionMarathiNameField
+                        || isDistrictMarathiNameField
+                        || isCenterMarathiTextField
+                        || isSessionMonthMarathiField
+                        || isPaperNameMarathiField ? (
+                        <MarathiNameField
+                          label={field.label}
+                          value={value === null || value === undefined ? '' : String(value)}
+                          required={Boolean(field.required)}
+                          disabled={Boolean(editingKey && isKeyField)}
+                          phoneticAssist={phoneticAssist}
+                          showAssistControls={false}
+                          onChange={(name) => onChange(field.key, 'text', name)}
+                          helperText=""
+                        />
+                      ) : isDistrictRegionField ? (
+                        <FormControl fullWidth size="small">
                           <InputLabel id="district-region-no-label">Region No</InputLabel>
                           <Select
                             labelId="district-region-no-label"
@@ -1099,7 +1041,7 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
                           </Select>
                         </FormControl>
                       ) : isCenterDistrictField ? (
-                        <FormControl fullWidth>
+                        <FormControl fullWidth size="small">
                           <InputLabel id="center-district-name-label">District Name</InputLabel>
                           <Select
                             labelId="center-district-name-label"
@@ -1117,7 +1059,7 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
                           </Select>
                         </FormControl>
                       ) : isCenterFlagField ? (
-                        <FormControl fullWidth>
+                        <FormControl fullWidth size="small">
                           <InputLabel id={`center-flag-${field.key}-label`}>{field.label}</InputLabel>
                           <Select
                             labelId={`center-flag-${field.key}-label`}
@@ -1132,7 +1074,7 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
                           </Select>
                         </FormControl>
                       ) : isPaperExamField ? (
-                        <FormControl fullWidth>
+                        <FormControl fullWidth size="small">
                           <InputLabel id="paper-exam-no-label">{field.label}</InputLabel>
                           <Select
                             labelId="paper-exam-no-label"
@@ -1155,6 +1097,7 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
                         </FormControl>
                       ) : (
                         <TextField
+                          size="small"
                           type={field.type === 'number' ? 'number' : 'text'}
                           label={field.label}
                           value={value === null || value === undefined ? '' : String(value)}
@@ -1277,7 +1220,24 @@ export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
                                 return <TableCell key={field.key}>{displayValue}</TableCell>
                               }
 
-                              return <TableCell key={field.key}>{formatValue(rawValue)}</TableCell>
+                              const isMarathiTextCell =
+                                (config.title === 'Region Master' && field.key === 'regionName')
+                                || (config.title === 'District Master'
+                                  && (field.key === 'districtName'
+                                    || field.key === 'districtCity'
+                                    || field.key === 'shortName'))
+                                || (config.title === 'Center Master' && centerMarathiFieldKeys.has(field.key))
+                                || (config.title === 'Session Master' && field.key === 'month')
+                                || (config.title === 'Paper Master' && field.key === 'paperName')
+
+                              return (
+                                <TableCell
+                                  key={field.key}
+                                  sx={isMarathiTextCell ? marathiNameFieldSx['& .MuiInputBase-input'] : undefined}
+                                >
+                                  {formatValue(rawValue)}
+                                </TableCell>
+                              )
                             })}
                             <TableCell>
                               <Stack direction="row" spacing={1}>

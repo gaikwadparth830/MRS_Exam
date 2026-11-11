@@ -2,11 +2,28 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { BatchInsertRequest } from '../models/BatchInsertRequest';
 import type { FormPrathamik } from '../models/FormPrathamik';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
 export class FormPrathamikService {
+    /**
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static postApiFormPrathamikBatchInsert({
+        requestBody,
+    }: {
+        requestBody?: BatchInsertRequest,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/FormPrathamik/batch-insert',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
     /**
      * @returns any OK
      * @throws ApiError
@@ -194,6 +211,27 @@ export class FormPrathamikService {
             path: {
                 'regionNo': regionNo,
             },
+        });
+    }
+    /**
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static postApiFormPrathamikInsertAfter({
+        previousSrNo,
+        requestBody,
+    }: {
+        previousSrNo: number,
+        requestBody?: FormPrathamik,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/FormPrathamik/insert-after/{previousSrNo}',
+            path: {
+                'previousSrNo': previousSrNo,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
 }

@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { BatchInsertRequest } from '../models/BatchInsertRequest';
 import type { FormPraveshika } from '../models/FormPraveshika';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
@@ -29,6 +30,22 @@ export class FormPraveshikaService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/FormPraveshika',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static postApiFormPraveshikaBatchInsert({
+        requestBody,
+    }: {
+        requestBody?: BatchInsertRequest,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/FormPraveshika/batch-insert',
             body: requestBody,
             mediaType: 'application/json',
         });
@@ -194,6 +211,27 @@ export class FormPraveshikaService {
             path: {
                 'regionNo': regionNo,
             },
+        });
+    }
+    /**
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static postApiFormPraveshikaInsertAfter({
+        previousSrNo,
+        requestBody,
+    }: {
+        previousSrNo: number,
+        requestBody?: FormPraveshika,
+    }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/FormPraveshika/insert-after/{previousSrNo}',
+            path: {
+                'previousSrNo': previousSrNo,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
         });
     }
 }
