@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using mrsexam_backend.Models;
+using mrsexam_backend.Services;
 
 namespace mrsexam_backend.Controllers
 {
@@ -9,8 +10,34 @@ namespace mrsexam_backend.Controllers
     public sealed class CentersController : ControllerBase
     {
         private readonly MrsexamContext _db;
+        private readonly CentreUnicodeMigrationService _unicodeMigration;
 
-        public CentersController(MrsexamContext db) => _db = db;
+        public CentersController(MrsexamContext db, CentreUnicodeMigrationService unicodeMigration)
+        {
+            _db = db;
+            _unicodeMigration = unicodeMigration;
+        }
+
+        // GET: api/centers/unicode-convert/preview
+        [HttpGet("unicode-convert/preview")]
+        public async Task<IActionResult> PreviewUnicodeConvert(CancellationToken cancellationToken)
+        {
+            var preview = await _unicodeMigration.PreviewAsync(cancellationToken);
+            return Ok(preview);
+        }
+
+        // POST: api/centers/unicode-convert/apply
+        [HttpPost("unicode-convert/apply")]
+        public async Task<IActionResult> ApplyUnicodeConvert(CancellationToken cancellationToken)
+        {
+            var result = await _unicodeMigration.ApplyAsync(cancellationToken);
+            if (result.Errors.Count > 0 && result.CentresUpdated == 0)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
+        }
 
         // GET: api/centers
         [HttpGet]

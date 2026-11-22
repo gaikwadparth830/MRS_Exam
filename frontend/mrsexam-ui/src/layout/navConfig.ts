@@ -89,7 +89,61 @@ export const balbodhiniNav: NavGroup[] = [
   },
 ]
 
+export const prathamikNav: NavGroup[] = [
+  {
+    id: 'candidates',
+    label: 'Candidates',
+    items: [
+      { id: 'form-entry', label: 'Form Entry', description: 'Register Prathamik candidates' },
+      { id: 'batch-insert', label: 'Batch Insert', description: 'Insert placeholder names', supervisorOnly: true },
+    ],
+  },
+  {
+    id: 'processing',
+    label: 'Processing',
+    items: [
+      { id: 'marks', label: 'Marks Entry', description: 'Paper 1 and grace', comingSoon: true },
+      { id: 'set-rolls', label: 'Set Roll Numbers', description: 'Assign centre roll ranges', comingSoon: true },
+      { id: 'aur-rolls', label: 'Aur Roll Numbers', description: 'Number late null rolls', comingSoon: true },
+      { id: 'clear-rolls', label: 'Clear Roll Numbers', description: 'Blank rolls from a centre', comingSoon: true },
+      { id: 'generate-result', label: 'Generate Result', description: 'Pass, fail, grade, ranks', comingSoon: true },
+    ],
+  },
+  {
+    id: 'masters',
+    label: 'Masters',
+    items: [
+      { id: 'master-region', label: 'Region Master' },
+      { id: 'master-district', label: 'District Master' },
+      { id: 'master-centre', label: 'Centre Master' },
+      { id: 'master-exam', label: 'Exam Master' },
+      { id: 'master-paper', label: 'Paper Master' },
+      { id: 'master-session', label: 'Session Master' },
+      { id: 'select-session', label: 'Select Session' },
+    ],
+  },
+  {
+    id: 'supervisor',
+    label: 'Supervisor',
+    items: [
+      { id: 'reset-lock', label: 'Reset Result Lock', supervisorOnly: true },
+      { id: 'correct-marks', label: 'Correct Marks', supervisorOnly: true, comingSoon: true },
+    ],
+  },
+  {
+    id: 'reports',
+    label: 'Reports',
+    items: [
+      { id: 'report-attendance', label: 'Attendance Sheet', comingSoon: true },
+      { id: 'report-name-list', label: 'Name List', comingSoon: true },
+      { id: 'report-result-sheet', label: 'Result Sheet', comingSoon: true },
+      { id: 'report-certificate', label: 'Certificate', comingSoon: true },
+      { id: 'report-register', label: 'Register', comingSoon: true },
+    ],
+  },
+]
+
 export const defaultNavItemId: NavItemId = 'form-entry'
 
-export const findNavItem = (id: NavItemId): NavItem | undefined =>
-  balbodhiniNav.flatMap((group) => group.items).find((item) => item.id === id)
+export const findNavItem = (id: NavItemId, nav: NavGroup[] = balbodhiniNav): NavItem | undefined =>
+  nav.flatMap((group) => group.items).find((item) => item.id === id)

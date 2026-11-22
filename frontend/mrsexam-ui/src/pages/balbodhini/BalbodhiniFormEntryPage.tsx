@@ -25,6 +25,7 @@ import {
   type CentreResolve,
 } from '../../api/balbodhini/client'
 import { CentersService, type Center } from '../../api/generatedClient'
+import { CentreSearchField } from '../../components/CentreSearchField'
 import { MarathiNameField, MarathiPhoneticToggle } from '../../components/MarathiNameField'
 import { PageFrame } from '../../layout/PageFrame'
 import { containsDevanagari, marathiNameFieldSx } from '../../utils/marathiTransliterate'
@@ -136,6 +137,59 @@ export const BalbodhiniFormEntryPage = ({ defaultSessionNo, isLocked = false }: 
     [centres],
   )
 
+  const centreDisplayFromList = (centreNo: string): CentreResolve | null => {
+    const code = centreNo.trim()
+    if (!code) return null
+    const centre = centres.find((item) => item.centreNo === code)
+    if (!centre) return null
+    const name = centre.centreName?.trim() || ''
+    const city = centre.city?.trim() || '-'
+    return {
+      centreNo: centre.centreNo,
+      centreName: centre.centreName,
+      city: centre.city,
+      display: name ? `${name}, ${city}` : city,
+      districtName: centre.districtName,
+      regionNo: null,
+      regionName: null,
+      isClosed: (centre.closeFlag ?? '').trim().toUpperCase() === 'Y',
+    }
+  }
+
+  // Keep Form/Exam Centre Name fields in sync when navigating rows or centres load.
+  useEffect(() => {
+    const formCode = form.formCentre?.trim() ?? ''
+    setFormCentreInfo(formCode ? centreDisplayFromList(formCode) : null)
+    if (!formCode) return
+    void balbodhiniApi.resolveCentre(formCode)
+      .then((resolved) => {
+        setFormCentreInfo(resolved)
+        setForm((current) => (
+          current.formCentre?.trim() === formCode
+            ? { ...current, regionNo: resolved.regionNo ?? current.regionNo ?? null }
+            : current
+        ))
+      })
+      .catch(() => {
+        // Keep local display if API resolve fails.
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.formCentre, centres])
+
+  useEffect(() => {
+    const examCode = form.examCentre?.trim() ?? ''
+    setExamCentreInfo(examCode ? centreDisplayFromList(examCode) : null)
+    if (!examCode) return
+    void balbodhiniApi.resolveCentre(examCode)
+      .then((resolved) => {
+        setExamCentreInfo(resolved)
+      })
+      .catch(() => {
+        // Keep local display if API resolve fails.
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.examCentre, centres])
+
   const showRow = (nextIndex: number) => {
     if (rows.length === 0) return
     const safe = Math.max(0, Math.min(rows.length - 1, nextIndex))
@@ -148,17 +202,21 @@ export const BalbodhiniFormEntryPage = ({ defaultSessionNo, isLocked = false }: 
   }
 
   const onFormCentreChange = async (value: string) => {
+    const code = value.trim()
+    const local = code ? centreDisplayFromList(code) : null
+    setFormCentreInfo(local)
     setForm((current) => ({
       ...current,
       formCentre: value,
       examCentre: mode === 'new' || mode === 'edit' ? value : current.examCentre,
     }))
-    if (!value.trim()) {
-      setFormCentreInfo(null)
-      return
+    if (mode === 'new' || mode === 'edit') {
+      setExamCentreInfo(local)
     }
+    if (!code) return
+
     try {
-      const resolved = await balbodhiniApi.resolveCentre(value.trim())
+      const resolved = await balbodhiniApi.resolveCentre(code)
       setFormCentreInfo(resolved)
       setForm((current) => ({
         ...current,
@@ -170,24 +228,30 @@ export const BalbodhiniFormEntryPage = ({ defaultSessionNo, isLocked = false }: 
         setExamCentreInfo(resolved)
       }
     } catch (err) {
-      setFormCentreInfo(null)
-      setError(balbodhiniApi.messageFromError(err, 'Invalid form centre.'))
+      // Local name already shown; only warn if centre was not in the list.
+      if (!local) {
+        setFormCentreInfo(null)
+        setError(balbodhiniApi.messageFromError(err, 'Invalid form centre.'))
+      }
     }
   }
 
   const onExamCentreChange = async (value: string) => {
+    const code = value.trim()
+    const local = code ? centreDisplayFromList(code) : null
+    setExamCentreInfo(local)
     setForm((current) => ({ ...current, examCentre: value }))
-    if (!value.trim()) {
-      setExamCentreInfo(null)
-      return
-    }
+    if (!code) return
+
     try {
-      const resolved = await balbodhiniApi.resolveCentre(value.trim())
+      const resolved = await balbodhiniApi.resolveCentre(code)
       setExamCentreInfo(resolved)
       setForm((current) => ({ ...current, examCentre: resolved.centreNo }))
     } catch (err) {
-      setExamCentreInfo(null)
-      setError(balbodhiniApi.messageFromError(err, 'Invalid exam centre.'))
+      if (!local) {
+        setExamCentreInfo(null)
+        setError(balbodhiniApi.messageFromError(err, 'Invalid exam centre.'))
+      }
     }
   }
 
@@ -333,7 +397,6 @@ export const BalbodhiniFormEntryPage = ({ defaultSessionNo, isLocked = false }: 
               gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(3, minmax(0, 1fr))' },
             }}
           >
-            <TextField size="small" label="Sr No" value={form.srNo || ''} InputProps={{ readOnly: true }} />
             <TextField size="small" label="Roll No" value={form.rollNo ?? ''} InputProps={{ readOnly: true }} />
             <TextField size="small" label="Session" value={form.sessionNo ?? defaultSessionNo ?? ''} InputProps={{ readOnly: true }} />
             <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 2' }, minWidth: 0 }}>
@@ -358,34 +421,38 @@ export const BalbodhiniFormEntryPage = ({ defaultSessionNo, isLocked = false }: 
               </RadioGroup>
             </FormControl>
             <TextField size="small" label="Region" value={form.regionNo ?? ''} InputProps={{ readOnly: true }} />
-            <FormControl size="small" disabled={readOnly} fullWidth>
-              <InputLabel id="form-centre-label">Form Centre *</InputLabel>
-              <Select
-                labelId="form-centre-label"
+            <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 2' }, minWidth: 0 }}>
+              <CentreSearchField
                 label="Form Centre *"
+                centres={centreOptions}
                 value={form.formCentre ?? ''}
-                onChange={(e) => void onFormCentreChange(String(e.target.value))}
-              >
-                {centreOptions.map((centre) => (
-                  <MenuItem key={centre.centreNo} value={centre.centreNo}>{centre.centreNo}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <TextField size="small" label="Form Centre Name" value={formCentreInfo?.display ?? ''} InputProps={{ readOnly: true }} />
-            <FormControl size="small" disabled={readOnly} fullWidth>
-              <InputLabel id="exam-centre-label">Exam Centre *</InputLabel>
-              <Select
-                labelId="exam-centre-label"
+                disabled={readOnly}
+                onChange={(centreNo) => void onFormCentreChange(centreNo)}
+              />
+            </Box>
+            <TextField
+              size="small"
+              label="Form Centre Name"
+              value={formCentreInfo?.display ?? ''}
+              InputProps={{ readOnly: true }}
+              sx={marathiNameFieldSx}
+            />
+            <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 2' }, minWidth: 0 }}>
+              <CentreSearchField
                 label="Exam Centre *"
+                centres={centreOptions}
                 value={form.examCentre ?? ''}
-                onChange={(e) => void onExamCentreChange(String(e.target.value))}
-              >
-                {centreOptions.map((centre) => (
-                  <MenuItem key={centre.centreNo} value={centre.centreNo}>{centre.centreNo}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <TextField size="small" label="Exam Centre Name" value={examCentreInfo?.display ?? ''} InputProps={{ readOnly: true }} />
+                disabled={readOnly}
+                onChange={(centreNo) => void onExamCentreChange(centreNo)}
+              />
+            </Box>
+            <TextField
+              size="small"
+              label="Exam Centre Name"
+              value={examCentreInfo?.display ?? ''}
+              InputProps={{ readOnly: true }}
+              sx={marathiNameFieldSx}
+            />
             <TextField size="small" label="Entered By" value={form.userId ?? currentUserId} InputProps={{ readOnly: true }} />
             <FormControl size="small" disabled={isLocked || mode !== 'new'} fullWidth>
               <InputLabel id="insert-between-label">Insert After Sr No</InputLabel>

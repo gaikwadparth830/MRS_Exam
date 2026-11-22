@@ -42,7 +42,9 @@ export type CurrentSession = {
   defa?: string | null
   backup?: string | null
   resgenBalbodhini?: string | null
+  resgenPrathamik?: string | null
   isLocked: boolean
+  isLockedPrathamik?: boolean
   isBackup: boolean
   resultDate?: string | null
 }

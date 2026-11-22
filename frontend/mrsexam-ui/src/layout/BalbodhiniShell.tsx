@@ -19,7 +19,7 @@ import type { ReactNode } from 'react'
 import { useMemo, useState } from 'react'
 
 import monoLogo from '../assets/MONO.png'
-import { balbodhiniNav, findNavItem, type NavItemId } from './navConfig'
+import { balbodhiniNav, findNavItem, type NavGroup, type NavItemId } from './navConfig'
 
 type SessionInfo = {
   sessionNo?: number | null
@@ -34,6 +34,9 @@ type BalbodhiniShellProps = {
   userId?: string
   isSupervisor?: boolean
   onSignOut?: () => void
+  onSwitchExam?: () => void
+  officeLabel?: string
+  navGroups?: NavGroup[]
   children: ReactNode
 }
 
@@ -44,19 +47,22 @@ export const BalbodhiniShell = ({
   userId,
   isSupervisor = false,
   onSignOut,
+  onSwitchExam,
+  officeLabel = 'Balbodhini Office',
+  navGroups = balbodhiniNav,
   children,
 }: BalbodhiniShellProps) => {
   const [collapsed, setCollapsed] = useState(false)
-  const activeItem = findNavItem(activeItemId)
+  const activeItem = findNavItem(activeItemId, navGroups)
 
   const visibleGroups = useMemo(
-    () => balbodhiniNav
+    () => navGroups
       .map((group) => ({
         ...group,
         items: group.items.filter((item) => !item.supervisorOnly || isSupervisor),
       }))
       .filter((group) => group.items.length > 0),
-    [isSupervisor],
+    [isSupervisor, navGroups],
   )
 
   return (
@@ -106,7 +112,7 @@ export const BalbodhiniShell = ({
                   MRS Exam
                 </Typography>
                 <Typography variant="caption" sx={{ opacity: 0.78 }}>
-                  Balbodhini Office
+                  {officeLabel}
                 </Typography>
               </Box>
             ) : null}
@@ -235,6 +241,11 @@ export const BalbodhiniShell = ({
                 label={userId ? `User ${userId}` : 'Signed in'}
                 variant="outlined"
               />
+              {onSwitchExam ? (
+                <Button size="small" variant="text" onClick={onSwitchExam}>
+                  Switch exam
+                </Button>
+              ) : null}
               {onSignOut ? (
                 <Button
                   size="small"

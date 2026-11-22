@@ -15,10 +15,13 @@ builder.Services.Configure<BalbodhiniOptions>(builder.Configuration.GetSection(B
 builder.Services.AddScoped<SessionService>();
 builder.Services.AddScoped<CentreResolver>();
 builder.Services.AddScoped<CandidateService>();
+builder.Services.AddScoped<PrathamikCandidateService>();
 builder.Services.AddScoped<RollNumberService>();
 builder.Services.AddScoped<MarksService>();
 builder.Services.AddScoped<ResultService>();
 builder.Services.AddScoped<ReportService>();
+builder.Services.AddScoped<DistrictUnicodeMigrationService>();
+builder.Services.AddScoped<CentreUnicodeMigrationService>();
 
 builder.Services.AddCors(options =>
 {

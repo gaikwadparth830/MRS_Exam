@@ -33,9 +33,10 @@ const masterPageByNav: Partial<Record<NavItemId, MasterPageKey>> = {
 
 type Props = {
   onSignOut: () => void
+  onSwitchExam?: () => void
 }
 
-export const BalbodhiniWorkspace = ({ onSignOut }: Props) => {
+export const BalbodhiniWorkspace = ({ onSignOut, onSwitchExam }: Props) => {
   const [activeItemId, setActiveItemId] = useState<NavItemId>(defaultNavItemId)
   const [defaultSession, setDefaultSession] = useState<Session | null>(null)
   const [currentSessionMeta, setCurrentSessionMeta] = useState<CurrentSession | null>(null)
@@ -190,6 +191,7 @@ export const BalbodhiniWorkspace = ({ onSignOut }: Props) => {
       userId={userId}
       isSupervisor={isSupervisor}
       onSignOut={handleSignOut}
+      onSwitchExam={onSwitchExam}
     >
       {renderContent()}
     </BalbodhiniShell>

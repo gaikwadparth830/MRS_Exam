@@ -336,10 +336,22 @@ export type TrailingLatinWord = {
 }
 
 const DEVANAGARI_DIGITS = '०१२३४५६७८९'
+const ASCII_DIGITS = '0123456789'
 
 /** 0-9 → ०-९ (for codes like ठा/001 → ठा/००१). */
 export const toDevanagariDigits = (value: string): string =>
   value.replace(/[0-9]/g, (digit) => DEVANAGARI_DIGITS[Number(digit)] ?? digit)
+
+/** ०-९ → 0-9 (for matching centre codes stored with ASCII digits). */
+export const toAsciiDigits = (value: string): string =>
+  value.replace(/[०-९]/gu, (digit) => {
+    const index = DEVANAGARI_DIGITS.indexOf(digit)
+    return index >= 0 ? ASCII_DIGITS[index] : digit
+  })
+
+/** Compare centre codes ignoring Devanagari vs ASCII digit style. */
+export const normalizeCentreCode = (value: string): string =>
+  toAsciiDigits((value ?? '').trim()).toUpperCase()
 
 /**
  * Finds the Latin word to convert.

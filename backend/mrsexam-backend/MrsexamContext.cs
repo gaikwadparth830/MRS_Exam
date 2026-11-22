@@ -40,7 +40,7 @@ namespace mrsexam_backend
             modelBuilder.Entity<Center>(entity =>
             {
                 entity.HasKey(e => e.CentreNo);
-                entity.Property(e => e.CentreNo).HasMaxLength(10).IsRequired();
+                entity.Property(e => e.CentreNo).HasMaxLength(20).IsRequired();
                 entity.Property(e => e.AddressTo).HasMaxLength(50);
                 entity.Property(e => e.CentreName).HasMaxLength(100);
                 entity.Property(e => e.DistrictName).HasMaxLength(50);

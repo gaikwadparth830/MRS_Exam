@@ -73,7 +73,11 @@ namespace mrsexam_backend.Dtos
         public string? Defa { get; set; }
         public string? Backup { get; set; }
         public string? ResgenBalbodhini { get; set; }
+        public string? ResgenPrathamik { get; set; }
+        /// <summary>Balbodhini result lock (backward compatible).</summary>
         public bool IsLocked { get; set; }
+        /// <summary>Prathamik result lock (resgen_prathamik = Y).</summary>
+        public bool IsLockedPrathamik { get; set; }
         public bool IsBackup { get; set; }
         public DateTime? ResultDate { get; set; }
     }

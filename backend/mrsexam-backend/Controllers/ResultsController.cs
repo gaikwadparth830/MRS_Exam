@@ -70,6 +70,20 @@ namespace mrsexam_backend.Controllers
             }
         }
 
+        [HttpPost("~/api/prathamik/results/lock/reset")]
+        public async Task<IActionResult> ResetPrathamikLock(CancellationToken cancellationToken)
+        {
+            try
+            {
+                await _sessions.ResetPrathamikLockAsync(cancellationToken);
+                return Ok(new { resgenPrathamik = "N" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { rule = "BR-070", message = ex.Message });
+            }
+        }
+
         [HttpGet("correction")]
         public async Task<IActionResult> Correction([FromQuery] int regionNo, [FromQuery] short rollNo, CancellationToken cancellationToken)
         {

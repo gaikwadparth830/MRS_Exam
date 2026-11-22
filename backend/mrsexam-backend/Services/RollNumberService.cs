@@ -54,18 +54,22 @@ namespace mrsexam_backend.Services
             var preview = await PreviewAsync(request, cancellationToken);
             var session = await RequireDefaultAsync(cancellationToken);
 
-            await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
-            var forms = await _db.FormBalbodhinis
-                .Where(f => f.SessionNo == session.SessionNo && f.FormCentre == request.FormCentre.Trim())
-                .OrderBy(f => f.SrNo)
-                .Take(preview.RollCount)
-                .ToListAsync(cancellationToken);
+            var strategy = _db.Database.CreateExecutionStrategy();
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
+                var forms = await _db.FormBalbodhinis
+                    .Where(f => f.SessionNo == session.SessionNo && f.FormCentre == request.FormCentre.Trim())
+                    .OrderBy(f => f.SrNo)
+                    .Take(preview.RollCount)
+                    .ToListAsync(cancellationToken);
 
-            for (var i = 0; i < forms.Count; i++)
-                forms[i].RollNo = (short)(request.FirstRollNo + i);
+                for (var i = 0; i < forms.Count; i++)
+                    forms[i].RollNo = (short)(request.FirstRollNo + i);
 
-            await _db.SaveChangesAsync(cancellationToken);
-            await tx.CommitAsync(cancellationToken);
+                await _db.SaveChangesAsync(cancellationToken);
+                await tx.CommitAsync(cancellationToken);
+            });
             return preview;
         }
 
@@ -150,19 +154,23 @@ namespace mrsexam_backend.Services
             var preview = await AurPreviewAsync(request, cancellationToken);
             var session = await RequireDefaultAsync(cancellationToken);
 
-            await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
-            var forms = await _db.FormBalbodhinis
-                .Where(f => f.SessionNo == session.SessionNo
-                    && f.FormCentre == request.FormCentre.Trim()
-                    && f.RollNo == null)
-                .OrderBy(f => f.SrNo)
-                .ToListAsync(cancellationToken);
+            var strategy = _db.Database.CreateExecutionStrategy();
+            await strategy.ExecuteAsync(async () =>
+            {
+                await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
+                var forms = await _db.FormBalbodhinis
+                    .Where(f => f.SessionNo == session.SessionNo
+                        && f.FormCentre == request.FormCentre.Trim()
+                        && f.RollNo == null)
+                    .OrderBy(f => f.SrNo)
+                    .ToListAsync(cancellationToken);
 
-            for (var i = 0; i < forms.Count; i++)
-                forms[i].RollNo = (short)preview.Assignments[i].RollNo;
+                for (var i = 0; i < forms.Count; i++)
+                    forms[i].RollNo = (short)preview.Assignments[i].RollNo;
 
-            await _db.SaveChangesAsync(cancellationToken);
-            await tx.CommitAsync(cancellationToken);
+                await _db.SaveChangesAsync(cancellationToken);
+                await tx.CommitAsync(cancellationToken);
+            });
             return preview;
         }
 

@@ -206,12 +206,12 @@ namespace mrsexam_backend.Controllers
                 throw new ArgumentException(message, nameof(model));
             }
 
-            // Compute last SrNo and assign model.SrNo = last + 1
+            // BR-030: new serial number is max(srno) + 3 (prefer /api/prathamik/candidates for full validation).
             var lastSrNo = await _db.FormPrathamiks
                 .Select(f => (int?)f.SrNo)
                 .MaxAsync(cancellationToken) ?? 0;
 
-            model.SrNo = lastSrNo + 1;
+            model.SrNo = lastSrNo + 3;
 
             // Ensure UND_FLAG is stored as NULL when not provided or empty
             if (string.IsNullOrWhiteSpace(model.UndFlag))

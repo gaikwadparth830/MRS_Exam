@@ -9,7 +9,7 @@ namespace mrsexam_backend.Models
         [Key]
         [Column("CENTRE_NO")]
         [Required]
-        [MaxLength(10)]
+        [MaxLength(20)]
         public string CentreNo { get; set; } = string.Empty;
 
         [Column("ADDRESS_TO")]

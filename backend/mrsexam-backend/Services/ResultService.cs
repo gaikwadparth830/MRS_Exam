@@ -54,63 +54,70 @@ namespace mrsexam_backend.Services
                 .FirstOrDefaultAsync(r => r.RegionNo == regionNo, cancellationToken)
                 ?? throw new InvalidOperationException("Region not found.");
 
-            await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
-
-            var eligible = await _db.FormBalbodhinis
-                .Where(f => f.SessionNo == session.SessionNo
-                    && f.RegionNo == regionNo
-                    && f.Marks1 != null
-                    && f.Result == null)
-                .OrderBy(f => f.RollNo)
-                .ToListAsync(cancellationToken);
-
-            foreach (var row in eligible)
+            object? result = null;
+            var strategy = _db.Database.CreateExecutionStrategy();
+            await strategy.ExecuteAsync(async () =>
             {
-                row.SpecialRank = null;
-                row.Grade = null;
-                row.Result = null;
-            }
+                await using var tx = await _db.Database.BeginTransactionAsync(cancellationToken);
 
-            await _db.SaveChangesAsync(cancellationToken);
+                var eligible = await _db.FormBalbodhinis
+                    .Where(f => f.SessionNo == session.SessionNo
+                        && f.RegionNo == regionNo
+                        && f.Marks1 != null
+                        && f.Result == null)
+                    .OrderBy(f => f.RollNo)
+                    .ToListAsync(cancellationToken);
 
-            var currentMaxRun = await _db.FormBalbodhinis
-                .Where(f => f.SessionNo == session.SessionNo)
-                .MaxAsync(f => (int?)f.ResgenRun, cancellationToken);
+                foreach (var row in eligible)
+                {
+                    row.SpecialRank = null;
+                    row.Grade = null;
+                    row.Result = null;
+                }
 
-            // Legacy stores computedRun + 1 (DEF-04 / Q-006). Preserve until answered.
-            var computedRun = currentMaxRun is null or 0 ? 1 : currentMaxRun.Value + 1;
-            var storedRun = (short)(computedRun + 1);
+                await _db.SaveChangesAsync(cancellationToken);
 
-            foreach (var row in eligible)
-            {
-                ApplyResultRules(row, exam, paper);
-                row.ResgenRun = storedRun;
-            }
+                var currentMaxRun = await _db.FormBalbodhinis
+                    .Where(f => f.SessionNo == session.SessionNo)
+                    .MaxAsync(f => (int?)f.ResgenRun, cancellationToken);
 
-            await _db.SaveChangesAsync(cancellationToken);
+                // Legacy stores computedRun + 1 (DEF-04 / Q-006). Preserve until answered.
+                var computedRun = currentMaxRun is null or 0 ? 1 : currentMaxRun.Value + 1;
+                var storedRun = (short)(computedRun + 1);
 
-            var passing = eligible
-                .Where(r => string.Equals(r.Result, "Pass", StringComparison.OrdinalIgnoreCase))
-                .OrderByDescending(r => r.TotMarks ?? 0)
-                .ToList();
+                foreach (var row in eligible)
+                {
+                    ApplyResultRules(row, exam, paper);
+                    row.ResgenRun = storedRun;
+                }
 
-            if (passing.Count > 0)
-            {
-                var top = passing[0].TotMarks ?? 0;
-                var englishName = region.RegionNameEng?.Trim() ?? region.RegionName?.Trim() ?? string.Empty;
-                foreach (var row in passing.Where(r => (r.TotMarks ?? 0) == top))
-                    row.SpecialRank = $"FIRST IN {englishName}".Trim();
-            }
+                await _db.SaveChangesAsync(cancellationToken);
 
-            await _db.SaveChangesAsync(cancellationToken);
-            await tx.CommitAsync(cancellationToken);
+                var passing = eligible
+                    .Where(r => string.Equals(r.Result, "Pass", StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(r => r.TotMarks ?? 0)
+                    .ToList();
 
-            return new
-            {
-                processed = eligible.Count,
-                resgenRun = storedRun,
-                regionNo
-            };
+                if (passing.Count > 0)
+                {
+                    var top = passing[0].TotMarks ?? 0;
+                    var englishName = region.RegionNameEng?.Trim() ?? region.RegionName?.Trim() ?? string.Empty;
+                    foreach (var row in passing.Where(r => (r.TotMarks ?? 0) == top))
+                        row.SpecialRank = $"FIRST IN {englishName}".Trim();
+                }
+
+                await _db.SaveChangesAsync(cancellationToken);
+                await tx.CommitAsync(cancellationToken);
+
+                result = new
+                {
+                    processed = eligible.Count,
+                    resgenRun = storedRun,
+                    regionNo
+                };
+            });
+
+            return result!;
         }
 
         public async Task<object> FindRanksAsync(CancellationToken cancellationToken)

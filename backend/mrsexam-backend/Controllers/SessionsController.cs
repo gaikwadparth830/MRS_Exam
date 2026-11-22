@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using mrsexam_backend.Models;
+using mrsexam_backend.Services;
 
 namespace mrsexam_backend.Controllers
 {
@@ -9,8 +10,13 @@ namespace mrsexam_backend.Controllers
     public sealed class SessionsController : ControllerBase
     {
         private readonly MrsexamContext _db;
+        private readonly SessionService _sessions;
 
-        public SessionsController(MrsexamContext db) => _db = db;
+        public SessionsController(MrsexamContext db, SessionService sessions)
+        {
+            _db = db;
+            _sessions = sessions;
+        }
 
         // GET: api/sessions
         [HttpGet]
@@ -24,24 +30,9 @@ namespace mrsexam_backend.Controllers
         [HttpGet("current")]
         public async Task<IActionResult> GetCurrent(CancellationToken cancellationToken)
         {
-            var session = await _db.Sessions.AsNoTracking()
-                .FirstOrDefaultAsync(s => s.Defa != null && s.Defa.ToUpper() == "Y", cancellationToken);
-            if (session is null) return NotFound(new { message = "Session not selected." });
-
-            var lockFlag = (session.ResgenBalbodhini ?? string.Empty).Trim().ToUpperInvariant();
-            var backupFlag = (session.Backup ?? string.Empty).Trim().ToUpperInvariant();
-
-            return Ok(new
-            {
-                session.SessionNo,
-                session.Month,
-                session.Defa,
-                session.Backup,
-                session.ResgenBalbodhini,
-                session.ResultDate,
-                isLocked = lockFlag == "Y",
-                isBackup = backupFlag == "Y"
-            });
+            var current = await _sessions.GetCurrentAsync(cancellationToken);
+            if (current is null) return NotFound(new { message = "Session not selected." });
+            return Ok(current);
         }
 
         // PUT: api/sessions/current
