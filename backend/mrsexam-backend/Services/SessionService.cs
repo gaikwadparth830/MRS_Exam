@@ -23,6 +23,7 @@ namespace mrsexam_backend.Services
 
             var balbodhiniLock = (session.ResgenBalbodhini ?? string.Empty).Trim().ToUpperInvariant();
             var prathamikLock = (session.ResgenPrathamik ?? string.Empty).Trim().ToUpperInvariant();
+            var praveshikaLock = (session.ResgenPraveshika ?? string.Empty).Trim().ToUpperInvariant();
             var backupFlag = (session.Backup ?? string.Empty).Trim().ToUpperInvariant();
 
             return new CurrentSessionDto
@@ -33,8 +34,10 @@ namespace mrsexam_backend.Services
                 Backup = session.Backup,
                 ResgenBalbodhini = session.ResgenBalbodhini,
                 ResgenPrathamik = session.ResgenPrathamik,
+                ResgenPraveshika = session.ResgenPraveshika,
                 IsLocked = balbodhiniLock == "Y",
                 IsLockedPrathamik = prathamikLock == "Y",
+                IsLockedPraveshika = praveshikaLock == "Y",
                 IsBackup = backupFlag == "Y",
                 ResultDate = session.ResultDate
             };
@@ -64,6 +67,18 @@ namespace mrsexam_backend.Services
                 throw new InvalidOperationException("Result has been generated. Forms and marks are locked.");
         }
 
+        public async Task EnsureWritablePraveshikaAsync(CancellationToken cancellationToken)
+        {
+            var current = await GetCurrentAsync(cancellationToken)
+                ?? throw new InvalidOperationException("Session not selected.");
+
+            if (current.IsBackup)
+                throw new InvalidOperationException("Backup session is read-only.");
+
+            if (current.IsLockedPraveshika)
+                throw new InvalidOperationException("Result has been generated. Forms and marks are locked.");
+        }
+
         public async Task ResetBalbodhiniLockAsync(CancellationToken cancellationToken)
         {
             var session = await _db.Sessions
@@ -81,6 +96,16 @@ namespace mrsexam_backend.Services
                 ?? throw new InvalidOperationException("Session not selected.");
 
             session.ResgenPrathamik = "N";
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
+        public async Task ResetPraveshikaLockAsync(CancellationToken cancellationToken)
+        {
+            var session = await _db.Sessions
+                .FirstOrDefaultAsync(s => s.Defa != null && s.Defa.ToUpper() == "Y", cancellationToken)
+                ?? throw new InvalidOperationException("Session not selected.");
+
+            session.ResgenPraveshika = "N";
             await _db.SaveChangesAsync(cancellationToken);
         }
     }

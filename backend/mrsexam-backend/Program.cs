@@ -13,6 +13,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<BalbodhiniOptions>(builder.Configuration.GetSection(BalbodhiniOptions.SectionName));
 builder.Services.Configure<PrathamikOptions>(builder.Configuration.GetSection(PrathamikOptions.SectionName));
+builder.Services.Configure<PraveshikaOptions>(builder.Configuration.GetSection(PraveshikaOptions.SectionName));
 builder.Services.AddScoped<SessionService>();
 builder.Services.AddScoped<CentreResolver>();
 builder.Services.AddScoped<CandidateService>();
@@ -25,6 +26,11 @@ builder.Services.AddScoped<ResultService>();
 builder.Services.AddScoped<PrathamikResultService>();
 builder.Services.AddScoped<ReportService>();
 builder.Services.AddScoped<PrathamikReportService>();
+builder.Services.AddScoped<PraveshikaCandidateService>();
+builder.Services.AddScoped<PraveshikaRollNumberService>();
+builder.Services.AddScoped<PraveshikaMarksService>();
+builder.Services.AddScoped<PraveshikaResultService>();
+builder.Services.AddScoped<PraveshikaReportService>();
 builder.Services.AddScoped<DistrictUnicodeMigrationService>();
 builder.Services.AddScoped<CentreUnicodeMigrationService>();
 

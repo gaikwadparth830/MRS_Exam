@@ -4,6 +4,7 @@ import { BalbodhiniWorkspace } from './pages/BalbodhiniWorkspace'
 import { ExamSelectPage, type ExamModule } from './pages/ExamSelectPage'
 import { LoginPage } from './pages/LoginPage'
 import { PrathamikWorkspace } from './pages/PrathamikWorkspace'
+import { PraveshikaWorkspace } from './pages/PraveshikaWorkspace'
 
 const ACCESS_TOKEN_KEY = 'accessToken'
 const EXAM_MODULE_KEY = 'examModule'
@@ -14,7 +15,7 @@ function App() {
   )
   const [examModule, setExamModule] = useState<ExamModule | null>(() => {
     const stored = localStorage.getItem(EXAM_MODULE_KEY)
-    return stored === 'balbodhini' || stored === 'prathamik' ? stored : null
+    return stored === 'balbodhini' || stored === 'prathamik' || stored === 'praveshika' ? stored : null
   })
 
   const handleLoginSuccess = useCallback(() => {
@@ -47,6 +48,10 @@ function App() {
 
   if (examModule === 'prathamik') {
     return <PrathamikWorkspace onSignOut={handleSignOut} onSwitchExam={handleSwitchExam} />
+  }
+
+  if (examModule === 'praveshika') {
+    return <PraveshikaWorkspace onSignOut={handleSignOut} onSwitchExam={handleSwitchExam} />
   }
 
   return <BalbodhiniWorkspace onSignOut={handleSignOut} onSwitchExam={handleSwitchExam} />

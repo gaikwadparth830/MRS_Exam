@@ -1,6 +1,6 @@
 import { Box, Button, Card, CardActionArea, CardContent, Stack, Typography } from '@mui/material'
 
-export type ExamModule = 'balbodhini' | 'prathamik'
+export type ExamModule = 'balbodhini' | 'prathamik' | 'praveshika'
 
 type Props = {
   onSelect: (exam: ExamModule) => void
@@ -31,7 +31,7 @@ export const ExamSelectPage = ({ onSelect }: Props) => {
           sx={{
             display: 'grid',
             gap: 2,
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
           }}
         >
           <Card variant="outlined">
@@ -51,6 +51,17 @@ export const ExamSelectPage = ({ onSelect }: Props) => {
                 <Typography variant="h6" fontWeight={700}>Prathamik</Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                   Form entry with Marathi name assist (pilot). More screens follow the BRD.
+                </Typography>
+              </CardContent>
+            </CardActionArea>
+          </Card>
+
+          <Card variant="outlined">
+            <CardActionArea onClick={() => onSelect('praveshika')} sx={{ height: '100%' }}>
+              <CardContent>
+                <Typography variant="h6" fontWeight={700}>Praveshika</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                  Two-paper marks, rolls, result generation, and reports.
                 </Typography>
               </CardContent>
             </CardActionArea>
