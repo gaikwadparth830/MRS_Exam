@@ -16,6 +16,9 @@ type Props = {
   centres: Center[]
   value: string
   disabled?: boolean
+  /** When true, clearing the field is allowed (e.g. “All centres” on reports). */
+  allowEmpty?: boolean
+  helperText?: string
   onChange: (centreNo: string) => void
 }
 
@@ -67,7 +70,15 @@ const queryVariants = (query: string): string[] => {
  * Searchable centre picker for Marathi lists (4000+ centres).
  * Type centre code, Marathi name/city, or English phonetic (e.g. thane, joshi).
  */
-export const CentreSearchField = ({ label, centres, value, disabled = false, onChange }: Props) => {
+export const CentreSearchField = ({
+  label,
+  centres,
+  value,
+  disabled = false,
+  allowEmpty = true,
+  helperText,
+  onChange,
+}: Props) => {
   const selected =
     centres.find((item) => normalizeCentreCode(item.centreNo ?? '') === normalizeCentreCode(value))
     ?? null
@@ -93,6 +104,7 @@ export const CentreSearchField = ({ label, centres, value, disabled = false, onC
         return matched.slice(0, 80)
       }}
       onChange={(_, next) => onChange(next?.centreNo?.trim() ?? '')}
+      disableClearable={!allowEmpty}
       renderOption={(props, option) => {
         const { key, ...rest } = props as typeof props & { key?: string }
         return (
@@ -112,7 +124,12 @@ export const CentreSearchField = ({ label, centres, value, disabled = false, onC
           {...params}
           label={label}
           placeholder="Type English or Marathi: thane, joshi, ठा/001…"
-          helperText="No Marathi keyboard needed — type English phonetic, centre code, or Marathi text"
+          helperText={
+            helperText
+            ?? (allowEmpty
+              ? 'Search by code, name, or city — clear for all centres'
+              : 'Search by code, name, or city')
+          }
           InputLabelProps={{ ...params.InputLabelProps, shrink: true }}
           inputProps={{
             ...params.inputProps,

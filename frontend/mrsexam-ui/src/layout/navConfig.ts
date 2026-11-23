@@ -102,11 +102,11 @@ export const prathamikNav: NavGroup[] = [
     id: 'processing',
     label: 'Processing',
     items: [
-      { id: 'marks', label: 'Marks Entry', description: 'Paper 1 and grace', comingSoon: true },
-      { id: 'set-rolls', label: 'Set Roll Numbers', description: 'Assign centre roll ranges', comingSoon: true },
-      { id: 'aur-rolls', label: 'Aur Roll Numbers', description: 'Number late null rolls', comingSoon: true },
-      { id: 'clear-rolls', label: 'Clear Roll Numbers', description: 'Blank rolls from a centre', comingSoon: true },
-      { id: 'generate-result', label: 'Generate Result', description: 'Pass, fail, grade, ranks', comingSoon: true },
+      { id: 'marks', label: 'Marks Entry', description: 'Paper 1 and grace' },
+      { id: 'set-rolls', label: 'Set Roll Numbers', description: 'Assign centre roll ranges' },
+      { id: 'aur-rolls', label: 'Aur Roll Numbers', description: 'Number late null rolls' },
+      { id: 'clear-rolls', label: 'Clear Roll Numbers', description: 'Blank rolls from a centre' },
+      { id: 'generate-result', label: 'Generate Result', description: 'Pass, fail, grade, ranks' },
     ],
   },
   {
@@ -134,11 +134,11 @@ export const prathamikNav: NavGroup[] = [
     id: 'reports',
     label: 'Reports',
     items: [
-      { id: 'report-attendance', label: 'Attendance Sheet', comingSoon: true },
-      { id: 'report-name-list', label: 'Name List', comingSoon: true },
-      { id: 'report-result-sheet', label: 'Result Sheet', comingSoon: true },
-      { id: 'report-certificate', label: 'Certificate', comingSoon: true },
-      { id: 'report-register', label: 'Register', comingSoon: true },
+      { id: 'report-attendance', label: 'Attendance Sheet', description: 'Centre roll pairs' },
+      { id: 'report-name-list', label: 'Name List', description: 'Candidate name list' },
+      { id: 'report-result-sheet', label: 'Result Sheet', description: 'With or without names' },
+      { id: 'report-certificate', label: 'Certificate', description: 'Pass candidates by region' },
+      { id: 'report-register', label: 'Register', description: 'Dummy centre counts' },
     ],
   },
 ]

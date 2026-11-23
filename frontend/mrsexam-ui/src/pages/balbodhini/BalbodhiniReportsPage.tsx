@@ -28,6 +28,7 @@ import {
   type ResultSheetReport,
 } from '../../api/balbodhini/client'
 import { CentersService, RegionsService, type Center, type Region } from '../../api/generatedClient'
+import { CentreSearchField } from '../../components/CentreSearchField'
 import { PageFrame } from '../../layout/PageFrame'
 import { marathiNameFieldSx } from '../../utils/marathiTransliterate'
 import type { NavItemId } from '../../layout/navConfig'
@@ -205,24 +206,20 @@ export const BalbodhiniReportsPage = ({ reportId, defaultSessionNo }: Props) => 
                 {(reportId === 'report-attendance'
                   || reportId === 'report-name-list'
                   || reportId === 'report-result-sheet') ? (
-                  <FormControl size="small" fullWidth>
-                    <InputLabel id="report-centre-label">
-                      {reportId === 'report-attendance' ? 'Exam Centre *' : 'Exam Centre'}
-                    </InputLabel>
-                    <Select
-                      labelId="report-centre-label"
+                  <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 2' }, minWidth: 0 }}>
+                    <CentreSearchField
                       label={reportId === 'report-attendance' ? 'Exam Centre *' : 'Exam Centre'}
+                      centres={centres}
                       value={centreNo}
-                      onChange={(e) => setCentreNo(String(e.target.value))}
-                    >
-                      {reportId !== 'report-attendance' ? <MenuItem value="">All centres</MenuItem> : null}
-                      {centres.map((centre) => (
-                        <MenuItem key={centre.centreNo} value={centre.centreNo}>
-                          {centre.centreNo}{centre.centreName ? ` · ${centre.centreName}` : ''}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                      allowEmpty={reportId !== 'report-attendance'}
+                      helperText={
+                        reportId === 'report-attendance'
+                          ? 'Search by code, name, or city'
+                          : 'Search by code, name, or city — clear for all centres'
+                      }
+                      onChange={setCentreNo}
+                    />
+                  </Box>
                 ) : null}
 
                 {(reportId === 'report-result-sheet'

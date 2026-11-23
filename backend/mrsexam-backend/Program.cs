@@ -12,14 +12,19 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<BalbodhiniOptions>(builder.Configuration.GetSection(BalbodhiniOptions.SectionName));
+builder.Services.Configure<PrathamikOptions>(builder.Configuration.GetSection(PrathamikOptions.SectionName));
 builder.Services.AddScoped<SessionService>();
 builder.Services.AddScoped<CentreResolver>();
 builder.Services.AddScoped<CandidateService>();
 builder.Services.AddScoped<PrathamikCandidateService>();
 builder.Services.AddScoped<RollNumberService>();
+builder.Services.AddScoped<PrathamikRollNumberService>();
 builder.Services.AddScoped<MarksService>();
+builder.Services.AddScoped<PrathamikMarksService>();
 builder.Services.AddScoped<ResultService>();
+builder.Services.AddScoped<PrathamikResultService>();
 builder.Services.AddScoped<ReportService>();
+builder.Services.AddScoped<PrathamikReportService>();
 builder.Services.AddScoped<DistrictUnicodeMigrationService>();
 builder.Services.AddScoped<CentreUnicodeMigrationService>();
 

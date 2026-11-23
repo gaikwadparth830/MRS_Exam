@@ -49,6 +49,121 @@ export type CurrentSession = {
   resultDate?: string | null
 }
 
+export type MarksRow = {
+  srNo: number
+  rollNo?: number | null
+  sessionNo?: number | null
+  marks1?: string | null
+  totMarks?: number | null
+  regionNo?: number | null
+  name?: string | null
+}
+
+export type MarksUpdateResponse = {
+  srNo: number
+  marks1?: string | null
+  totMarks?: number | null
+  graceOffered?: boolean
+  graceAmount?: number | null
+  message?: string | null
+}
+
+export type RollPreviewResponse = {
+  formCount: number
+  rollCount: number
+  lastCandidateName?: string | null
+  assignments: Array<{ srNo: number; name?: string | null; rollNo: number }>
+}
+
+export type ResultRow = {
+  srNo: number
+  rollNo?: number | null
+  marks1?: string | null
+  totMarks?: number | null
+  grade?: string | null
+  specialRank?: string | null
+  result?: string | null
+}
+
+export type ReportHeader = {
+  sessionNo: number
+  month?: string | null
+  year?: string | null
+  title: string
+  centreNo?: string | null
+  centreName?: string | null
+  regionName?: string | null
+  resultDate?: string | null
+  rowCount?: number
+}
+
+export type AttendanceReport = {
+  header: ReportHeader
+  maxRollNo?: number | null
+  pairs: Array<{ rollNo1?: number | null; rollNo2?: number | null }>
+}
+
+export type NameListReport = {
+  header: ReportHeader
+  rows: Array<{
+    rollNo?: number | null
+    name?: string | null
+    examCentre?: string | null
+    centreName?: string | null
+    districtName?: string | null
+  }>
+}
+
+export type ResultSheetReport = {
+  header: ReportHeader
+  mode: string
+  rows: Array<{
+    rollNo?: number | null
+    name?: string | null
+    examCentre?: string | null
+    marks1?: string | null
+    totMarks?: number | null
+    grade?: string | null
+    result?: string | null
+    specialRank?: string | null
+  }>
+}
+
+export type CertificateReport = {
+  header: ReportHeader
+  rows: Array<{
+    rollNo?: number | null
+    name?: string | null
+    gender?: string | null
+    grade?: string | null
+    result?: string | null
+    specialRank?: string | null
+    examCentre?: string | null
+    regionName?: string | null
+  }>
+}
+
+export type RegisterReport = {
+  header: ReportHeader
+  totalCandidates: number
+  passCount: number
+  failCount: number
+  absentCount: number
+  stoppedCount: number
+  passPercent: string
+  rows: Array<{
+    dummyCentreCode?: number | null
+    examCentre?: string | null
+    centreName?: string | null
+    regionNo?: number | null
+    regionName?: string | null
+    candidateCount: number
+    passCount: number
+    failCount: number
+    absentCount: number
+  }>
+}
+
 const messageFromError = (error: unknown, fallback: string): string => {
   if (error && typeof error === 'object' && 'response' in error) {
     const response = (error as { response?: { data?: unknown } }).response
@@ -137,6 +252,126 @@ export const prathamikApi = {
 
   resetLock: async () => {
     const { data } = await httpClient.post<{ resgenPrathamik: string }>('/api/prathamik/results/lock/reset')
+    return data
+  },
+
+  listMarks: async (regionNo: number, fromRoll: number): Promise<MarksRow[]> => {
+    const { data } = await httpClient.get<MarksRow[]>('/api/prathamik/marks', { params: { regionNo, fromRoll } })
+    return data
+  },
+
+  updateMarks: async (srNo: number, paper1: string, acceptGrace: boolean): Promise<MarksUpdateResponse> => {
+    const { data } = await httpClient.put<MarksUpdateResponse>(`/api/prathamik/marks/${srNo}`, { paper1, acceptGrace })
+    return data
+  },
+
+  previewRolls: async (payload: {
+    seatRegionNo: number
+    formCentre: string
+    firstRollNo: number
+    lastRollNo: number
+  }): Promise<RollPreviewResponse> => {
+    const { data } = await httpClient.post<RollPreviewResponse>('/api/prathamik/roll-numbers/preview', payload)
+    return data
+  },
+
+  commitRolls: async (payload: {
+    seatRegionNo: number
+    formCentre: string
+    firstRollNo: number
+    lastRollNo: number
+    confirmed: boolean
+  }): Promise<RollPreviewResponse> => {
+    const { data } = await httpClient.post<RollPreviewResponse>('/api/prathamik/roll-numbers/commit', payload)
+    return data
+  },
+
+  nextCentre: async (seatRegionNo: number) => {
+    const { data } = await httpClient.get<{
+      formCentre?: string | null
+      centreName?: string | null
+      suggestedFirstRollNo?: number | null
+    }>('/api/prathamik/roll-numbers/next-centre', { params: { seatRegionNo } })
+    return data
+  },
+
+  generateResults: async (regionNo: number) => {
+    const { data } = await httpClient.post('/api/prathamik/results/generate', { regionNo })
+    return data
+  },
+
+  findRanks: async () => {
+    const { data } = await httpClient.post('/api/prathamik/results/ranks')
+    return data
+  },
+
+  listResults: async (regionNo: number): Promise<ResultRow[]> => {
+    const { data } = await httpClient.get<ResultRow[]>('/api/prathamik/results', { params: { regionNo } })
+    return data
+  },
+
+  clearRolls: async (formCentre: string) => {
+    const { data } = await httpClient.post<{ cleared: number }>('/api/prathamik/roll-numbers/clear', {
+      formCentre,
+      confirmed: true,
+    })
+    return data
+  },
+
+  aurPreview: async (seatRegionNo: number, formCentre: string) => {
+    const { data } = await httpClient.post<RollPreviewResponse>('/api/prathamik/roll-numbers/aur/preview', {
+      seatRegionNo,
+      formCentre,
+      confirmed: false,
+    })
+    return data
+  },
+
+  aurCommit: async (seatRegionNo: number, formCentre: string) => {
+    const { data } = await httpClient.post<RollPreviewResponse>('/api/prathamik/roll-numbers/aur/commit', {
+      seatRegionNo,
+      formCentre,
+      confirmed: true,
+    })
+    return data
+  },
+
+  getAttendanceReport: async (centreNo: string): Promise<AttendanceReport> => {
+    const { data } = await httpClient.get<AttendanceReport>('/api/prathamik/reports/attendance', {
+      params: { centreNo },
+    })
+    return data
+  },
+
+  getNameListReport: async (centreNo?: string): Promise<NameListReport> => {
+    const { data } = await httpClient.get<NameListReport>('/api/prathamik/reports/name-list', {
+      params: centreNo ? { centreNo } : undefined,
+    })
+    return data
+  },
+
+  getResultSheetReport: async (params: {
+    mode: 'named' | 'noname'
+    centreNo?: string
+    regionNo?: number
+  }): Promise<ResultSheetReport> => {
+    const { data } = await httpClient.get<ResultSheetReport>('/api/prathamik/reports/result-sheet', { params })
+    return data
+  },
+
+  getCertificateReport: async (params: {
+    regionNo: number
+    fromRoll?: number
+    toRoll?: number
+  }): Promise<CertificateReport> => {
+    const { data } = await httpClient.get<CertificateReport>('/api/prathamik/reports/certificates', { params })
+    return data
+  },
+
+  getRegisterReport: async (regionNo?: number): Promise<RegisterReport> => {
+    const { data } = await httpClient.post<RegisterReport>('/api/prathamik/reports/register', null, {
+      params: regionNo ? { regionNo } : undefined,
+    })
     return data
   },
 }

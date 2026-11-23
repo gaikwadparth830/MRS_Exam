@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Alert, Button, Card, CardContent, Stack, Typography } from '@mui/material'
+import { Alert, Card, CardContent, Typography } from '@mui/material'
 
 import { prathamikApi, type CurrentSession } from '../api/prathamik/client'
 import { SessionsService, type Session } from '../api/generatedClient'
@@ -9,6 +9,13 @@ import { defaultNavItemId, findNavItem, prathamikNav, type NavItemId } from '../
 import { MasterMenuPage, type MasterPageKey } from './master/MasterPages'
 import { PrathamikBatchInsertPage } from './prathamik/PrathamikBatchInsertPage'
 import { PrathamikFormEntryPage } from './prathamik/PrathamikFormEntryPage'
+import {
+  PrathamikGenerateResultPage,
+  PrathamikResetLockPage,
+} from './prathamik/PrathamikGenerateResultPage'
+import { PrathamikMarksPage } from './prathamik/PrathamikMarksPage'
+import { PrathamikRollNumbersPage } from './prathamik/PrathamikRollNumbersPage'
+import { PrathamikReportsPage, isReportNavId } from './prathamik/PrathamikReportsPage'
 import { SelectSessionPage } from './prathamik/SelectSessionPage'
 
 const ACCESS_TOKEN_KEY = 'accessToken'
@@ -33,7 +40,6 @@ export const PrathamikWorkspace = ({ onSignOut, onSwitchExam }: Props) => {
   const [activeItemId, setActiveItemId] = useState<NavItemId>(defaultNavItemId)
   const [defaultSession, setDefaultSession] = useState<Session | null>(null)
   const [currentSessionMeta, setCurrentSessionMeta] = useState<CurrentSession | null>(null)
-  const [lockMessage, setLockMessage] = useState<string | null>(null)
   const userId = localStorage.getItem(CURRENT_USER_ID_KEY)?.trim() ?? ''
   const isSupervisor = localStorage.getItem(IS_SUPERVISOR_KEY) === 'Y'
   const isLocked = currentSessionMeta?.isLockedPrathamik
@@ -101,20 +107,6 @@ export const PrathamikWorkspace = ({ onSignOut, onSwitchExam }: Props) => {
     }
   }
 
-  const onResetLock = async () => {
-    setLockMessage(null)
-    try {
-      await prathamikApi.resetLock()
-      setLockMessage('Prathamik result lock reset to N.')
-      const current = await prathamikApi.getCurrentSession()
-      if (current) {
-        setCurrentSessionMeta(current)
-      }
-    } catch (err) {
-      setLockMessage(prathamikApi.messageFromError(err, 'Unable to reset Prathamik lock.'))
-    }
-  }
-
   const renderContent = () => {
     const masterKey = masterPageByNav[activeItemId]
     if (masterKey) {
@@ -133,8 +125,21 @@ export const PrathamikWorkspace = ({ onSignOut, onSwitchExam }: Props) => {
             isLocked={isLocked}
           />
         )
-      case 'batch-insert':
-        return <PrathamikBatchInsertPage defaultSessionNo={defaultSession?.sessionNo} />
+      case 'marks':
+        return (
+          <PrathamikMarksPage
+            defaultSessionNo={defaultSession?.sessionNo}
+            isLocked={isLocked}
+          />
+        )
+      case 'set-rolls':
+        return <PrathamikRollNumbersPage defaultSessionNo={defaultSession?.sessionNo} mode="regular" />
+      case 'aur-rolls':
+        return <PrathamikRollNumbersPage defaultSessionNo={defaultSession?.sessionNo} mode="aur" />
+      case 'clear-rolls':
+        return <PrathamikRollNumbersPage defaultSessionNo={defaultSession?.sessionNo} mode="clear" />
+      case 'generate-result':
+        return <PrathamikGenerateResultPage defaultSessionNo={defaultSession?.sessionNo} />
       case 'select-session':
         return (
           <SelectSessionPage
@@ -142,38 +147,30 @@ export const PrathamikWorkspace = ({ onSignOut, onSwitchExam }: Props) => {
             onDefaultSessionChanged={handleSessionChanged}
           />
         )
+      case 'batch-insert':
+        return <PrathamikBatchInsertPage defaultSessionNo={defaultSession?.sessionNo} />
       case 'reset-lock':
-        return (
-          <PageFrame
-            title="Reset Result Lock"
-            description="Supervisor: set session.resgen_prathamik back to N so forms and marks can be edited again (BR-070)."
-          >
-            <Card>
-              <CardContent>
-                <Stack spacing={2}>
-                  {lockMessage ? <Alert severity="info">{lockMessage}</Alert> : null}
-                  <Typography color="text.secondary">
-                    Current Prathamik lock: {isLocked ? 'Y (locked)' : 'N (open)'}
-                  </Typography>
-                  <Button variant="contained" onClick={() => void onResetLock()}>
-                    Reset Prathamik lock
-                  </Button>
-                </Stack>
-              </CardContent>
-            </Card>
-          </PageFrame>
-        )
+        return <PrathamikResetLockPage />
       default: {
+        if (isReportNavId(activeItemId)) {
+          return (
+            <PrathamikReportsPage
+              reportId={activeItemId}
+              defaultSessionNo={defaultSession?.sessionNo}
+            />
+          )
+        }
+
         const item = findNavItem(activeItemId, prathamikNav)
         return (
           <PageFrame title={item?.label ?? 'Prathamik'} description={item?.description}>
             <Card>
               <CardContent>
                 <Alert severity="info" sx={{ mb: 1.5 }}>
-                  This Prathamik screen is planned for a later milestone (BRD M4–M8).
+                  This Prathamik screen is planned for a later milestone.
                 </Alert>
                 <Typography color="text.secondary">
-                  Form entry with Marathi transliteration is available now. Marks, rolls, result, and reports follow next.
+                  Menu and core candidate / marks / roll / result flows are available now.
                 </Typography>
               </CardContent>
             </Card>
