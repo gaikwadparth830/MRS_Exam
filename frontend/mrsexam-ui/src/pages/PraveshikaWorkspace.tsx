@@ -185,7 +185,8 @@ export const PraveshikaWorkspace = ({ onSignOut, onSwitchExam }: Props) => {
       activeItemId={activeItemId}
       onNavigate={setActiveItemId}
       navGroups={praveshikaNav}
-      officeLabel="Praveshika Office"
+      examNameEn="Praveshika"
+      examNameMr="प्रवेशिका"
       session={{
         sessionNo: defaultSession?.sessionNo,
         month: defaultSession?.month,

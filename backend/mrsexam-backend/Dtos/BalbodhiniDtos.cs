@@ -75,12 +75,15 @@ namespace mrsexam_backend.Dtos
         public string? ResgenBalbodhini { get; set; }
         public string? ResgenPrathamik { get; set; }
         public string? ResgenPraveshika { get; set; }
+        public string? ResgenSubodh { get; set; }
         /// <summary>Balbodhini result lock (backward compatible).</summary>
         public bool IsLocked { get; set; }
         /// <summary>Prathamik result lock (resgen_prathamik = Y).</summary>
         public bool IsLockedPrathamik { get; set; }
         /// <summary>Praveshika result lock (resgen_praveshika = Y).</summary>
         public bool IsLockedPraveshika { get; set; }
+        /// <summary>Subodh result lock (resgen_subodh = Y).</summary>
+        public bool IsLockedSubodh { get; set; }
         public bool IsBackup { get; set; }
         public DateTime? ResultDate { get; set; }
     }
@@ -224,6 +227,38 @@ namespace mrsexam_backend.Dtos
     }
 
     public sealed class PraveshikaCorrectionSaveRequest
+    {
+        [Required]
+        public int RegionNo { get; set; }
+
+        [Required]
+        public short RollNo { get; set; }
+
+        [Required]
+        public string Paper1 { get; set; } = string.Empty;
+
+        [Required]
+        public string Paper2 { get; set; } = string.Empty;
+    }
+
+    public sealed class SubodhMarksUpdateRequest
+    {
+        [Required]
+        public string Paper1 { get; set; } = string.Empty;
+
+        [Required]
+        public string Paper2 { get; set; } = string.Empty;
+    }
+
+    public sealed class SubodhMarksUpdateResponse
+    {
+        public int SrNo { get; set; }
+        public string? Marks1 { get; set; }
+        public string? Marks2 { get; set; }
+        public short? TotMarks { get; set; }
+    }
+
+    public sealed class SubodhCorrectionSaveRequest
     {
         [Required]
         public int RegionNo { get; set; }

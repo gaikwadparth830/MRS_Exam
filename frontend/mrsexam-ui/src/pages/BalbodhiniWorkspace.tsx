@@ -183,6 +183,8 @@ export const BalbodhiniWorkspace = ({ onSignOut, onSwitchExam }: Props) => {
     <BalbodhiniShell
       activeItemId={activeItemId}
       onNavigate={setActiveItemId}
+      examNameEn="Balbodhini"
+      examNameMr="बालबोधिनी"
       session={{
         sessionNo: defaultSession?.sessionNo,
         month: defaultSession?.month,

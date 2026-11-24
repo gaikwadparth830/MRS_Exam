@@ -198,3 +198,4 @@ Z:\mrsexam\backend\mrsexam-backend\bin\Debug\net8.0\_build_verify\appsettings.js
 Z:\mrsexam\backend\mrsexam-backend\bin\Debug\net8.0\_build_verify\mrsexam-backend.deps.json
 Z:\mrsexam\backend\mrsexam-backend\bin\Debug\net8.0\_build_verify\mrsexam-backend.runtimeconfig.json
 Z:\mrsexam\backend\mrsexam-backend\bin\Debug\net8.0\_build_verify\mrsexam-backend.staticwebassets.endpoints.json
+z:\mrsexam\backend\mrsexam-backend\_build_verify\mrsexam-backend.exe

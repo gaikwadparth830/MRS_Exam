@@ -16,7 +16,7 @@ import {
   MenuRounded,
 } from '@mui/icons-material'
 import type { ReactNode } from 'react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import monoLogo from '../assets/MONO.png'
 import { balbodhiniNav, findNavItem, type NavGroup, type NavItemId } from './navConfig'
@@ -35,10 +35,19 @@ type BalbodhiniShellProps = {
   isSupervisor?: boolean
   onSignOut?: () => void
   onSwitchExam?: () => void
+  /** English exam name, e.g. Balbodhini */
+  examNameEn?: string
+  /** Marathi exam name, e.g. बालबोधिनी */
+  examNameMr?: string
   officeLabel?: string
   navGroups?: NavGroup[]
   children: ReactNode
 }
+
+const marathiExamSx = {
+  fontFamily: '"Noto Sans Devanagari", "Source Serif 4", sans-serif',
+  fontWeight: 700,
+} as const
 
 export const BalbodhiniShell = ({
   activeItemId,
@@ -48,11 +57,14 @@ export const BalbodhiniShell = ({
   isSupervisor = false,
   onSignOut,
   onSwitchExam,
-  officeLabel = 'Balbodhini Office',
+  examNameEn = 'Balbodhini',
+  examNameMr = 'बालबोधिनी',
+  officeLabel,
   navGroups = balbodhiniNav,
   children,
 }: BalbodhiniShellProps) => {
   const [collapsed, setCollapsed] = useState(false)
+  const mainRef = useRef<HTMLDivElement | null>(null)
   const activeItem = findNavItem(activeItemId, navGroups)
 
   const visibleGroups = useMemo(
@@ -65,14 +77,26 @@ export const BalbodhiniShell = ({
     [isSupervisor, navGroups],
   )
 
+  // Keep report/form filters in view after switching a lower menu item.
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [activeItemId])
+
+  const handleNavigate = (id: NavItemId) => {
+    onNavigate(id)
+  }
+
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        height: { xs: '100dvh', md: '100vh' },
+        maxHeight: { xs: '100dvh', md: '100vh' },
+        overflow: 'hidden',
         display: 'grid',
         gridTemplateColumns: {
           xs: '1fr',
-          md: collapsed ? '88px 1fr' : '280px 1fr',
+          md: collapsed ? '96px 1fr' : '280px 1fr',
         },
         transition: 'grid-template-columns 180ms ease',
       }}
@@ -86,48 +110,110 @@ export const BalbodhiniShell = ({
           background:
             'linear-gradient(180deg, #0a3d54 0%, #0b4f6c 48%, #0a455c 100%)',
           borderRight: '1px solid rgba(255,255,255,0.08)',
-          minHeight: '100vh',
+          height: '100vh',
+          maxHeight: '100vh',
+          overflow: 'hidden',
           position: 'sticky',
           top: 0,
         }}
       >
-        <Stack spacing={1.5} sx={{ p: 2.25, pb: 1.5 }}>
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Box
-              component="img"
-              src={monoLogo}
-              alt="MRS"
-              sx={{
-                width: 46,
-                height: 46,
-                objectFit: 'contain',
-                borderRadius: 1.5,
-                bgcolor: 'rgba(255,255,255,0.08)',
-                p: 0.5,
-              }}
-            />
-            {!collapsed ? (
-              <Box>
-                <Typography sx={{ fontFamily: '"Source Serif 4", serif', fontWeight: 700, fontSize: '1.2rem', lineHeight: 1.1 }}>
+        <Stack spacing={1} sx={{ p: collapsed ? 1 : 2.25, pb: 1.5, alignItems: collapsed ? 'center' : 'stretch' }}>
+          {collapsed ? (
+            <Stack spacing={1} alignItems="center" sx={{ width: '100%' }}>
+              <Tooltip title={`${examNameMr} (${examNameEn})`} placement="right">
+                <Box
+                  component="img"
+                  src={monoLogo}
+                  alt={`${examNameMr} ${examNameEn}`}
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    objectFit: 'contain',
+                    borderRadius: 1.5,
+                    bgcolor: 'rgba(255,255,255,0.08)',
+                    p: 0.5,
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title="Expand menu" placement="right">
+                <IconButton
+                  size="medium"
+                  onClick={() => setCollapsed(false)}
+                  sx={{
+                    color: 'inherit',
+                    bgcolor: 'rgba(255,255,255,0.16)',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    width: 44,
+                    height: 44,
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.28)' },
+                  }}
+                  aria-label="Expand menu"
+                >
+                  <MenuRounded />
+                </IconButton>
+              </Tooltip>
+              <Typography
+                sx={{
+                  ...marathiExamSx,
+                  fontSize: '0.72rem',
+                  lineHeight: 1.15,
+                  textAlign: 'center',
+                  maxWidth: 80,
+                  opacity: 0.95,
+                }}
+              >
+                {examNameMr}
+              </Typography>
+            </Stack>
+          ) : (
+            <Stack direction="row" spacing={1.5} alignItems="flex-start">
+              <Box
+                component="img"
+                src={monoLogo}
+                alt="MRS"
+                sx={{
+                  width: 46,
+                  height: 46,
+                  objectFit: 'contain',
+                  borderRadius: 1.5,
+                  bgcolor: 'rgba(255,255,255,0.08)',
+                  p: 0.5,
+                  flexShrink: 0,
+                }}
+              />
+              <Box sx={{ minWidth: 0, flex: 1 }}>
+                <Typography sx={{ fontFamily: '"Source Serif 4", serif', fontWeight: 700, fontSize: '1.05rem', lineHeight: 1.1 }}>
                   MRS Exam
                 </Typography>
-                <Typography variant="caption" sx={{ opacity: 0.78 }}>
-                  {officeLabel}
+                <Typography
+                  sx={{
+                    ...marathiExamSx,
+                    mt: 0.35,
+                    fontSize: '1.15rem',
+                    lineHeight: 1.2,
+                    color: '#fff',
+                  }}
+                >
+                  {examNameMr}
+                </Typography>
+                <Typography variant="caption" sx={{ opacity: 0.85, fontWeight: 600, display: 'block' }}>
+                  {examNameEn}
+                  {officeLabel ? ` · ${officeLabel}` : ' Office'}
                 </Typography>
               </Box>
-            ) : null}
-            <IconButton
-              size="small"
-              onClick={() => setCollapsed((value) => !value)}
-              sx={{ ml: 'auto', color: 'inherit' }}
-              aria-label={collapsed ? 'Expand menu' : 'Collapse menu'}
-            >
-              {collapsed ? <MenuRounded /> : <MenuOpenRounded />}
-            </IconButton>
-          </Stack>
+              <IconButton
+                size="small"
+                onClick={() => setCollapsed(true)}
+                sx={{ color: 'inherit', flexShrink: 0 }}
+                aria-label="Collapse menu"
+              >
+                <MenuOpenRounded />
+              </IconButton>
+            </Stack>
+          )}
         </Stack>
 
-        <Box sx={{ px: 1.25, pb: 2, overflowY: 'auto', flex: 1 }}>
+        <Box sx={{ px: 1.25, pb: 2, overflowY: 'auto', flex: 1, minHeight: 0 }}>
           {visibleGroups.map((group) => (
             <Box key={group.id} sx={{ mb: 1.75 }}>
               {!collapsed ? (
@@ -151,7 +237,7 @@ export const BalbodhiniShell = ({
                     >
                       <Button
                         fullWidth
-                        onClick={() => onNavigate(item.id)}
+                        onClick={() => handleNavigate(item.id)}
                         disabled={item.comingSoon}
                         sx={{
                           justifyContent: collapsed ? 'center' : 'flex-start',
@@ -192,12 +278,11 @@ export const BalbodhiniShell = ({
         </Box>
       </Box>
 
-      <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ minWidth: 0, minHeight: 0, height: { xs: '100dvh', md: '100vh' }, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <Box
           component="header"
           sx={{
-            position: 'sticky',
-            top: 0,
+            flexShrink: 0,
             zIndex: 8,
             px: { xs: 2, md: 3 },
             py: 1.5,
@@ -214,14 +299,39 @@ export const BalbodhiniShell = ({
           >
             <Box>
               <Typography variant="overline" color="text.secondary">
-                Current workspace
+                Current exam
               </Typography>
-              <Typography variant="h6" sx={{ lineHeight: 1.2 }}>
-                {activeItem?.label ?? 'Balbodhini'}
+              <Stack direction="row" spacing={1} alignItems="baseline" flexWrap="wrap" useFlexGap>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    ...marathiExamSx,
+                    lineHeight: 1.2,
+                    color: '#0b4f6c',
+                  }}
+                >
+                  {examNameMr}
+                </Typography>
+                <Typography variant="h6" sx={{ lineHeight: 1.2, fontWeight: 700, color: '#0b4f6c' }}>
+                  {examNameEn}
+                </Typography>
+              </Stack>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                {activeItem?.label ?? 'Workspace'}
               </Typography>
             </Box>
 
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap alignItems="center">
+              <Chip
+                label={`${examNameMr} · ${examNameEn}`}
+                color="primary"
+                sx={{
+                  fontWeight: 700,
+                  '& .MuiChip-label': {
+                    fontFamily: '"Noto Sans Devanagari", "IBM Plex Sans", sans-serif',
+                  },
+                }}
+              />
               <Chip
                 label={`Session ${session?.sessionNo ?? '-'}`}
                 color="primary"
@@ -268,7 +378,7 @@ export const BalbodhiniShell = ({
                   size="small"
                   variant={item.id === activeItemId ? 'contained' : 'outlined'}
                   disabled={item.comingSoon}
-                  onClick={() => onNavigate(item.id)}
+                  onClick={() => handleNavigate(item.id)}
                   sx={{ whiteSpace: 'nowrap' }}
                 >
                   {item.label}
@@ -278,7 +388,11 @@ export const BalbodhiniShell = ({
           </Box>
         </Box>
 
-        <Box component="main" sx={{ p: { xs: 2, md: 3 }, flex: 1 }}>
+        <Box
+          ref={mainRef}
+          component="main"
+          sx={{ p: { xs: 2, md: 3 }, flex: 1, minHeight: 0, overflowY: 'auto' }}
+        >
           {children}
         </Box>
       </Box>
