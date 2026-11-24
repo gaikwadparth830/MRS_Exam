@@ -1,6 +1,6 @@
 import { Box, Button, Card, CardActionArea, CardContent, Stack, Typography } from '@mui/material'
 
-export type ExamModule = 'balbodhini' | 'prathamik' | 'praveshika' | 'subodh'
+export type ExamModule = 'balbodhini' | 'prathamik' | 'praveshika' | 'subodh' | 'prabodh' | 'praveen' | 'pandit' | 'sambhashan'
 
 type Props = {
   onSelect: (exam: ExamModule) => void
@@ -36,6 +36,30 @@ const exams: Array<{
     nameMr: 'सुबोध',
     description: 'Two-paper marks, rolls, result generation, and reports.',
   },
+  {
+    id: 'prabodh',
+    nameEn: 'Prabodh',
+    nameMr: 'प्रबोध',
+    description: 'Three papers plus oral marks, rolls, results, and reports.',
+  },
+  {
+    id: 'praveen',
+    nameEn: 'Praveen',
+    nameMr: 'प्रवीण',
+    description: 'Five papers plus oral and project/reg lang, results, and reports.',
+  },
+  {
+    id: 'pandit',
+    nameEn: 'Pandit',
+    nameMr: 'पंडित',
+    description: 'Khand I/II, portion NEW/OLD, concession, cross-ref, results, and reports.',
+  },
+  {
+    id: 'sambhashan',
+    nameEn: 'Sambhashan Yogyata',
+    nameMr: 'संभाषण योग्यता',
+    description: 'One-paper form entry, marks, rolls, result, and reports.',
+  },
 ]
 
 const marathiTitleSx = {
@@ -68,7 +92,7 @@ export const ExamSelectPage = ({ onSelect }: Props) => {
           sx={{
             display: 'grid',
             gap: 2,
-            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(3, 1fr)', xl: 'repeat(6, 1fr)' },
           }}
         >
           {exams.map((exam) => (

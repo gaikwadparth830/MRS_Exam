@@ -58,6 +58,10 @@ namespace mrsexam_backend.Models
         [MaxLength(1)]
         public string? ResgenBalbodhini { get; set; }
 
+        [Column("RESGEN_SAMBHASHAN")]
+        [MaxLength(1)]
+        public string? ResgenSambhashan { get; set; }
+
         [Column("BACKUP")]
         [MaxLength(1)]
         public string? Backup { get; set; }

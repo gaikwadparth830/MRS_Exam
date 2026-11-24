@@ -16,6 +16,7 @@ export type Session = {
     resgenPraveshika?: string | null;
     resgenPrathamik?: string | null;
     resgenBalbodhini?: string | null;
+    resgenSambhashan?: string | null;
     backup?: string | null;
 };
 

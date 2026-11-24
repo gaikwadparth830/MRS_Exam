@@ -49,6 +49,10 @@ namespace mrsexam_backend.Models
         [MaxLength(50)]
         public string? Marks4 { get; set; }
 
+        [Column("MARKS5")]
+        [MaxLength(50)]
+        public string? Marks5 { get; set; }
+
         [Column("ORAL_MARKS")]
         [MaxLength(50)]
         public string? OralMarks { get; set; }

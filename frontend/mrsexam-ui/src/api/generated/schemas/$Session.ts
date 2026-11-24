@@ -69,6 +69,11 @@ export const $Session = {
             isNullable: true,
             maxLength: 1,
         },
+        resgenSambhashan: {
+            type: 'string',
+            isNullable: true,
+            maxLength: 1,
+        },
         backup: {
             type: 'string',
             isNullable: true,

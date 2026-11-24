@@ -21,11 +21,11 @@ namespace mrsexam_backend.Models
         public string? Name { get; set; }
 
         [Column("FORM_CENTRE")]
-        [MaxLength(10)]
+        [MaxLength(20)]
         public string? FormCentre { get; set; }
 
         [Column("EXAM_CENTRE")]
-        [MaxLength(10)]
+        [MaxLength(20)]
         public string? ExamCentre { get; set; }
 
         [Column("ROLL_NO_1")]
@@ -88,6 +88,26 @@ namespace mrsexam_backend.Models
         [MaxLength(3)]
         public string? Marks6 { get; set; }
 
+        [Column("ROLL_NO_7")]
+        public short? RollNo7 { get; set; }
+
+        [Column("SESSION_NO_7")]
+        public short? SessionNo7 { get; set; }
+
+        [Column("MARKS7")]
+        [MaxLength(3)]
+        public string? Marks7 { get; set; }
+
+        [Column("ROLL_NO_8")]
+        public short? RollNo8 { get; set; }
+
+        [Column("SESSION_NO_8")]
+        public short? SessionNo8 { get; set; }
+
+        [Column("MARKS8")]
+        [MaxLength(3)]
+        public string? Marks8 { get; set; }
+
         [Column("ORAL_ROLL_NO")]
         public short? OralRollNo { get; set; }
 
@@ -145,6 +165,11 @@ namespace mrsexam_backend.Models
         [Column("RES_DECL_FLAG")]
         [MaxLength(1)]
         public string? ResDeclFlag { get; set; }
+
+        /// <summary>N = NEW portion (primary); O = OLD portion (alternate paper sets).</summary>
+        [Column("flgportion")]
+        [MaxLength(1)]
+        public string? FlgPortion { get; set; }
 
         [Column("RESULT")]
         [MaxLength(20)]

@@ -254,6 +254,15 @@ namespace mrsexam_backend.Services
                 Add(row.ExamCentre);
             }
 
+            var sambhashan = await _db.FormSambhashans.AsNoTracking()
+                .Select(f => new { f.FormCentre, f.ExamCentre })
+                .ToListAsync(cancellationToken);
+            foreach (var row in sambhashan)
+            {
+                Add(row.FormCentre);
+                Add(row.ExamCentre);
+            }
+
             return counts;
         }
 
@@ -267,6 +276,10 @@ namespace mrsexam_backend.Services
             updated += await _db.FormPrathamiks.Where(f => f.FormCentre == oldNo)
                 .ExecuteUpdateAsync(s => s.SetProperty(f => f.FormCentre, newNo), cancellationToken);
             updated += await _db.FormPrathamiks.Where(f => f.ExamCentre == oldNo)
+                .ExecuteUpdateAsync(s => s.SetProperty(f => f.ExamCentre, newNo), cancellationToken);
+            updated += await _db.FormSambhashans.Where(f => f.FormCentre == oldNo)
+                .ExecuteUpdateAsync(s => s.SetProperty(f => f.FormCentre, newNo), cancellationToken);
+            updated += await _db.FormSambhashans.Where(f => f.ExamCentre == oldNo)
                 .ExecuteUpdateAsync(s => s.SetProperty(f => f.ExamCentre, newNo), cancellationToken);
             updated += await _db.FormPandits.Where(f => f.FormCentre == oldNo)
                 .ExecuteUpdateAsync(s => s.SetProperty(f => f.FormCentre, newNo), cancellationToken);

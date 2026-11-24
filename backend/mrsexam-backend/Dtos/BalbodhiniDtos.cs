@@ -76,6 +76,10 @@ namespace mrsexam_backend.Dtos
         public string? ResgenPrathamik { get; set; }
         public string? ResgenPraveshika { get; set; }
         public string? ResgenSubodh { get; set; }
+        public string? ResgenPrabodh { get; set; }
+        public string? ResgenPraveen { get; set; }
+        public string? ResgenPandit { get; set; }
+        public string? ResgenSambhashan { get; set; }
         /// <summary>Balbodhini result lock (backward compatible).</summary>
         public bool IsLocked { get; set; }
         /// <summary>Prathamik result lock (resgen_prathamik = Y).</summary>
@@ -84,6 +88,14 @@ namespace mrsexam_backend.Dtos
         public bool IsLockedPraveshika { get; set; }
         /// <summary>Subodh result lock (resgen_subodh = Y).</summary>
         public bool IsLockedSubodh { get; set; }
+        /// <summary>Prabodh result lock (resgen_prabodh = Y).</summary>
+        public bool IsLockedPrabodh { get; set; }
+        /// <summary>Praveen result lock (resgen_praveen = Y).</summary>
+        public bool IsLockedPraveen { get; set; }
+        /// <summary>Pandit result lock (resgen_pandit = Y).</summary>
+        public bool IsLockedPandit { get; set; }
+        /// <summary>Sambhashan result lock (resgen_sambhashan = Y).</summary>
+        public bool IsLockedSambhashan { get; set; }
         public bool IsBackup { get; set; }
         public DateTime? ResultDate { get; set; }
     }
@@ -271,5 +283,279 @@ namespace mrsexam_backend.Dtos
 
         [Required]
         public string Paper2 { get; set; } = string.Empty;
+    }
+
+    public sealed class PrabodhMarksUpdateRequest
+    {
+        [Required]
+        public string Paper1 { get; set; } = string.Empty;
+
+        [Required]
+        public string Paper2 { get; set; } = string.Empty;
+
+        [Required]
+        public string Paper3 { get; set; } = string.Empty;
+
+        [Required]
+        public string OralMarks { get; set; } = string.Empty;
+    }
+
+    public sealed class PrabodhMarksUpdateResponse
+    {
+        public int SrNo { get; set; }
+        public string? Marks1 { get; set; }
+        public string? Marks2 { get; set; }
+        public string? Marks3 { get; set; }
+        public string? OralMarks { get; set; }
+        public short? TotMarks { get; set; }
+    }
+
+    public sealed class PrabodhCorrectionSaveRequest
+    {
+        [Required]
+        public int RegionNo { get; set; }
+
+        [Required]
+        public short RollNo { get; set; }
+
+        [Required]
+        public string Paper1 { get; set; } = string.Empty;
+
+        [Required]
+        public string Paper2 { get; set; } = string.Empty;
+
+        [Required]
+        public string Paper3 { get; set; } = string.Empty;
+
+        [Required]
+        public string OralMarks { get; set; } = string.Empty;
+    }
+
+    public sealed class PraveenCandidateWriteRequest
+    {
+        [Required]
+        [MaxLength(60)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        public short RollNo { get; set; }
+
+        [Required]
+        [MaxLength(50)]
+        public string FormCentre { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(50)]
+        public string ExamCentre { get; set; } = string.Empty;
+
+        public string? UserId { get; set; }
+    }
+
+    public sealed class PraveenMarksUpdateRequest
+    {
+        [Required]
+        public string Paper1 { get; set; } = string.Empty;
+
+        [Required]
+        public string Paper2 { get; set; } = string.Empty;
+
+        [Required]
+        public string Paper3 { get; set; } = string.Empty;
+
+        [Required]
+        public string Paper4 { get; set; } = string.Empty;
+
+        [Required]
+        public string Paper5 { get; set; } = string.Empty;
+
+        [Required]
+        public string OralMarks { get; set; } = string.Empty;
+
+        [Required]
+        public string RegLang { get; set; } = string.Empty;
+    }
+
+    public sealed class PraveenMarksUpdateResponse
+    {
+        public short RollNo { get; set; }
+        public int RegionNo { get; set; }
+        public short SessionNo { get; set; }
+        public string? Marks1 { get; set; }
+        public string? Marks2 { get; set; }
+        public string? Marks3 { get; set; }
+        public string? Marks4 { get; set; }
+        public string? Marks5 { get; set; }
+        public string? OralMarks { get; set; }
+        public string? RegLang { get; set; }
+        public short? TotMarks { get; set; }
+    }
+
+    public sealed class PraveenCorrectionSaveRequest
+    {
+        [Required]
+        public int RegionNo { get; set; }
+
+        [Required]
+        public short RollNo { get; set; }
+
+        [Required]
+        public string Paper1 { get; set; } = string.Empty;
+
+        [Required]
+        public string Paper2 { get; set; } = string.Empty;
+
+        [Required]
+        public string Paper3 { get; set; } = string.Empty;
+
+        [Required]
+        public string Paper4 { get; set; } = string.Empty;
+
+        [Required]
+        public string Paper5 { get; set; } = string.Empty;
+
+        [Required]
+        public string OralMarks { get; set; } = string.Empty;
+
+        [Required]
+        public string RegLang { get; set; } = string.Empty;
+    }
+
+    public sealed class PanditCandidateWriteRequest
+    {
+        [Required]
+        public short RollNo { get; set; }
+
+        [Required]
+        [MaxLength(60)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(20)]
+        public string FormCentre { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(20)]
+        public string ExamCentre { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(1)]
+        public string UndFlag { get; set; } = "N";
+
+        [MaxLength(4)]
+        public string? UndClass { get; set; }
+
+        [Required]
+        [MaxLength(2)]
+        public string KhandAppearing { get; set; } = "I";
+
+        /// <summary>N = NEW (default); O = OLD.</summary>
+        [MaxLength(1)]
+        public string? FlgPortion { get; set; } = "N";
+
+        [MaxLength(80)]
+        public string? Add1 { get; set; }
+
+        [MaxLength(80)]
+        public string? Add2 { get; set; }
+
+        [MaxLength(80)]
+        public string? Add3 { get; set; }
+
+        public short? RollNo1 { get; set; }
+        public short? SessionNo1 { get; set; }
+        public string? Marks1 { get; set; }
+        public short? RollNo2 { get; set; }
+        public short? SessionNo2 { get; set; }
+        public string? Marks2 { get; set; }
+        public short? RollNo3 { get; set; }
+        public short? SessionNo3 { get; set; }
+        public string? Marks3 { get; set; }
+        public short? RollNo4 { get; set; }
+        public short? SessionNo4 { get; set; }
+        public string? Marks4 { get; set; }
+        public short? RollNo5 { get; set; }
+        public short? SessionNo5 { get; set; }
+        public string? Marks5 { get; set; }
+        public short? RollNo6 { get; set; }
+        public short? SessionNo6 { get; set; }
+        public string? Marks6 { get; set; }
+        public short? RollNo7 { get; set; }
+        public short? SessionNo7 { get; set; }
+        public string? Marks7 { get; set; }
+        public short? RollNo8 { get; set; }
+        public short? SessionNo8 { get; set; }
+        public string? Marks8 { get; set; }
+        public short? OralRollNo { get; set; }
+        public short? OralSessionNo { get; set; }
+        public string? OralMarks { get; set; }
+        public string? OptMarks { get; set; }
+        public short? OthKhandRollNo { get; set; }
+        public string? BothKhandFlag { get; set; }
+        public string? ResDeclFlag { get; set; }
+        public string? UserId { get; set; }
+    }
+
+    public sealed class PanditMarksUpdateRequest
+    {
+        public string? Paper1 { get; set; }
+        public string? Paper2 { get; set; }
+        public string? Paper3 { get; set; }
+        public string? Paper4 { get; set; }
+        public string? Paper5 { get; set; }
+        public string? Paper6 { get; set; }
+        public string? Paper7 { get; set; }
+        public string? Paper8 { get; set; }
+        public string? OralMarks { get; set; }
+    }
+
+    public sealed class PanditMarksUpdateResponse
+    {
+        public short RollNo { get; set; }
+        public short SessionNo { get; set; }
+        public string? Marks1 { get; set; }
+        public string? Marks2 { get; set; }
+        public string? Marks3 { get; set; }
+        public string? Marks4 { get; set; }
+        public string? Marks5 { get; set; }
+        public string? Marks6 { get; set; }
+        public string? Marks7 { get; set; }
+        public string? Marks8 { get; set; }
+        public string? OralMarks { get; set; }
+        public int? Khand1TotMarks { get; set; }
+        public int? Khand2TotMarks { get; set; }
+        public short? TotMarks { get; set; }
+    }
+
+    public sealed class PanditCorrectionSaveRequest
+    {
+        [Required]
+        public short RollNo { get; set; }
+
+        public string? Paper1 { get; set; }
+        public string? Paper2 { get; set; }
+        public string? Paper3 { get; set; }
+        public string? Paper4 { get; set; }
+        public string? Paper5 { get; set; }
+        public string? Paper6 { get; set; }
+        public string? Paper7 { get; set; }
+        public string? Paper8 { get; set; }
+        public string? OralMarks { get; set; }
+    }
+
+    public sealed class PanditBatchInsertDto
+    {
+        [Required]
+        [MaxLength(20)]
+        public string CentreCode { get; set; } = string.Empty;
+
+        [Required]
+        public int StartRollNo { get; set; }
+
+        [Required]
+        public int EndRollNo { get; set; }
+
+        public string? StartName { get; set; }
+        public string? EndName { get; set; }
+        public string? UserId { get; set; }
     }
 }

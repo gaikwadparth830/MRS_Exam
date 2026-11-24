@@ -31,6 +31,7 @@ namespace mrsexam_backend
         public DbSet<FormPraveen> FormPraveens { get; set; } = null!;
         public DbSet<FormPraveshika> FormPraveshikas { get; set; } = null!;
         public DbSet<FormSubodh> FormSubodhs { get; set; } = null!;
+        public DbSet<FormSambhashan> FormSambhashans { get; set; } = null!;
 
         // Optionally override to configure the model:
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -90,6 +91,7 @@ namespace mrsexam_backend
                 entity.Property(e => e.ResgenPraveshika).HasMaxLength(1);
                 entity.Property(e => e.ResgenPrathamik).HasMaxLength(1);
                 entity.Property(e => e.ResgenBalbodhini).HasMaxLength(1);
+                entity.Property(e => e.ResgenSambhashan).HasMaxLength(1);
                 entity.Property(e => e.Backup).HasMaxLength(1).HasDefaultValue("N");
             });
 
@@ -274,8 +276,8 @@ namespace mrsexam_backend
                 entity.Property(e => e.RollNo).HasDefaultValue((short)0).IsRequired();
                 entity.Property(e => e.SessionNo).HasDefaultValue((short)0).IsRequired();
                 entity.Property(e => e.Name).HasMaxLength(60);
-                entity.Property(e => e.FormCentre).HasMaxLength(10);
-                entity.Property(e => e.ExamCentre).HasMaxLength(10);
+                entity.Property(e => e.FormCentre).HasMaxLength(20);
+                entity.Property(e => e.ExamCentre).HasMaxLength(20);
                 entity.Property(e => e.RollNo1);
                 entity.Property(e => e.SessionNo1);
                 entity.Property(e => e.Marks1).HasMaxLength(3);
@@ -294,6 +296,12 @@ namespace mrsexam_backend
                 entity.Property(e => e.RollNo6);
                 entity.Property(e => e.SessionNo6);
                 entity.Property(e => e.Marks6).HasMaxLength(3);
+                entity.Property(e => e.RollNo7);
+                entity.Property(e => e.SessionNo7);
+                entity.Property(e => e.Marks7).HasMaxLength(3);
+                entity.Property(e => e.RollNo8);
+                entity.Property(e => e.SessionNo8);
+                entity.Property(e => e.Marks8).HasMaxLength(3);
                 entity.Property(e => e.OralRollNo);
                 entity.Property(e => e.OralSessionNo);
                 entity.Property(e => e.OralMarks).HasMaxLength(3);
@@ -310,6 +318,7 @@ namespace mrsexam_backend
                 entity.Property(e => e.OthKhandRollNo).HasDefaultValue((short)0);
                 entity.Property(e => e.ConcessionFlag).HasMaxLength(1).HasDefaultValue("N");
                 entity.Property(e => e.ResDeclFlag).HasMaxLength(1).HasDefaultValue("N");
+                entity.Property(e => e.FlgPortion).HasColumnName("flgportion").HasMaxLength(1).HasDefaultValue("N");
                 entity.Property(e => e.Result).HasMaxLength(20);
                 entity.Property(e => e.Add1).HasMaxLength(80);
                 entity.Property(e => e.Add2).HasMaxLength(80);
@@ -394,6 +403,7 @@ namespace mrsexam_backend
                 entity.Property(e => e.Marks2).HasMaxLength(50);
                 entity.Property(e => e.Marks3).HasMaxLength(50);
                 entity.Property(e => e.Marks4).HasMaxLength(50);
+                entity.Property(e => e.Marks5).HasMaxLength(50);
                 entity.Property(e => e.OralMarks).HasMaxLength(50);
                 entity.Property(e => e.RegLang).HasMaxLength(50);
                 entity.Property(e => e.TotMarks);
@@ -466,6 +476,35 @@ namespace mrsexam_backend
                 entity.HasIndex(e => e.DummyCentreCode).HasDatabaseName("FORM_SUBODH$DummyCentreCode");
                 entity.HasIndex(e => e.Name).HasDatabaseName("FORM_SUBODH$NAME");
                 entity.HasIndex(e => e.UserId).HasDatabaseName("FORM_SUBODH$userid");
+            });
+
+            modelBuilder.Entity<FormSambhashan>(entity =>
+            {
+                entity.ToTable("FORM_SAMBHASHAN");
+                entity.HasKey(e => e.SrNo);
+                entity.Property(e => e.SrNo).HasDefaultValue(0).IsRequired();
+                entity.Property(e => e.RollNo);
+                entity.Property(e => e.RegionNo).HasDefaultValue(0);
+                entity.Property(e => e.Name).HasMaxLength(60);
+                entity.Property(e => e.SessionNo);
+                entity.Property(e => e.Gender).HasMaxLength(1);
+                entity.Property(e => e.FormCentre).HasMaxLength(50);
+                entity.Property(e => e.ExamCentre).HasMaxLength(50);
+                entity.Property(e => e.Marks1).HasMaxLength(50);
+                entity.Property(e => e.TotMarks);
+                entity.Property(e => e.Grade).HasMaxLength(10);
+                entity.Property(e => e.UndFlag).HasMaxLength(1);
+                entity.Property(e => e.UndClass).HasMaxLength(6);
+                entity.Property(e => e.SpecialRank).HasMaxLength(20);
+                entity.Property(e => e.Result).HasMaxLength(20);
+                entity.Property(e => e.DummyCentreCode).HasDefaultValue(0);
+                entity.Property(e => e.ResgenRun).HasDefaultValue((short)0);
+                entity.Property(e => e.DistrictName).HasMaxLength(50);
+                entity.Property(e => e.UserId).HasMaxLength(15);
+
+                entity.HasIndex(e => e.DummyCentreCode).HasDatabaseName("FORM_SAMBHASHAN$DummyCentreCode");
+                entity.HasIndex(e => e.Name).HasDatabaseName("FORM_SAMBHASHAN$NAME");
+                entity.HasIndex(e => e.UserId).HasDatabaseName("FORM_SAMBHASHAN$userid");
             });
         }
     }

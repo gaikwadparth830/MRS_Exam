@@ -55,6 +55,14 @@ namespace mrsexam_backend.Dtos
         public string? ExamCentre { get; set; }
         public string? Marks1 { get; set; }
         public string? Marks2 { get; set; }
+        public string? Marks3 { get; set; }
+        public string? Marks4 { get; set; }
+        public string? Marks5 { get; set; }
+        public string? Marks6 { get; set; }
+        public string? Marks7 { get; set; }
+        public string? Marks8 { get; set; }
+        public string? OralMarks { get; set; }
+        public string? RegLang { get; set; }
         public short? TotMarks { get; set; }
         public string? Grade { get; set; }
         public string? Result { get; set; }
