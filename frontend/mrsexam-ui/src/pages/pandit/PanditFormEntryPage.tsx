@@ -24,6 +24,7 @@ import {
 import { CentersService, type Center } from '../../api/generatedClient'
 import { CentreSearchField } from '../../components/CentreSearchField'
 import { MarathiNameField, MarathiPhoneticToggle } from '../../components/MarathiNameField'
+import { CandidateNameSearchDialog } from '../../components/CandidateNameSearchDialog'
 import { PageFrame } from '../../layout/PageFrame'
 import {
   containsDevanagari,
@@ -177,8 +178,10 @@ export const PanditFormEntryPage = ({ defaultSessionNo, isLocked = false }: Prop
   const [examCentreInfo, setExamCentreInfo] = useState<CentreResolve | null>(null)
   const [centreCount, setCentreCount] = useState(0)
   const [searchName, setSearchName] = useState('')
+  const [nameSearchOpen, setNameSearchOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const [phoneticAssist, setPhoneticAssist] = useState(
     () => localStorage.getItem(PHONETIC_ASSIST_KEY) !== 'N',
   )
@@ -187,6 +190,7 @@ export const PanditFormEntryPage = ({ defaultSessionNo, isLocked = false }: Prop
   const readOnly = isLocked || mode === 'view'
 
   const loadRows = async () => {
+    setIsLoading(true)
     try {
       const list = (await panditApi.listCandidates()).map(normalizeCandidate)
       setRows(list)
@@ -201,6 +205,8 @@ export const PanditFormEntryPage = ({ defaultSessionNo, isLocked = false }: Prop
       }
     } catch (err) {
       setError(panditApi.messageFromError(err, 'Unable to load Pandit candidates.'))
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -454,7 +460,6 @@ export const PanditFormEntryPage = ({ defaultSessionNo, isLocked = false }: Prop
 
             <MarathiPhoneticToggle
               enabled={phoneticAssist}
-              disabled={readOnly}
               onChange={onPhoneticAssistChange}
             />
 
@@ -617,16 +622,36 @@ export const PanditFormEntryPage = ({ defaultSessionNo, isLocked = false }: Prop
               <Button variant="outlined" disabled={!form.rollNo} onClick={() => void onCheckConcession()}>Check Concession</Button>
             </Stack>
 
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-              <TextField
-                label="Search name"
-                value={searchName}
-                onChange={(e) => setSearchName(e.target.value)}
-                fullWidth
-              />
-              <Button variant="outlined" onClick={() => void onSearch()}>Search</Button>
-              <Button variant="text" onClick={() => void loadRows()}>Reload</Button>
-            </Stack>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <Button size="small" variant="outlined" onClick={() => setNameSearchOpen(true)}>Search by name</Button>
+            <Button size="small" variant="text" onClick={() => void loadRows()}>{isLoading ? 'Loading...' : 'Reload'}</Button>
+          </Stack>
+
+          <CandidateNameSearchDialog
+            open={nameSearchOpen}
+            onClose={() => setNameSearchOpen(false)}
+            phoneticAssist={phoneticAssist}
+            onPhoneticAssistChange={onPhoneticAssistChange}
+            searchFn={async (q) => (await panditApi.searchByName(q)).map(normalizeCandidate)}
+            getRowKey={(row) => String(row.rollNo)}
+            columns={[
+              { id: 'name', label: 'Name', render: (r) => r.name || '-' },
+              { id: 'rollNo', label: 'Roll', width: 80, render: (r) => r.rollNo ?? '-' },
+              { id: 'khand', label: 'Khand', width: 80, render: (r) => r.khandAppearing || '-' },
+              { id: 'centre', label: 'Form Centre', render: (r) => r.formCentre || '-' },
+            ]}
+            onSelect={(row) => {
+              setRows([row])
+              setIndex(0)
+              setForm(row)
+              setOriginalRoll(row.rollNo)
+              setMode('view')
+              setSearchName(row.name ?? '')
+              setSuccess(`Selected: ${row.name ?? ''}`)
+              setError(null)
+            }}
+          />
+
           </Stack>
         </CardContent>
       </Card>

@@ -68,8 +68,9 @@ namespace mrsexam_backend.Services
             var session = await RequireDefaultSessionAsync(cancellationToken);
             var prefix = (name ?? string.Empty).Trim();
             return await _db.FormPandits.AsNoTracking()
-                .Where(f => f.SessionNo == session.SessionNo && f.Name != null && f.Name.StartsWith(prefix))
+                .Where(f => f.SessionNo == session.SessionNo && f.Name != null && f.Name.Contains(prefix))
                 .OrderBy(f => f.FormCentre).ThenBy(f => f.RollNo)
+                .Take(150)
                 .ToListAsync(cancellationToken);
         }
 

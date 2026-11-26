@@ -417,20 +417,22 @@ export const MarathiNameField = ({
         </Box>
       ) : null}
 
-      {showAssistControls && onPhoneticAssistChange ? (
+      {(showAssistControls && onPhoneticAssistChange) || (phoneticAssist && !disabled) ? (
         <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap>
-          <FormControlLabel
-            sx={{ m: 0 }}
-            control={(
-              <Switch
-                size="small"
-                checked={phoneticAssist}
-                disabled={disabled}
-                onChange={(event) => onPhoneticAssistChange(event.target.checked)}
-              />
-            )}
-            label={<Typography variant="caption">Phonetic assist</Typography>}
-          />
+          {showAssistControls && onPhoneticAssistChange ? (
+            <FormControlLabel
+              sx={{ m: 0 }}
+              control={(
+                <Switch
+                  size="small"
+                  checked={phoneticAssist}
+                  disabled={disabled}
+                  onChange={(event) => onPhoneticAssistChange(event.target.checked)}
+                />
+              )}
+              label={<Typography variant="caption">Phonetic assist</Typography>}
+            />
+          ) : null}
           {phoneticAssist && !disabled ? (
             <Typography
               component="button"

@@ -19,6 +19,7 @@ import {
 import { CentersService, type Center } from '../../api/generatedClient'
 import { CentreSearchField } from '../../components/CentreSearchField'
 import { MarathiNameField, MarathiPhoneticToggle } from '../../components/MarathiNameField'
+import { CandidateNameSearchDialog } from '../../components/CandidateNameSearchDialog'
 import { PageFrame } from '../../layout/PageFrame'
 import {
   containsDevanagari,
@@ -100,6 +101,7 @@ export const PraveenFormEntryPage = ({ defaultSessionNo, isLocked = false }: Pro
   const [examCentreInfo, setExamCentreInfo] = useState<CentreResolve | null>(null)
   const [centreCount, setCentreCount] = useState(0)
   const [searchName, setSearchName] = useState('')
+  const [nameSearchOpen, setNameSearchOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -487,7 +489,6 @@ export const PraveenFormEntryPage = ({ defaultSessionNo, isLocked = false }: Pro
 
           <MarathiPhoneticToggle
             enabled={phoneticAssist}
-            disabled={readOnly}
             onChange={onPhoneticAssistChange}
           />
 
@@ -522,7 +523,7 @@ export const PraveenFormEntryPage = ({ defaultSessionNo, isLocked = false }: Pro
                 phoneticAssist={phoneticAssist}
                 showAssistControls={false}
                 onChange={(name) => setForm((c) => ({ ...c, name }))}
-                helperText=""
+                helperText={phoneticAssist ? 'Type English (e.g. hemalata), then Space to convert to Marathi.' : 'Enter Marathi with keyboard.'}
               />
             </Box>
             <TextField size="small" label="Region" value={form.regionNo || ''} InputProps={{ readOnly: true }} />
@@ -581,19 +582,35 @@ export const PraveenFormEntryPage = ({ defaultSessionNo, isLocked = false }: Pro
             <Button disabled={rows.length === 0} onClick={() => showRow(rows.length - 1)}>Last</Button>
           </Stack>
 
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-            <TextField
-              size="small"
-              label="Search name (Marathi)"
-              value={searchName}
-              onChange={(e) => setSearchName(e.target.value)}
-              fullWidth
-              sx={marathiNameFieldSx}
-              inputProps={{ lang: 'mr', spellCheck: false }}
-            />
-            <Button size="small" variant="outlined" onClick={() => void onSearch()}>Search</Button>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <Button size="small" variant="outlined" onClick={() => setNameSearchOpen(true)}>Search by name</Button>
             <Button size="small" variant="text" onClick={() => void loadRows(activeSessionNo)}>{isLoading ? 'Loading...' : 'Reload'}</Button>
           </Stack>
+
+          <CandidateNameSearchDialog
+            open={nameSearchOpen}
+            onClose={() => setNameSearchOpen(false)}
+            phoneticAssist={phoneticAssist}
+            onPhoneticAssistChange={onPhoneticAssistChange}
+            searchFn={async (q) => (await praveenApi.searchByName(q)).map(normalizeCandidate)}
+            getRowKey={(row) => `${row.rollNo}-${row.regionNo}`}
+            columns={[
+              { id: 'name', label: 'Name', render: (r) => r.name || '-' },
+              { id: 'rollNo', label: 'Roll', width: 80, render: (r) => r.rollNo ?? '-' },
+              { id: 'region', label: 'Region', width: 80, render: (r) => r.regionNo ?? '-' },
+              { id: 'centre', label: 'Form Centre', render: (r) => r.formCentre || '-' },
+            ]}
+            onSelect={(row) => {
+              setRows([row])
+              setIndex(0)
+              setForm(row)
+              setMode('view')
+              setSearchName(row.name ?? '')
+              setSuccess(`Selected: ${row.name ?? ''}`)
+              setError(null)
+            }}
+          />
+
           {rows.length > 0 ? (
             <Chip size="small" variant="outlined" label={`Showing ${rowKey(form)} (${index + 1}/${rows.length})`} />
           ) : null}

@@ -27,6 +27,7 @@ import {
 import { CentersService, type Center } from '../../api/generatedClient'
 import { CentreSearchField } from '../../components/CentreSearchField'
 import { MarathiNameField, MarathiPhoneticToggle } from '../../components/MarathiNameField'
+import { CandidateNameSearchDialog } from '../../components/CandidateNameSearchDialog'
 import { PageFrame } from '../../layout/PageFrame'
 import { containsDevanagari, marathiNameFieldSx } from '../../utils/marathiTransliterate'
 
@@ -69,6 +70,7 @@ export const BalbodhiniFormEntryPage = ({ defaultSessionNo, isLocked = false }: 
   const [examCentreInfo, setExamCentreInfo] = useState<CentreResolve | null>(null)
   const [centreCount, setCentreCount] = useState(0)
   const [searchName, setSearchName] = useState('')
+  const [nameSearchOpen, setNameSearchOpen] = useState(false)
   const [insertPreviousSrNo, setInsertPreviousSrNo] = useState<number | ''>('')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -385,7 +387,6 @@ export const BalbodhiniFormEntryPage = ({ defaultSessionNo, isLocked = false }: 
 
           <MarathiPhoneticToggle
             enabled={phoneticAssist}
-            disabled={readOnly}
             onChange={onPhoneticAssistChange}
           />
 
@@ -406,7 +407,7 @@ export const BalbodhiniFormEntryPage = ({ defaultSessionNo, isLocked = false }: 
                 phoneticAssist={phoneticAssist}
                 showAssistControls={false}
                 onChange={(name) => setForm((c) => ({ ...c, name }))}
-                helperText=""
+                helperText={phoneticAssist ? 'Type English (e.g. hemalata), then Space to convert to Marathi.' : 'Enter Marathi with keyboard.'}
               />
             </Box>
             <FormControl size="small" disabled={readOnly} sx={{ justifyContent: 'center' }}>
@@ -485,19 +486,36 @@ export const BalbodhiniFormEntryPage = ({ defaultSessionNo, isLocked = false }: 
             <Button disabled={rows.length === 0} onClick={() => showRow(rows.length - 1)}>Last</Button>
           </Stack>
 
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-            <TextField
-              size="small"
-              label="Search name (Marathi)"
-              value={searchName}
-              onChange={(e) => setSearchName(e.target.value)}
-              fullWidth
-              sx={marathiNameFieldSx}
-              inputProps={{ lang: 'mr', spellCheck: false }}
-            />
-            <Button size="small" variant="outlined" onClick={() => void onSearch()}>Search</Button>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <Button size="small" variant="outlined" onClick={() => setNameSearchOpen(true)}>Search by name</Button>
             <Button size="small" variant="text" onClick={() => void loadRows()}>{isLoading ? 'Loading...' : 'Reload'}</Button>
           </Stack>
+
+          <CandidateNameSearchDialog
+            open={nameSearchOpen}
+            onClose={() => setNameSearchOpen(false)}
+            phoneticAssist={phoneticAssist}
+            onPhoneticAssistChange={onPhoneticAssistChange}
+            searchFn={async (q) => await balbodhiniApi.searchByName(q)}
+            getRowKey={(row) => String(row.srNo)}
+            columns={[
+              { id: 'name', label: 'Name', render: (r) => r.name || '-' },
+              { id: 'srNo', label: 'Sr No', width: 80, render: (r) => r.srNo || '-' },
+              { id: 'rollNo', label: 'Roll', width: 80, render: (r) => r.rollNo ?? '-' },
+              { id: 'region', label: 'Region', width: 80, render: (r) => r.regionNo ?? '-' },
+              { id: 'centre', label: 'Form Centre', render: (r) => r.formCentre || '-' },
+            ]}
+            onSelect={(row) => {
+              setRows([row])
+              setIndex(0)
+              setForm(row)
+              setMode('view')
+              setSearchName(row.name ?? '')
+              setSuccess(`Selected: ${row.name ?? ''}`)
+              setError(null)
+            }}
+          />
+
           </Stack>
         </CardContent>
       </Card>
