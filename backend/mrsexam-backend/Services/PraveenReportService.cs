@@ -44,7 +44,7 @@ namespace mrsexam_backend.Services
 
             return new AttendanceReportDto
             {
-                Header = BuildHeader(session, "Praveen Attendance Sheet", centreCode, centre?.CentreName, null),
+                Header = BuildHeader(session, "Attendance Sheet", "उपस्थिति पत्र", centreCode, centre?.CentreName, null),
                 MaxRollNo = rolls.Count > 0 ? rolls[^1] : null,
                 Pairs = pairs,
             };
@@ -86,7 +86,7 @@ namespace mrsexam_backend.Services
                     .FirstOrDefaultAsync(cancellationToken);
             }
 
-            var header = BuildHeader(session, "Praveen Name List", centreCode, centreName, null);
+            var header = BuildHeader(session, "Name List", "नामावली", centreCode, centreName, null);
             header.RowCount = rows.Count;
             return new NameListReportDto { Header = header, Rows = rows };
         }
@@ -144,7 +144,8 @@ namespace mrsexam_backend.Services
 
             var header = BuildHeader(
                 session,
-                normalizedMode == "named" ? "Praveen Result Sheet" : "Praveen Result Sheet (No Name)",
+                normalizedMode == "named" ? "Result Sheet" : "Result Sheet (No Name)",
+                "निकाल पत्रक",
                 centreCode,
                 null,
                 regionName);
@@ -155,6 +156,201 @@ namespace mrsexam_backend.Services
             {
                 Header = header,
                 Mode = normalizedMode,
+                Rows = rows,
+            };
+        }
+
+        public async Task<MarkSheetReportDto> GetMarkSheetAsync(
+            int? regionNo,
+            int? fromRoll,
+            int? toRoll,
+            CancellationToken cancellationToken)
+        {
+            var session = await RequireDefaultSessionAsync(cancellationToken);
+
+            var query = _db.FormPraveens.AsNoTracking()
+                .Where(f => f.SessionNo == (short)session.SessionNo
+                    && f.Result != null
+                    && f.Result.Trim() != string.Empty);
+
+            if (regionNo is > 0)
+                query = query.Where(f => f.RegionNo == regionNo);
+
+            if (fromRoll is > 0)
+                query = query.Where(f => f.RollNo >= fromRoll);
+
+            if (toRoll is > 0)
+                query = query.Where(f => f.RollNo <= toRoll);
+
+            var rows = await query
+                .OrderBy(f => f.RegionNo)
+                .ThenBy(f => f.RollNo)
+                .Select(f => new MarkSheetRowDto
+                {
+                    RollNo = f.RollNo,
+                    Name = f.Name,
+                    FormCentre = f.FormCentre,
+                    ExamCentre = f.ExamCentre,
+                    Marks1 = f.Marks1,
+                    Marks2 = f.Marks2,
+                    Marks3 = f.Marks3,
+                    Marks4 = f.Marks4,
+                    Marks5 = f.Marks5,
+                    OralMarks = f.OralMarks,
+                    RegLang = f.RegLang,
+                    TotMarks = f.TotMarks,
+                    Grade = f.Grade,
+                    Result = f.Result,
+                    SpecialRank = f.SpecialRank,
+                    RegionNo = f.RegionNo,
+                })
+                .ToListAsync(cancellationToken);
+
+            string? regionName = null;
+            if (regionNo is > 0)
+            {
+                regionName = await _db.Regions.AsNoTracking()
+                    .Where(r => r.RegionNo == regionNo)
+                    .Select(r => r.RegionName)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
+
+            var header = BuildHeader(session, "Mark Sheet", "गुणपत्रिका", null, null, regionName);
+            header.ResultDate = session.ResultDate;
+            header.RowCount = rows.Count;
+            return new MarkSheetReportDto { Header = header, Variant = "new", Rows = rows };
+        }
+
+        public async Task<RanksReportDto> GetRanksAsync(CancellationToken cancellationToken)
+        {
+            var session = await RequireDefaultSessionAsync(cancellationToken);
+
+            var regionNames = await _db.Regions.AsNoTracking()
+                .Select(r => new { r.RegionNo, r.RegionName })
+                .ToDictionaryAsync(r => r.RegionNo, r => r.RegionName, cancellationToken);
+
+            var rows = await _db.FormPraveens.AsNoTracking()
+                .Where(f => f.SessionNo == (short)session.SessionNo
+                    && f.SpecialRank != null
+                    && f.SpecialRank != string.Empty
+                    && f.Result != null
+                    && f.Result.ToUpper() == "PASS")
+                .OrderBy(f => f.SpecialRank)
+                .ThenByDescending(f => f.TotMarks)
+                .Select(f => new RankRowDto
+                {
+                    RollNo = f.RollNo,
+                    Name = f.Name,
+                    TotMarks = f.TotMarks,
+                    Grade = f.Grade,
+                    Result = f.Result,
+                    SpecialRank = f.SpecialRank,
+                    RegionNo = f.RegionNo,
+                    FormCentre = f.FormCentre,
+                    ExamCentre = f.ExamCentre,
+                })
+                .ToListAsync(cancellationToken);
+
+            foreach (var row in rows)
+            {
+                if (row.RegionNo is int rn && regionNames.TryGetValue(rn, out var name))
+                    row.RegionName = name;
+            }
+
+            var header = BuildHeader(session, "Ranks", "क्रमांक", null, null, null);
+            header.RowCount = rows.Count;
+            return new RanksReportDto { Header = header, Rows = rows };
+        }
+
+        public async Task<LostByTwoReportDto> GetLostByTwoMarksAsync(
+            int? regionNo,
+            CancellationToken cancellationToken)
+        {
+            var session = await RequireDefaultSessionAsync(cancellationToken);
+
+            // Catalog RPT-PRV-07: Cmd_LosingTwoMarksPraveen exam_no=6 — SQL not extracted;
+            // same near-miss rule as Prabodh using Exam Class3 / paper MinMarks.
+            var exam = await _db.Exams.AsNoTracking()
+                .FirstOrDefaultAsync(e => e.ExamNo == 6, cancellationToken);
+            var papers = await _db.Papers.AsNoTracking()
+                .Where(p => p.ExamNo == 6)
+                .OrderBy(p => p.PaperNo)
+                .ToListAsync(cancellationToken);
+
+            var class3 = exam?.Class3Marks ?? 0;
+            var minTotal = exam?.MinTotalKhand1 ?? class3;
+
+            var query = _db.FormPraveens.AsNoTracking()
+                .Where(f => f.SessionNo == (short)session.SessionNo
+                    && f.Result != null
+                    && f.Result.ToUpper() == "FAIL"
+                    && f.TotMarks != null);
+
+            if (regionNo is > 0)
+                query = query.Where(f => f.RegionNo == regionNo);
+
+            var forms = await query.ToListAsync(cancellationToken);
+            var paperMins = papers
+                .Select(p => new { p.PaperNo, Min = p.MinMarks ?? p.PassingMarks ?? 0 })
+                .Where(p => p.Min > 0)
+                .ToDictionary(p => p.PaperNo, p => p.Min);
+
+            var rows = forms
+                .Select(f =>
+                {
+                    var reasons = new List<string>();
+                    var tot = f.TotMarks ?? 0;
+                    var threshold = minTotal > 0 ? minTotal : class3;
+                    if (threshold > 0 && tot >= threshold - 2 && tot < threshold)
+                        reasons.Add($"Tot {tot} within 2 of min total {threshold}");
+
+                    TryNearMissPaper(f.Marks1, 1, paperMins.GetValueOrDefault(1), reasons);
+                    TryNearMissPaper(f.Marks2, 2, paperMins.GetValueOrDefault(2), reasons);
+                    TryNearMissPaper(f.Marks3, 3, paperMins.GetValueOrDefault(3), reasons);
+                    TryNearMissPaper(f.Marks4, 4, paperMins.GetValueOrDefault(4), reasons);
+                    TryNearMissPaper(f.Marks5, 5, paperMins.GetValueOrDefault(5), reasons);
+
+                    if (reasons.Count == 0) return null;
+
+                    return new LostByTwoRowDto
+                    {
+                        RollNo = f.RollNo,
+                        Name = f.Name,
+                        FormCentre = f.FormCentre,
+                        ExamCentre = f.ExamCentre,
+                        Marks1 = f.Marks1,
+                        Marks2 = f.Marks2,
+                        Marks3 = f.Marks3,
+                        Marks4 = f.Marks4,
+                        Marks5 = f.Marks5,
+                        OralMarks = f.OralMarks,
+                        TotMarks = f.TotMarks,
+                        Grade = f.Grade,
+                        Result = f.Result,
+                        NearMissReason = string.Join("; ", reasons),
+                    };
+                })
+                .Where(r => r != null)
+                .Cast<LostByTwoRowDto>()
+                .OrderBy(r => r.RollNo)
+                .ToList();
+
+            string? regionName = null;
+            if (regionNo is > 0)
+            {
+                regionName = await _db.Regions.AsNoTracking()
+                    .Where(r => r.RegionNo == regionNo)
+                    .Select(r => r.RegionName)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
+
+            var header = BuildHeader(session, "Lost by 2 Marks", "दोन गुणांनी कमी", null, null, regionName);
+            header.RowCount = rows.Count;
+            return new LostByTwoReportDto
+            {
+                Header = header,
+                Class3Marks = class3 > 0 ? class3 : null,
+                MinTotalKhand1 = minTotal > 0 ? minTotal : null,
                 Rows = rows,
             };
         }
@@ -199,7 +395,7 @@ namespace mrsexam_backend.Services
                 })
                 .ToListAsync(cancellationToken);
 
-            var header = BuildHeader(session, "Praveen Certificates", null, null, region?.RegionName);
+            var header = BuildHeader(session, "Certificates", "प्रमाणपत्र", null, null, region?.RegionName);
             header.RowCount = rows.Count;
             return new CertificateReportDto { Header = header, Rows = rows };
         }
@@ -278,7 +474,8 @@ namespace mrsexam_backend.Services
 
             var header = BuildHeader(
                 session,
-                regionNo is > 0 ? "Praveen Region-wise Register" : "Praveen Register",
+                regionNo is > 0 ? "Region-wise Register" : "Register",
+                "नोंदवही",
                 null,
                 null,
                 filterRegionName);
@@ -330,6 +527,27 @@ namespace mrsexam_backend.Services
             }
         }
 
+        private static void TryNearMissPaper(string? marksText, int paperNo, int minMarks, List<string> reasons)
+        {
+            if (minMarks <= 0) return;
+            if (!TryParseMarks(marksText, out var marks)) return;
+            if (marks >= minMarks - 2 && marks < minMarks)
+                reasons.Add($"Paper {paperNo}: {marks} in [{minMarks - 2}, {minMarks})");
+        }
+
+        private static bool TryParseMarks(string? text, out int marks)
+        {
+            marks = 0;
+            if (string.IsNullOrWhiteSpace(text)) return false;
+            var trimmed = text.Trim();
+            if (trimmed.Equals("A", StringComparison.OrdinalIgnoreCase)
+                || trimmed.Equals("AB", StringComparison.OrdinalIgnoreCase)
+                || trimmed == "-"
+                || trimmed == "*")
+                return false;
+            return int.TryParse(trimmed, out marks);
+        }
+
         private async Task<Session> RequireDefaultSessionAsync(CancellationToken cancellationToken)
         {
             var session = await _sessions.GetDefaultSessionAsync(cancellationToken);
@@ -341,6 +559,7 @@ namespace mrsexam_backend.Services
         private static ReportHeaderDto BuildHeader(
             Session session,
             string title,
+            string? titleMr,
             string? centreNo,
             string? centreName,
             string? regionName)
@@ -349,9 +568,11 @@ namespace mrsexam_backend.Services
             return new ReportHeaderDto
             {
                 SessionNo = session.SessionNo,
-                Month = session.Month,
+                Month = DvTtAakashConverter.NormalizeMonth(session.Month),
                 Year = sessionText.Length >= 4 ? sessionText[..4] : sessionText,
                 Title = title,
+                TitleMr = titleMr,
+                ExamName = "Praveen",
                 CentreNo = centreNo,
                 CentreName = centreName,
                 RegionName = regionName,

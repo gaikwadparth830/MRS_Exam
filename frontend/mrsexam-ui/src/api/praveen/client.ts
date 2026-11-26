@@ -102,6 +102,8 @@ export type ReportHeader = {
   month?: string | null
   year?: string | null
   title: string
+  titleMr?: string | null
+  examName?: string | null
   centreNo?: string | null
   centreName?: string | null
   regionName?: string | null
@@ -366,5 +368,76 @@ export const praveenApi = {
       params: regionNo ? { regionNo } : undefined,
     })
     return data
+  },
+
+  getMarkSheetReport: async (params: {
+    regionNo?: number
+    fromRoll?: number
+    toRoll?: number
+  }) => {
+    const { data } = await httpClient.get('/api/praveen/reports/mark-sheet', { params })
+    return data as {
+      header: ReportHeader
+      rows: Array<{
+        rollNo?: number | null
+        name?: string | null
+        formCentre?: string | null
+        examCentre?: string | null
+        marks1?: string | null
+        marks2?: string | null
+        marks3?: string | null
+        marks4?: string | null
+        marks5?: string | null
+        oralMarks?: string | null
+        regLang?: string | null
+        totMarks?: number | null
+        grade?: string | null
+        result?: string | null
+        specialRank?: string | null
+      }>
+    }
+  },
+
+  getRanksReport: async () => {
+    const { data } = await httpClient.get('/api/praveen/reports/ranks')
+    return data as {
+      header: ReportHeader
+      rows: Array<{
+        rollNo?: number | null
+        name?: string | null
+        totMarks?: number | null
+        grade?: string | null
+        result?: string | null
+        specialRank?: string | null
+        regionNo?: number | null
+        regionName?: string | null
+        formCentre?: string | null
+        examCentre?: string | null
+      }>
+    }
+  },
+
+  getLostByTwoReport: async (regionNo?: number) => {
+    const { data } = await httpClient.get('/api/praveen/reports/lost-two-marks', {
+      params: regionNo ? { regionNo } : undefined,
+    })
+    return data as {
+      header: ReportHeader
+      class3Marks?: number | null
+      rows: Array<{
+        rollNo?: number | null
+        name?: string | null
+        marks1?: string | null
+        marks2?: string | null
+        marks3?: string | null
+        marks4?: string | null
+        marks5?: string | null
+        totMarks?: number | null
+        grade?: string | null
+        nearMissReason?: string | null
+        formCentre?: string | null
+        examCentre?: string | null
+      }>
+    }
   },
 }

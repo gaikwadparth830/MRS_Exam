@@ -57,6 +57,40 @@ namespace mrsexam_backend.Controllers
             }
         }
 
+        [HttpGet("result-details")]
+        public async Task<IActionResult> ResultDetails(
+            [FromQuery] string? centreNo = null,
+            [FromQuery] int? regionNo = null,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return Ok(await _reports.GetResultDetailsAsync(centreNo, regionNo, cancellationToken));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("mark-sheet")]
+        public async Task<IActionResult> MarkSheet(
+            [FromQuery] int? fromRoll = null,
+            [FromQuery] int? toRoll = null,
+            [FromQuery] string variant = "new",
+            [FromQuery] string? portion = null,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return Ok(await _reports.GetMarkSheetAsync(fromRoll, toRoll, variant, portion, cancellationToken));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpGet("certificates")]
         public async Task<IActionResult> Certificates(
             [FromQuery] int? regionNo = null,
@@ -103,13 +137,14 @@ namespace mrsexam_backend.Controllers
 
         [HttpGet("students-passing")]
         public async Task<IActionResult> StudentsPassing(
-            [FromQuery] string? formCentre,
-            [FromQuery] int? regionNo,
-            CancellationToken cancellationToken)
+            [FromQuery] string? formCentre = null,
+            [FromQuery] int? regionNo = null,
+            [FromQuery] string passingMode = "full",
+            CancellationToken cancellationToken = default)
         {
             try
             {
-                return Ok(await _reports.GetStudentsPassingAsync(formCentre, regionNo, cancellationToken));
+                return Ok(await _reports.GetStudentsPassingAsync(formCentre, regionNo, passingMode, cancellationToken));
             }
             catch (InvalidOperationException ex)
             {
@@ -129,5 +164,10 @@ namespace mrsexam_backend.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        /// <summary>Alias matching catalog API key lost-two-marks.</summary>
+        [HttpGet("lost-two-marks")]
+        public async Task<IActionResult> LostTwoMarks([FromQuery] int? regionNo, CancellationToken cancellationToken)
+            => await LostByTwo(regionNo, cancellationToken);
     }
 }

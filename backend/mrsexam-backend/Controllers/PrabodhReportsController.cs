@@ -54,6 +54,55 @@ namespace mrsexam_backend.Controllers
             }
         }
 
+        [HttpGet("mark-sheet")]
+        public async Task<IActionResult> MarkSheet(
+            [FromQuery] int? regionNo = null,
+            [FromQuery] int? fromRoll = null,
+            [FromQuery] int? toRoll = null,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return Ok(await _reports.GetMarkSheetAsync(regionNo, fromRoll, toRoll, cancellationToken));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("hall-ticket")]
+        public async Task<IActionResult> HallTicket(
+            [FromQuery] string? centreNo = null,
+            [FromQuery] int? fromRoll = null,
+            [FromQuery] int? toRoll = null,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return Ok(await _reports.GetHallTicketAsync(centreNo, fromRoll, toRoll, cancellationToken));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("lost-two-marks")]
+        public async Task<IActionResult> LostTwoMarks(
+            [FromQuery] int? regionNo = null,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return Ok(await _reports.GetLostByTwoMarksAsync(regionNo, cancellationToken));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpGet("certificates")]
         public async Task<IActionResult> Certificates(
             [FromQuery] int regionNo,

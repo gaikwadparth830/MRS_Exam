@@ -36,10 +36,13 @@ import {
   type Session,
 } from '../../api/generatedClient'
 import { httpClient } from '../../api/httpClient'
+import { CandidateNameSearchDialog } from '../../components/CandidateNameSearchDialog'
 import { MarathiNameField, MarathiPhoneticToggle } from '../../components/MarathiNameField'
 import {
   lookupExactMarathiSpelling,
   marathiNameFieldSx,
+  normalizeCentreCode,
+  toAsciiDigits,
   transliterateEnglishToDevanagari as offlineTransliterate,
 } from '../../utils/marathiTransliterate'
 import { UserMasterPage } from './UserMasterPage'
@@ -75,66 +78,6 @@ type PageResult<T> = {
   totalCount: number
   pageNumber: number
   pageSize: number
-}
-
-type DistrictUnicodeConvertPreviewItem = {
-  originalDistrictName: string
-  convertedDistrictName: string
-  originalShortName?: string | null
-  convertedShortName?: string | null
-  originalDistrictCity?: string | null
-  convertedDistrictCity?: string | null
-  centreRefCount: number
-  formRefCount: number
-  willChange: boolean
-  conflict?: string | null
-}
-
-type DistrictUnicodeConvertPreviewResponse = {
-  totalDistricts: number
-  convertibleCount: number
-  unchangedCount: number
-  conflictCount: number
-  items: DistrictUnicodeConvertPreviewItem[]
-}
-
-type DistrictUnicodeConvertApplyResponse = {
-  districtsUpdated: number
-  centresUpdated: number
-  formsUpdated: number
-  skippedConflicts: string[]
-  errors: string[]
-}
-
-type CentreUnicodeConvertPreviewItem = {
-  originalCentreNo: string
-  convertedCentreNo: string
-  originalCentreName?: string | null
-  convertedCentreName?: string | null
-  originalCity?: string | null
-  convertedCity?: string | null
-  originalDistrictName?: string | null
-  convertedDistrictName?: string | null
-  formRefCount: number
-  willChange: boolean
-  centreNoChanges: boolean
-  conflict?: string | null
-}
-
-type CentreUnicodeConvertPreviewResponse = {
-  totalCentres: number
-  convertibleCount: number
-  unchangedCount: number
-  conflictCount: number
-  items: CentreUnicodeConvertPreviewItem[]
-}
-
-type CentreUnicodeConvertApplyResponse = {
-  centresUpdated: number
-  centreNosRenamed: number
-  formRefsUpdated: number
-  skippedConflicts: string[]
-  errors: string[]
 }
 
 const fetchGoogleMarathiTransliteration = async (input: string): Promise<string | null> => {
@@ -289,7 +232,7 @@ const regionCrud: CrudConfig<Region> = {
 
 const districtCrud: CrudConfig<District> = {
   title: 'District Master',
-  description: 'Create, update, and remove districts. District Name, District City, and Short Name can be entered in Marathi. Use Preview/Apply below to convert legacy DV-TTAakash names to Unicode.',
+  description: 'Create, update, and remove districts. District Name, District City, and Short Name can be entered in Marathi.',
   keyFields: ['districtName'],
   fields: [
     { key: 'districtName', label: 'District Name (Marathi)', type: 'text', required: true },
@@ -335,7 +278,7 @@ const centerMarathiFieldKeys = new Set([
 
 const centerCrud: CrudConfig<Center> = {
   title: 'Center Master',
-  description: 'Enter center details in Marathi. Pincode and Phone stay in English. District and flags use dropdowns. Use Preview/Apply below to convert legacy DV-TTAakash centre data to Unicode.',
+  description: 'Enter center details in Marathi. Pincode and Phone stay in English. District and flags use dropdowns.',
   keyFields: ['centreNo'],
   fields: [
     { key: 'centreNo', label: 'Center No (Marathi)', type: 'text', required: true },
@@ -578,9 +521,9 @@ const MasterCrudPage = ({ pageKey }: { pageKey: MasterCrudPageKey }) => {
   const [form, setForm] = useState<object>(config.createEmpty())
   const [regionOptions, setRegionOptions] = useState<Region[]>([])
   const [districtNameOptions, setDistrictNameOptions] = useState<string[]>([])
-  const [centerNoOptions, setCenterNoOptions] = useState<string[]>([])
+  const [allCentres, setAllCentres] = useState<Center[]>([])
   const [examOptions, setExamOptions] = useState<Exam[]>([])
-  const [centerSearchValue, setCenterSearchValue] = useState('')
+  const [centerSearchOpen, setCenterSearchOpen] = useState(false)
   const [editingKey, setEditingKey] = useState<string | null>(null)
   const [phoneticAssist, setPhoneticAssist] = useState(true)
   const [pageNumber, setPageNumber] = useState(1)
@@ -589,9 +532,6 @@ const MasterCrudPage = ({ pageKey }: { pageKey: MasterCrudPageKey }) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [unicodePreview, setUnicodePreview] = useState<DistrictUnicodeConvertPreviewResponse | null>(null)
-  const [centreUnicodePreview, setCentreUnicodePreview] = useState<CentreUnicodeConvertPreviewResponse | null>(null)
-  const [unicodeBusy, setUnicodeBusy] = useState(false)
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
   const defaultPageNumber = 1
   const defaultPageSize = 10
@@ -663,8 +603,8 @@ const MasterCrudPage = ({ pageKey }: { pageKey: MasterCrudPageKey }) => {
   useEffect(() => {
     if (config.title !== 'Center Master') {
       setDistrictNameOptions([])
-      setCenterNoOptions([])
-      setCenterSearchValue('')
+      setAllCentres([])
+      setCenterSearchOpen(false)
       return
     }
 
@@ -693,30 +633,22 @@ const MasterCrudPage = ({ pageKey }: { pageKey: MasterCrudPageKey }) => {
       }
     }
 
-    const loadCenterNoOptions = async () => {
+    const loadAllCentres = async () => {
       try {
         const payload = await CentersService.getApiCenters()
-        const normalized = normalizePagedResponse<Center>(payload, { pageNumber: 1, pageSize: 2000 })
-        const centerNos = Array.from(
-          new Set(
-            normalized.items
-              .map((center) => center.centreNo?.trim() ?? '')
-              .filter((centerNo): centerNo is string => centerNo.length > 0),
-          ),
-        )
-
+        const normalized = normalizePagedResponse<Center>(payload, { pageNumber: 1, pageSize: 10000 })
         if (isMounted) {
-          setCenterNoOptions(centerNos)
+          setAllCentres(normalized.items)
         }
       } catch {
         if (isMounted) {
-          setCenterNoOptions([])
+          setAllCentres([])
         }
       }
     }
 
     void loadDistrictNameOptions()
-    void loadCenterNoOptions()
+    void loadAllCentres()
 
     return () => {
       isMounted = false
@@ -763,8 +695,6 @@ const MasterCrudPage = ({ pageKey }: { pageKey: MasterCrudPageKey }) => {
       setTotalCount(0)
       setSuccess(null)
       setError(null)
-      setUnicodePreview(null)
-      setCentreUnicodePreview(null)
 
       if (pageNumber !== defaultPageNumber || pageSize !== defaultPageSize) {
         setPageNumber(defaultPageNumber)
@@ -966,219 +896,31 @@ const MasterCrudPage = ({ pageKey }: { pageKey: MasterCrudPageKey }) => {
     }
   }
 
-  const searchCenterByNo = async (rawCenterNo: string) => {
-    const centerNo = rawCenterNo.trim()
+  const searchCentresByNo = async (query: string): Promise<Center[]> => {
+    const needle = normalizeCentreCode(query)
+    if (!needle) return []
 
-    if (!centerNo) {
-      await loadRows({ pageNumber, pageSize })
-      return
-    }
+    const asciiNeedle = toAsciiDigits(query).trim().toLowerCase()
+    const matched = allCentres.filter((centre) => {
+      const code = normalizeCentreCode(centre.centreNo ?? '')
+      const raw = (centre.centreNo ?? '').toLowerCase()
+      return code.includes(needle) || raw.includes(asciiNeedle) || raw.includes(query.trim().toLowerCase())
+    })
 
-    setLoading(true)
+    return matched
+      .slice()
+      .sort((a, b) => (a.centreNo ?? '').localeCompare(b.centreNo ?? '', 'mr'))
+      .slice(0, 100)
+  }
+
+  const onSelectCentreFromSearch = (centre: Center) => {
+    setRows([centre as object])
+    setForm({ ...centre } as object)
+    setEditingKey(null)
+    setTotalCount(1)
+    setPageNumber(1)
+    setSuccess(`Selected center ${centre.centreNo ?? ''}`)
     setError(null)
-
-    try {
-      const payload = await CentersService.getApiCenters1({ id: centerNo })
-      let foundItems: Center[] = []
-
-      if (Array.isArray(payload)) {
-        foundItems = payload as Center[]
-      } else if (payload && typeof payload === 'object') {
-        const objectPayload = payload as Record<string, unknown>
-
-        if (typeof objectPayload.centreNo === 'string') {
-          foundItems = [payload as Center]
-        } else {
-          foundItems = normalizePagedResponse<Center>(payload, { pageNumber: 1, pageSize: 10 }).items
-        }
-      }
-
-      setRows(foundItems as object[])
-      setTotalCount(foundItems.length)
-      setPageNumber(1)
-    } catch {
-      setRows([])
-      setTotalCount(0)
-      setPageNumber(1)
-      setError('No center found for the given Center No.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const onCenterSearch = async () => {
-    if (config.title !== 'Center Master') {
-      return
-    }
-
-    await searchCenterByNo(centerSearchValue)
-  }
-
-  const onClearCenterSearch = async () => {
-    setCenterSearchValue('')
-    await loadRows({ pageNumber, pageSize })
-  }
-
-  const onPreviewUnicodeConvert = async () => {
-    if (config.title !== 'District Master') {
-      return
-    }
-
-    setUnicodeBusy(true)
-    setError(null)
-    setSuccess(null)
-
-    try {
-      const { data } = await httpClient.get<DistrictUnicodeConvertPreviewResponse>(
-        '/api/Districts/unicode-convert/preview',
-      )
-      setUnicodePreview(data)
-      setSuccess(
-        `Preview ready: ${data.convertibleCount} to convert, ${data.unchangedCount} unchanged, ${data.conflictCount} conflicts.`,
-      )
-    } catch (requestError) {
-      setUnicodePreview(null)
-      setError(requestError instanceof Error ? requestError.message : 'Unicode convert preview failed.')
-    } finally {
-      setUnicodeBusy(false)
-    }
-  }
-
-  const onApplyUnicodeConvert = async () => {
-    if (config.title !== 'District Master') {
-      return
-    }
-
-    const convertible = unicodePreview?.convertibleCount ?? 0
-    if (convertible < 1) {
-      setError('Run Preview first. Nothing to convert.')
-      return
-    }
-
-    const confirmed = window.confirm(
-      `Convert ${convertible} district name(s) from DV-TTAakash to Unicode?\n\nCentre and Balbodhini form district references will be updated in the same step.`,
-    )
-    if (!confirmed) {
-      return
-    }
-
-    setUnicodeBusy(true)
-    setError(null)
-    setSuccess(null)
-
-    try {
-      const { data } = await httpClient.post<DistrictUnicodeConvertApplyResponse>(
-        '/api/Districts/unicode-convert/apply',
-      )
-
-      const conflictNote = data.skippedConflicts?.length
-        ? ` Skipped conflicts: ${data.skippedConflicts.length}.`
-        : ''
-      const errorNote = data.errors?.length ? ` Errors: ${data.errors.join(' | ')}` : ''
-
-      if (data.errors?.length && data.districtsUpdated === 0) {
-        setError(`Unicode convert failed.${errorNote}`)
-      } else {
-        setSuccess(
-          `Converted ${data.districtsUpdated} district(s), updated ${data.centresUpdated} centre(s) and ${data.formsUpdated} form(s).${conflictNote}${errorNote}`,
-        )
-      }
-
-      setUnicodePreview(null)
-      await loadRows({ pageNumber: 1, pageSize })
-    } catch (requestError) {
-      const body = (requestError as { response?: { data?: DistrictUnicodeConvertApplyResponse | { message?: string } } })
-        ?.response?.data
-      if (body && typeof body === 'object' && 'errors' in body) {
-        const applyBody = body as DistrictUnicodeConvertApplyResponse
-        setError(applyBody.errors?.join(' | ') || 'Unicode convert apply failed.')
-      } else {
-        setError(requestError instanceof Error ? requestError.message : 'Unicode convert apply failed.')
-      }
-    } finally {
-      setUnicodeBusy(false)
-    }
-  }
-
-  const onPreviewCentreUnicodeConvert = async () => {
-    if (config.title !== 'Center Master') {
-      return
-    }
-
-    setUnicodeBusy(true)
-    setError(null)
-    setSuccess(null)
-
-    try {
-      const { data } = await httpClient.get<CentreUnicodeConvertPreviewResponse>(
-        '/api/Centers/unicode-convert/preview',
-      )
-      setCentreUnicodePreview(data)
-      setSuccess(
-        `Centre preview ready: ${data.convertibleCount} to convert, ${data.unchangedCount} unchanged, ${data.conflictCount} conflicts.`,
-      )
-    } catch (requestError) {
-      setCentreUnicodePreview(null)
-      setError(requestError instanceof Error ? requestError.message : 'Centre Unicode convert preview failed.')
-    } finally {
-      setUnicodeBusy(false)
-    }
-  }
-
-  const onApplyCentreUnicodeConvert = async () => {
-    if (config.title !== 'Center Master') {
-      return
-    }
-
-    const convertible = centreUnicodePreview?.convertibleCount ?? 0
-    if (convertible < 1) {
-      setError('Run Preview first. Nothing to convert.')
-      return
-    }
-
-    const confirmed = window.confirm(
-      `Convert ${convertible} centre(s) from DV-TTAakash to Unicode?\n\nCentre No, name, address, city, and district fields are converted. Form/exam centre references are updated when Centre No changes.`,
-    )
-    if (!confirmed) {
-      return
-    }
-
-    setUnicodeBusy(true)
-    setError(null)
-    setSuccess(null)
-
-    try {
-      const { data } = await httpClient.post<CentreUnicodeConvertApplyResponse>(
-        '/api/Centers/unicode-convert/apply',
-      )
-
-      const conflictNote = data.skippedConflicts?.length
-        ? ` Skipped conflicts: ${data.skippedConflicts.length}.`
-        : ''
-      const errorNote = data.errors?.length ? ` Errors: ${data.errors.join(' | ')}` : ''
-
-      if (data.errors?.length && data.centresUpdated === 0) {
-        setError(`Centre Unicode convert failed.${errorNote}`)
-      } else {
-        setSuccess(
-          `Converted ${data.centresUpdated} centre(s), renamed ${data.centreNosRenamed} centre no(s), updated ${data.formRefsUpdated} form ref(s).${conflictNote}${errorNote}`,
-        )
-      }
-
-      setCentreUnicodePreview(null)
-      await loadRows({ pageNumber: 1, pageSize })
-    } catch (requestError) {
-      const body = (requestError as { response?: { data?: CentreUnicodeConvertApplyResponse | { message?: string } } })
-        ?.response?.data
-      if (body && typeof body === 'object' && 'errors' in body) {
-        const applyBody = body as CentreUnicodeConvertApplyResponse
-        setError(applyBody.errors?.join(' | ') || 'Centre Unicode convert apply failed.')
-      } else {
-        setError(requestError instanceof Error ? requestError.message : 'Centre Unicode convert apply failed.')
-      }
-    } finally {
-      setUnicodeBusy(false)
-    }
   }
 
   return (
@@ -1371,203 +1113,87 @@ const MasterCrudPage = ({ pageKey }: { pageKey: MasterCrudPageKey }) => {
               </Stack>
             </Box>
 
-            {config.title === 'District Master' ? (
-              <MuiPaper variant="outlined" sx={{ p: 2 }}>
-                <Stack spacing={1.5}>
-                  <Typography variant="subtitle1" fontWeight={700}>
-                    Convert legacy DV-TTAakash names to Unicode
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Preview first, then apply. Already-Unicode rows are skipped. Centre and Balbodhini form district references are updated when a district name changes.
-                  </Typography>
-                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-                    <Button
-                      type="button"
-                      variant="outlined"
-                      onClick={() => void onPreviewUnicodeConvert()}
-                      disabled={loading || unicodeBusy}
-                    >
-                      Preview conversion
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="contained"
-                      color="secondary"
-                      onClick={() => void onApplyUnicodeConvert()}
-                      disabled={loading || unicodeBusy || !unicodePreview || unicodePreview.convertibleCount < 1}
-                    >
-                      Apply conversion
-                    </Button>
-                  </Stack>
-
-                  {unicodePreview ? (
-                    <TableContainer sx={{ maxHeight: 320 }}>
-                      <Table size="small" stickyHeader>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell sx={{ fontWeight: 700 }}>Legacy name</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Unicode name</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Centres</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Forms</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {unicodePreview.items
-                            .filter((item) => item.willChange || item.conflict)
-                            .map((item) => (
-                              <TableRow key={item.originalDistrictName}>
-                                <TableCell sx={marathiNameFieldSx['& .MuiInputBase-input']}>
-                                  {item.originalDistrictName}
-                                </TableCell>
-                                <TableCell sx={marathiNameFieldSx['& .MuiInputBase-input']}>
-                                  {item.convertedDistrictName}
-                                </TableCell>
-                                <TableCell>{item.centreRefCount}</TableCell>
-                                <TableCell>{item.formRefCount}</TableCell>
-                                <TableCell>
-                                  {item.conflict
-                                    ? item.conflict
-                                    : item.willChange
-                                      ? 'Will convert'
-                                      : 'Unchanged'}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  ) : null}
-                </Stack>
-              </MuiPaper>
+            {config.title === 'Center Master' ? (
+              <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
+                <Button
+                  type="button"
+                  size="small"
+                  variant="outlined"
+                  onClick={() => setCenterSearchOpen(true)}
+                  disabled={loading}
+                >
+                  Search by Center No
+                </Button>
+                <Button
+                  type="button"
+                  size="small"
+                  variant="text"
+                  onClick={() => void loadRows({ pageNumber, pageSize })}
+                  disabled={loading}
+                >
+                  Clear search / Reload
+                </Button>
+              </Stack>
             ) : null}
 
             {config.title === 'Center Master' ? (
-              <MuiPaper variant="outlined" sx={{ p: 2 }}>
-                <Stack spacing={1.5} sx={{ mb: 2 }}>
-                  <Typography variant="subtitle1" fontWeight={700}>
-                    Convert legacy DV-TTAakash centre data to Unicode
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Preview first, then apply. Converts Centre No, name, address, city, and district. Form/exam centre references are updated when a Centre No changes. Already-Unicode values are skipped.
-                  </Typography>
-                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-                    <Button
-                      type="button"
-                      variant="outlined"
-                      onClick={() => void onPreviewCentreUnicodeConvert()}
-                      disabled={loading || unicodeBusy}
-                    >
-                      Preview conversion
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="contained"
-                      color="secondary"
-                      onClick={() => void onApplyCentreUnicodeConvert()}
-                      disabled={loading || unicodeBusy || !centreUnicodePreview || centreUnicodePreview.convertibleCount < 1}
-                    >
-                      Apply conversion
-                    </Button>
-                  </Stack>
-
-                  {centreUnicodePreview ? (
-                    <TableContainer sx={{ maxHeight: 320 }}>
-                      <Table size="small" stickyHeader>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell sx={{ fontWeight: 700 }}>Legacy Centre No</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Unicode Centre No</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Unicode Name</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Forms</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {centreUnicodePreview.items
-                            .filter((item) => item.willChange || item.conflict)
-                            .slice(0, 100)
-                            .map((item) => (
-                              <TableRow key={item.originalCentreNo}>
-                                <TableCell sx={marathiNameFieldSx['& .MuiInputBase-input']}>
-                                  {item.originalCentreNo}
-                                </TableCell>
-                                <TableCell sx={marathiNameFieldSx['& .MuiInputBase-input']}>
-                                  {item.convertedCentreNo}
-                                </TableCell>
-                                <TableCell sx={marathiNameFieldSx['& .MuiInputBase-input']}>
-                                  {item.convertedCentreName ?? '-'}
-                                </TableCell>
-                                <TableCell>{item.formRefCount}</TableCell>
-                                <TableCell>
-                                  {item.conflict
-                                    ? item.conflict
-                                    : item.willChange
-                                      ? (item.centreNoChanges ? 'Will convert (+ rename)' : 'Will convert')
-                                      : 'Unchanged'}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  ) : null}
-                  {centreUnicodePreview && centreUnicodePreview.convertibleCount > 100 ? (
-                    <Typography variant="caption" color="text.secondary">
-                      Showing first 100 of {centreUnicodePreview.convertibleCount} convertible rows.
-                    </Typography>
-                  ) : null}
-                </Stack>
-
-                <Stack
-                  direction={{ xs: 'column', md: 'row' }}
-                  spacing={1.5}
-                  alignItems={{ xs: 'stretch', md: 'center' }}
-                >
-                  <TextField
-                    label="Search by Center No"
-                    value={centerSearchValue}
-                    onChange={(event) => setCenterSearchValue(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault()
-                        void onCenterSearch()
-                      }
-                    }}
-                    sx={{ minWidth: { xs: '100%', md: 260 } }}
-                  />
-
-                  <FormControl sx={{ minWidth: { xs: '100%', md: 260 } }}>
-                    <InputLabel id="center-search-no-label">Center No List</InputLabel>
-                    <Select
-                      labelId="center-search-no-label"
-                      label="Center No List"
-                      value={centerSearchValue}
-                      onChange={(event) => {
-                        const selected = String(event.target.value)
-                        setCenterSearchValue(selected)
-                        void searchCenterByNo(selected)
-                      }}
-                    >
-                      <MenuItem value="">Select Center No</MenuItem>
-                      {centerNoOptions.map((centerNo) => (
-                        <MenuItem key={centerNo} value={centerNo}>
-                          {centerNo}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <Stack direction="row" spacing={1.5}>
-                    <Button type="button" variant="contained" onClick={() => void onCenterSearch()} disabled={loading}>
-                      Search
-                    </Button>
-                    <Button type="button" variant="outlined" onClick={() => void onClearCenterSearch()} disabled={loading}>
-                      Clear
-                    </Button>
-                  </Stack>
-                </Stack>
-              </MuiPaper>
+              <CandidateNameSearchDialog
+                open={centerSearchOpen}
+                onClose={() => setCenterSearchOpen(false)}
+                title="Search by Center No"
+                queryLabel="Center No"
+                queryHelperText={
+                  phoneticAssist
+                    ? 'Type centre no (e.g. अ/087 or a/087). Space converts English phonetic. Matches appear below — select one.'
+                    : 'Type centre no. If several match, pick one from the list.'
+                }
+                phoneticAssist={phoneticAssist}
+                onPhoneticAssistChange={setPhoneticAssist}
+                minChars={1}
+                emptyHint="Type at least 1 character of the Center No."
+                searchFn={searchCentresByNo}
+                getRowKey={(row) => row.centreNo ?? ''}
+                columns={[
+                  {
+                    id: 'centreNo',
+                    label: 'Center No',
+                    width: 140,
+                    render: (row) => (
+                      <Typography variant="body2" sx={{ ...marathiNameFieldSx, fontWeight: 600 }}>
+                        {row.centreNo || '-'}
+                      </Typography>
+                    ),
+                  },
+                  {
+                    id: 'centreName',
+                    label: 'Name',
+                    render: (row) => (
+                      <Typography variant="body2" sx={marathiNameFieldSx}>
+                        {row.centreName || '-'}
+                      </Typography>
+                    ),
+                  },
+                  {
+                    id: 'city',
+                    label: 'City',
+                    render: (row) => (
+                      <Typography variant="body2" sx={marathiNameFieldSx}>
+                        {row.city || '-'}
+                      </Typography>
+                    ),
+                  },
+                  {
+                    id: 'district',
+                    label: 'District',
+                    render: (row) => (
+                      <Typography variant="body2" sx={marathiNameFieldSx}>
+                        {row.districtName || '-'}
+                      </Typography>
+                    ),
+                  },
+                ]}
+                onSelect={onSelectCentreFromSearch}
+              />
             ) : null}
 
             {error ? <Alert severity="error">{error}</Alert> : null}

@@ -43,7 +43,7 @@ namespace mrsexam_backend.Services
 
             return new AttendanceReportDto
             {
-                Header = BuildHeader(session, "Pandit Attendance Sheet", centreCode, centre?.CentreName, null),
+                Header = BuildHeader(session, "Attendance Sheet", "उपस्थिति पत्र", centreCode, centre?.CentreName, null),
                 MaxRollNo = rolls.Count > 0 ? rolls[^1] : null,
                 Pairs = pairs,
             };
@@ -75,9 +75,13 @@ namespace mrsexam_backend.Services
                 {
                     RollNo = x.form.RollNo,
                     Name = x.form.Name,
+                    FormCentre = x.form.FormCentre,
                     ExamCentre = x.form.ExamCentre,
                     CentreName = x.centre != null ? x.centre.CentreName : null,
                     DistrictName = x.centre != null ? x.centre.DistrictName : null,
+                    KhandAppearing = x.form.KhandAppearing,
+                    FlgPortion = x.form.FlgPortion,
+                    RegionNo = x.district != null ? x.district.RegionNo : null,
                 })
                 .ToListAsync(cancellationToken);
 
@@ -90,7 +94,7 @@ namespace mrsexam_backend.Services
                     .FirstOrDefaultAsync(cancellationToken);
             }
 
-            var header = BuildHeader(session, "Pandit Name List", centreCode, centreName, null);
+            var header = BuildHeader(session, "Name List", "नामावली", centreCode, centreName, null);
             header.RowCount = rows.Count;
             return new NameListReportDto { Header = header, Rows = rows };
         }
@@ -125,6 +129,7 @@ namespace mrsexam_backend.Services
                 {
                     RollNo = x.form.RollNo,
                     Name = normalizedMode == "named" ? x.form.Name : null,
+                    FormCentre = x.form.FormCentre,
                     ExamCentre = x.form.ExamCentre,
                     Marks1 = x.form.Marks1,
                     Marks2 = x.form.Marks2,
@@ -136,6 +141,10 @@ namespace mrsexam_backend.Services
                     Marks8 = x.form.Marks8,
                     OralMarks = x.form.OralMarks,
                     TotMarks = x.form.TotMarks,
+                    Khand1TotMarks = x.form.Khand1TotMarks,
+                    Khand2TotMarks = x.form.Khand2TotMarks,
+                    KhandAppearing = x.form.KhandAppearing,
+                    FlgPortion = x.form.FlgPortion,
                     Grade = x.form.Grade,
                     Result = x.form.Result,
                     SpecialRank = x.form.SpecialRank,
@@ -153,7 +162,8 @@ namespace mrsexam_backend.Services
 
             var header = BuildHeader(
                 session,
-                normalizedMode == "named" ? "Pandit Result Sheet" : "Pandit Result Sheet (No Name)",
+                normalizedMode == "named" ? "Result Sheet" : "Result Sheet (No Name)",
+                "निकाल पत्रक",
                 centreCode,
                 null,
                 regionName);
@@ -166,6 +176,140 @@ namespace mrsexam_backend.Services
                 Mode = normalizedMode,
                 Rows = rows,
             };
+        }
+
+        public async Task<PanditResultDetailsReportDto> GetResultDetailsAsync(
+            string? centreNo,
+            int? regionNo,
+            CancellationToken cancellationToken)
+        {
+            var session = await RequireDefaultSessionAsync(cancellationToken);
+            var centreCode = centreNo?.Trim();
+
+            var query = from form in _db.FormPandits.AsNoTracking()
+                        where form.SessionNo == (short)session.SessionNo
+                        join centre in _db.Centres.AsNoTracking() on form.FormCentre equals centre.CentreNo into centreJoin
+                        from centre in centreJoin.DefaultIfEmpty()
+                        join district in _db.Districts.AsNoTracking() on centre.DistrictName equals district.DistrictName into districtJoin
+                        from district in districtJoin.DefaultIfEmpty()
+                        select new { form, centre, district };
+
+            if (!string.IsNullOrWhiteSpace(centreCode))
+                query = query.Where(x => x.form.ExamCentre == centreCode || x.form.FormCentre == centreCode);
+
+            if (regionNo is > 0)
+                query = query.Where(x => x.district != null && x.district.RegionNo == regionNo);
+
+            var rows = await query
+                .OrderBy(x => x.form.RollNo)
+                .Select(x => new PanditResultDetailsRowDto
+                {
+                    RollNo = x.form.RollNo,
+                    Name = x.form.Name,
+                    FormCentre = x.form.FormCentre,
+                    ExamCentre = x.form.ExamCentre,
+                    KhandAppearing = x.form.KhandAppearing,
+                    FlgPortion = x.form.FlgPortion,
+                    Marks1 = x.form.Marks1,
+                    Marks2 = x.form.Marks2,
+                    Marks3 = x.form.Marks3,
+                    Marks4 = x.form.Marks4,
+                    Marks5 = x.form.Marks5,
+                    Marks6 = x.form.Marks6,
+                    Marks7 = x.form.Marks7,
+                    Marks8 = x.form.Marks8,
+                    OralMarks = x.form.OralMarks,
+                    Khand1TotMarks = x.form.Khand1TotMarks,
+                    Khand2TotMarks = x.form.Khand2TotMarks,
+                    TotMarks = x.form.TotMarks,
+                    Grade = x.form.Grade,
+                    Result = x.form.Result,
+                    SpecialRank = x.form.SpecialRank,
+                    ConcessionFlag = x.form.ConcessionFlag,
+                    UndFlag = x.form.UndFlag,
+                    BothKhandFlag = x.form.BothKhandFlag,
+                })
+                .ToListAsync(cancellationToken);
+
+            string? regionName = null;
+            if (regionNo is > 0)
+            {
+                regionName = await _db.Regions.AsNoTracking()
+                    .Where(r => r.RegionNo == regionNo)
+                    .Select(r => r.RegionName)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
+
+            var header = BuildHeader(session, "Result Details", "निकाल तपशील", centreCode, null, regionName);
+            header.ResultDate = session.ResultDate;
+            header.RowCount = rows.Count;
+            return new PanditResultDetailsReportDto { Header = header, Rows = rows };
+        }
+
+        public async Task<MarkSheetReportDto> GetMarkSheetAsync(
+            int? fromRoll,
+            int? toRoll,
+            string? variant,
+            string? portion,
+            CancellationToken cancellationToken)
+        {
+            var session = await RequireDefaultSessionAsync(cancellationToken);
+            var normalizedVariant = string.IsNullOrWhiteSpace(variant) ? "new" : variant.Trim().ToLowerInvariant();
+            var portionFilter = portion?.Trim().ToUpperInvariant();
+
+            var query = _db.FormPandits.AsNoTracking()
+                .Where(f => f.SessionNo == (short)session.SessionNo
+                    && f.Result != null
+                    && f.Result.Trim() != string.Empty);
+
+            if (fromRoll is > 0)
+                query = query.Where(f => f.RollNo >= fromRoll);
+
+            if (toRoll is > 0)
+                query = query.Where(f => f.RollNo <= toRoll);
+
+            if (portionFilter is "N" or "O")
+                query = query.Where(f => f.FlgPortion == portionFilter);
+
+            // variant=onlynew → NEW portion only (flgportion=N)
+            if (normalizedVariant is "onlynew" or "new")
+            {
+                if (portionFilter is null or "" or "ALL")
+                    query = query.Where(f => f.FlgPortion == null || f.FlgPortion == "N" || f.FlgPortion == "n");
+            }
+
+            var rows = await query
+                .OrderBy(f => f.RollNo)
+                .Select(f => new MarkSheetRowDto
+                {
+                    RollNo = f.RollNo,
+                    Name = f.Name,
+                    FormCentre = f.FormCentre,
+                    ExamCentre = f.ExamCentre,
+                    Marks1 = f.Marks1,
+                    Marks2 = f.Marks2,
+                    Marks3 = f.Marks3,
+                    Marks4 = f.Marks4,
+                    Marks5 = f.Marks5,
+                    Marks6 = f.Marks6,
+                    Marks7 = f.Marks7,
+                    Marks8 = f.Marks8,
+                    OralMarks = f.OralMarks,
+                    TotMarks = f.TotMarks,
+                    Khand1TotMarks = f.Khand1TotMarks,
+                    Khand2TotMarks = f.Khand2TotMarks,
+                    KhandAppearing = f.KhandAppearing,
+                    FlgPortion = f.FlgPortion,
+                    Grade = f.Grade,
+                    Result = f.Result,
+                    SpecialRank = f.SpecialRank,
+                })
+                .ToListAsync(cancellationToken);
+
+            var header = BuildHeader(session, "Mark Sheet", "गुणपत्रिका", null, null, null);
+            header.ResultDate = session.ResultDate;
+            header.RowCount = rows.Count;
+            return new MarkSheetReportDto { Header = header, Variant = normalizedVariant, Rows = rows };
         }
 
         public async Task<CertificateReportDto> GetCertificatesAsync(
@@ -223,7 +367,7 @@ namespace mrsexam_backend.Services
                     .FirstOrDefaultAsync(cancellationToken);
             }
 
-            var header = BuildHeader(session, "Pandit Certificates", formCentre, null, regionName);
+            var header = BuildHeader(session, "Certificates", "प्रमाणपत्र", formCentre, null, regionName);
             header.RowCount = rows.Count;
             return new CertificateReportDto { Header = header, Rows = rows };
         }
@@ -292,7 +436,8 @@ namespace mrsexam_backend.Services
 
             var header = BuildHeader(
                 session,
-                regionNo is > 0 ? "Pandit Region-wise Register" : "Pandit Register",
+                regionNo is > 0 ? "Region-wise Register" : "Register",
+                "नोंदवही",
                 null,
                 null,
                 filterRegionName);
@@ -311,50 +456,60 @@ namespace mrsexam_backend.Services
             };
         }
 
-        public async Task<object> GetRanksAsync(CancellationToken cancellationToken)
+        public async Task<RanksReportDto> GetRanksAsync(CancellationToken cancellationToken)
         {
             var session = await RequireDefaultSessionAsync(cancellationToken);
+            // Prefer full exam pass for FIRST/SECOND (catalog RPT-PND-07).
             var rows = await _db.FormPandits.AsNoTracking()
                 .Where(f => f.SessionNo == (short)session.SessionNo
                     && f.SpecialRank != null
-                    && f.SpecialRank != string.Empty)
+                    && f.SpecialRank != string.Empty
+                    && f.Result != null
+                    && f.Result.Contains("Exam Pass"))
                 .OrderBy(f => f.SpecialRank)
                 .ThenByDescending(f => f.TotMarks)
-                .Select(f => new
+                .Select(f => new RankRowDto
                 {
-                    f.RollNo,
-                    f.Name,
-                    f.TotMarks,
-                    f.Grade,
-                    f.Result,
-                    f.SpecialRank,
-                    f.FormCentre,
-                    f.ExamCentre
+                    RollNo = f.RollNo,
+                    Name = f.Name,
+                    TotMarks = f.TotMarks,
+                    Grade = f.Grade,
+                    Result = f.Result,
+                    SpecialRank = f.SpecialRank,
+                    FormCentre = f.FormCentre,
+                    ExamCentre = f.ExamCentre,
                 })
                 .ToListAsync(cancellationToken);
 
-            return new
-            {
-                header = BuildHeader(session, "Pandit Ranks", null, null, null),
-                rows
-            };
+            var header = BuildHeader(session, "Ranks", "क्रमांक", null, null, null);
+            header.RowCount = rows.Count;
+            return new RanksReportDto { Header = header, Rows = rows };
         }
 
-        public async Task<object> GetStudentsPassingAsync(string? formCentre, int? regionNo, CancellationToken cancellationToken)
+        public async Task<StudentsPassingReportDto> GetStudentsPassingAsync(
+            string? formCentre,
+            int? regionNo,
+            string? passingMode,
+            CancellationToken cancellationToken)
         {
             var session = await RequireDefaultSessionAsync(cancellationToken);
+            var mode = (passingMode ?? "full").Trim().ToLowerInvariant();
 
             var query = from form in _db.FormPandits.AsNoTracking()
                         where form.SessionNo == (short)session.SessionNo
                             && form.Result != null
-                            && (form.Result.Contains("Exam Pass")
-                                || form.Result.Contains("Khand1 Pass")
-                                || form.Result.Contains("Khand2 Pass"))
                         join centre in _db.Centres.AsNoTracking() on form.FormCentre equals centre.CentreNo into centreJoin
                         from centre in centreJoin.DefaultIfEmpty()
                         join district in _db.Districts.AsNoTracking() on centre.DistrictName equals district.DistrictName into districtJoin
                         from district in districtJoin.DefaultIfEmpty()
                         select new { form, centre, district };
+
+            query = mode switch
+            {
+                "khand1" => query.Where(x => x.form.Result!.Contains("Khand1 Pass")),
+                "khand2" => query.Where(x => x.form.Result!.Contains("Khand2 Pass")),
+                _ => query.Where(x => x.form.Result!.Contains("Exam Pass")),
+            };
 
             if (!string.IsNullOrWhiteSpace(formCentre))
                 query = query.Where(x => x.form.FormCentre == formCentre.Trim());
@@ -364,29 +519,35 @@ namespace mrsexam_backend.Services
 
             var rows = await query
                 .OrderBy(x => x.form.RollNo)
-                .Select(x => new
+                .Select(x => new StudentsPassingRowDto
                 {
-                    x.form.RollNo,
-                    x.form.Name,
-                    x.form.Result,
-                    x.form.Grade,
-                    x.form.TotMarks,
-                    x.form.FormCentre,
-                    x.form.ExamCentre,
-                    x.form.KhandAppearing
+                    RollNo = x.form.RollNo,
+                    Name = x.form.Name,
+                    Result = x.form.Result,
+                    Grade = x.form.Grade,
+                    TotMarks = x.form.TotMarks,
+                    FormCentre = x.form.FormCentre,
+                    ExamCentre = x.form.ExamCentre,
+                    KhandAppearing = x.form.KhandAppearing,
                 })
                 .ToListAsync(cancellationToken);
 
-            return new
+            var title = mode switch
             {
-                header = BuildHeader(session, "Pandit Students Passing", formCentre, null, null),
-                rows
+                "khand1" => "Students Passing — Khand I",
+                "khand2" => "Students Passing — Khand II",
+                _ => "Students Passing — Full Exam",
             };
+
+            var header = BuildHeader(session, title, "उत्तीर्ण विद्यार्थी", formCentre, null, null);
+            header.RowCount = rows.Count;
+            return new StudentsPassingReportDto { Header = header, PassingMode = mode, Rows = rows };
         }
 
-        public async Task<object> GetLostByTwoAsync(int? regionNo, CancellationToken cancellationToken)
+        public async Task<LostByTwoReportDto> GetLostByTwoAsync(int? regionNo, CancellationToken cancellationToken)
         {
             var session = await RequireDefaultSessionAsync(cancellationToken);
+            // Catalog RPT-PND-09: Cmd_LosingTwoMarksPandit exam 7 — near-miss on Class3 / Khand mins.
             var exam = await _db.Exams.AsNoTracking()
                 .FirstOrDefaultAsync(e => e.ExamNo == 7, cancellationToken);
 
@@ -410,33 +571,57 @@ namespace mrsexam_backend.Services
 
             var forms = await query.ToListAsync(cancellationToken);
             var rows = forms
-                .Where(x =>
+                .Select(x =>
                 {
                     var tot = x.form.TotMarks ?? 0;
                     var k1 = x.form.Khand1TotMarks ?? 0;
                     var k2 = x.form.Khand2TotMarks ?? 0;
-                    return (tot >= class3 - 2 && tot < class3)
-                        || (k1 >= minK1 - 2 && k1 < minK1)
-                        || (k2 >= minK2 - 2 && k2 < minK2);
+                    var reasons = new List<string>();
+                    if (tot >= class3 - 2 && tot < class3)
+                        reasons.Add($"Tot {tot} within 2 of Class3 {class3}");
+                    if (k1 >= minK1 - 2 && k1 < minK1)
+                        reasons.Add($"Khand1 {k1} within 2 of {minK1}");
+                    if (k2 >= minK2 - 2 && k2 < minK2)
+                        reasons.Add($"Khand2 {k2} within 2 of {minK2}");
+                    if (reasons.Count == 0) return null;
+
+                    return new LostByTwoRowDto
+                    {
+                        RollNo = x.form.RollNo,
+                        Name = x.form.Name,
+                        FormCentre = x.form.FormCentre,
+                        ExamCentre = x.form.ExamCentre,
+                        TotMarks = x.form.TotMarks,
+                        Khand1TotMarks = x.form.Khand1TotMarks,
+                        Khand2TotMarks = x.form.Khand2TotMarks,
+                        Result = x.form.Result,
+                        Grade = x.form.Grade,
+                        NearMissReason = string.Join("; ", reasons),
+                    };
                 })
-                .OrderBy(x => x.form.RollNo)
-                .Select(x => new
-                {
-                    x.form.RollNo,
-                    x.form.Name,
-                    x.form.TotMarks,
-                    x.form.Khand1TotMarks,
-                    x.form.Khand2TotMarks,
-                    x.form.Result,
-                    x.form.Grade,
-                    x.form.FormCentre
-                })
+                .Where(r => r != null)
+                .Cast<LostByTwoRowDto>()
+                .OrderBy(r => r.RollNo)
                 .ToList();
 
-            return new
+            string? regionName = null;
+            if (regionNo is > 0)
             {
-                header = BuildHeader(session, "Pandit Lost by 2 Marks", null, null, null),
-                rows
+                regionName = await _db.Regions.AsNoTracking()
+                    .Where(r => r.RegionNo == regionNo)
+                    .Select(r => r.RegionName)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
+
+            var header = BuildHeader(session, "Lost by 2 Marks", "दोन गुणांनी कमी", null, null, regionName);
+            header.RowCount = rows.Count;
+            return new LostByTwoReportDto
+            {
+                Header = header,
+                Class3Marks = class3,
+                MinTotalKhand1 = minK1,
+                MinTotalKhand2 = minK2,
+                Rows = rows,
             };
         }
 
@@ -451,6 +636,7 @@ namespace mrsexam_backend.Services
         private static ReportHeaderDto BuildHeader(
             Session session,
             string title,
+            string? titleMr,
             string? centreNo,
             string? centreName,
             string? regionName)
@@ -459,9 +645,11 @@ namespace mrsexam_backend.Services
             return new ReportHeaderDto
             {
                 SessionNo = session.SessionNo,
-                Month = session.Month,
+                Month = DvTtAakashConverter.NormalizeMonth(session.Month),
                 Year = sessionText.Length >= 4 ? sessionText[..4] : sessionText,
                 Title = title,
+                TitleMr = titleMr,
+                ExamName = "Pandit",
                 CentreNo = centreNo,
                 CentreName = centreName,
                 RegionName = regionName,

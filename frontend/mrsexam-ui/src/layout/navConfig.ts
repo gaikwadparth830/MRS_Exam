@@ -20,6 +20,9 @@ export type NavItemId =
   | 'report-attendance'
   | 'report-name-list'
   | 'report-result-sheet'
+  | 'report-result-details'
+  | 'report-mark-sheet'
+  | 'report-hall-ticket'
   | 'report-certificate'
   | 'report-register'
   | 'report-ranks'
@@ -309,8 +312,11 @@ export const prabodhNav: NavGroup[] = [
       { id: 'report-attendance', label: 'Attendance Sheet', description: 'Centre roll pairs' },
       { id: 'report-name-list', label: 'Name List', description: 'Candidate name list' },
       { id: 'report-result-sheet', label: 'Result Sheet', description: 'With or without names' },
+      { id: 'report-mark-sheet', label: 'Mark Sheet', description: 'Per-student marks and grade' },
+      { id: 'report-hall-ticket', label: 'Hall Ticket', description: 'Pre-exam admit cards' },
       { id: 'report-certificate', label: 'Certificate', description: 'Pass candidates by region' },
       { id: 'report-register', label: 'Register', description: 'Dummy centre counts' },
+      { id: 'report-lost-by-2', label: 'Lost by 2 Marks', description: 'Near-miss fails' },
     ],
   },
 ]
@@ -361,9 +367,12 @@ export const praveenNav: NavGroup[] = [
     items: [
       { id: 'report-attendance', label: 'Attendance Sheet', description: 'Centre roll pairs' },
       { id: 'report-name-list', label: 'Name List', description: 'Candidate name list' },
-      { id: 'report-result-sheet', label: 'Result Sheet', description: 'With or without names' },
+      { id: 'report-result-sheet', label: 'Result Sheet', description: 'Marks 1–5, Oral, Project' },
+      { id: 'report-mark-sheet', label: 'Mark Sheet', description: 'Per-student marks and grade' },
       { id: 'report-certificate', label: 'Certificate', description: 'Pass candidates by region' },
       { id: 'report-register', label: 'Register', description: 'Dummy centre counts' },
+      { id: 'report-ranks', label: 'Ranks', description: 'FIRST / SECOND among Pass' },
+      { id: 'report-lost-by-2', label: 'Lost by 2 Marks', description: 'Near-miss fails' },
     ],
   },
 ]
@@ -415,7 +424,9 @@ export const panditNav: NavGroup[] = [
     items: [
       { id: 'report-attendance', label: 'Attendance Sheet', description: 'Centre roll pairs' },
       { id: 'report-name-list', label: 'Name List', description: 'Candidate name list' },
-      { id: 'report-result-sheet', label: 'Result Sheet', description: 'With or without names' },
+      { id: 'report-result-sheet', label: 'Result Sheet', description: 'Khand tots, grade, result' },
+      { id: 'report-result-details', label: 'Result Details', description: 'Papers 1–8, oral, flags' },
+      { id: 'report-mark-sheet', label: 'Mark Sheet', description: 'Variant new / portion filter' },
       { id: 'report-certificate', label: 'Certificate', description: 'Pass / Khand pass candidates' },
       { id: 'report-register', label: 'Register', description: 'Centre counts' },
       { id: 'report-ranks', label: 'Ranks', description: 'FIRST / SECOND' },

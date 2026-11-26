@@ -348,7 +348,7 @@ namespace mrsexam_backend.Services
             return new ReportHeaderDto
             {
                 SessionNo = session.SessionNo,
-                Month = session.Month,
+                Month = DvTtAakashConverter.NormalizeMonth(session.Month),
                 Year = sessionText.Length >= 4 ? sessionText[..4] : sessionText,
                 Title = title,
                 CentreNo = centreNo,

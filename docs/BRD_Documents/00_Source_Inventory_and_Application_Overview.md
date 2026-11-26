@@ -140,13 +140,29 @@ Pandit adds: **Cross Reference** processing and **Khand I / Khand II / Both** ap
 
 ## 6. Document package layout
 
-| Folder | Contents |
-|--------|----------|
-| `BRD_Documents\Prabodh\` | Docs 01–11 for Prabodh |
-| `BRD_Documents\Praveen\` | Docs 01–11 for Praveen |
-| `BRD_Documents\Pandit\` | Docs 01–11 for Pandit |
+| Folder / file | Contents |
+|---------------|----------|
+| `00_Source_Inventory_and_Application_Overview.md` | This overview |
+| `00_Access_Schema_Extract_Focus_Tables.md` | Access schema extract |
+| `00_DeepDive_Analysis_Addendum.md` | Errata / deep-dive refinements |
+| `00_Report_Troubleshooting_Guide.md` | Legacy VB6 report ODBC fix notes |
+| **`00_Report_Migration_Guide_React_ASPNET.md`** | **How to migrate reports to React/ASP.NET/PDF (copy to migration project)** |
+| `Prabodh\` | Docs 01–11 + **`12_Report_Migration_Catalog.md`** |
+| `Praveen\` | Docs 01–11 + **`12_Report_Migration_Catalog.md`** |
+| `Pandit\` | Docs 01–11 + **`12_Report_Migration_Catalog.md`** |
 
-Each folder contains: BRD, FRS, Screen Inventory, Business Rules & Workflows, Access→SQL mapping, React inventory, API spec, Architecture, Traceability Matrix, Test Scenarios, Implementation Plan.
+Each exam folder contains: BRD, FRS, Screen Inventory, Business Rules & Workflows, Access→SQL mapping, React inventory, API spec, Architecture, Traceability Matrix, Test Scenarios, Implementation Plan, **Report Migration Catalog**.
+
+### Copying into the migration project (reports)
+
+Copy at minimum:
+
+1. `00_Report_Migration_Guide_React_ASPNET.md`  
+2. `Prabodh/12_Report_Migration_Catalog.md`  
+3. `Praveen/12_Report_Migration_Catalog.md`  
+4. `Pandit/12_Report_Migration_Catalog.md`  
+
+These are **specification-only** (no application code). Use them to generate report APIs, PDF templates, and React pages in the migration project later.
 
 ---
 

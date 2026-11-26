@@ -265,5 +265,51 @@ namespace mrsexam_backend.Services
 
             return processedText;
         }
+
+        /// <summary>
+        /// Normalize SESSION.MONTH for print: English → Marathi, DV-TTAakash → Unicode, keep Unicode as-is.
+        /// </summary>
+        public static string? NormalizeMonth(string? month)
+        {
+            if (string.IsNullOrWhiteSpace(month))
+                return month;
+
+            var trimmed = month.Trim();
+            if (trimmed.Any(c => c is >= '\u0900' and <= '\u097F'))
+                return trimmed;
+
+            var english = trimmed.ToLowerInvariant() switch
+            {
+                "january" or "jan" => "जनवरी",
+                "february" or "feb" => "फरवरी",
+                "march" or "mar" => "मार्च",
+                "april" or "apr" => "अप्रैल",
+                "may" => "मई",
+                "june" or "jun" => "जून",
+                "july" or "jul" => "जुलाई",
+                "august" or "aug" => "अगस्त",
+                "september" or "sep" or "sept" => "सितंबर",
+                "october" or "oct" => "अक्टूबर",
+                "november" or "nov" => "नवंबर",
+                "december" or "dec" => "दिसंबर",
+                _ => null,
+            };
+            if (english is not null)
+                return english;
+
+            if (trimmed.Any(c => c > 127))
+            {
+                var converted = Convert(trimmed).Trim();
+                if (!string.IsNullOrEmpty(converted))
+                {
+                    // Prefer common print spelling used on legacy attendance sheets.
+                    if (converted == "अक्तूबर")
+                        return "अक्टूबर";
+                    return converted;
+                }
+            }
+
+            return trimmed;
+        }
     }
 }

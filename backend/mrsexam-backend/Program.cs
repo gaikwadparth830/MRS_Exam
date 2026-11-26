@@ -68,6 +68,7 @@ builder.Services.AddScoped<SambhashanResultService>();
 builder.Services.AddScoped<SambhashanReportService>();
 builder.Services.AddScoped<DistrictUnicodeMigrationService>();
 builder.Services.AddScoped<CentreUnicodeMigrationService>();
+builder.Services.AddScoped<PrabodhFormUnicodeMigrationService>();
 
 builder.Services.AddCors(options =>
 {

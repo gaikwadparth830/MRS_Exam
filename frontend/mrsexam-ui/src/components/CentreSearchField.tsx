@@ -1,4 +1,6 @@
+import type { HTMLAttributes } from 'react'
 import Autocomplete from '@mui/material/Autocomplete'
+import Chip from '@mui/material/Chip'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
@@ -11,16 +13,31 @@ import {
   transliterateEnglishToDevanagari,
 } from '../utils/marathiTransliterate'
 
-type Props = {
+type BaseProps = {
   label: string
   centres: Center[]
-  value: string
   disabled?: boolean
+  helperText?: string
+}
+
+type SingleProps = BaseProps & {
+  multiple?: false
+  value: string
   /** When true, clearing the field is allowed (e.g. “All centres” on reports). */
   allowEmpty?: boolean
-  helperText?: string
   onChange: (centreNo: string) => void
 }
+
+type MultiProps = BaseProps & {
+  multiple: true
+  value: string[]
+  allowEmpty?: boolean
+  onChange: (centreNos: string[]) => void
+}
+
+type Props = SingleProps | MultiProps
+
+const RESULT_LIMIT = 300
 
 const centreLabel = (centre: Center): string => {
   const code = centre.centreNo?.trim() || ''
@@ -32,6 +49,16 @@ const centreLabel = (centre: Center): string => {
   return code
 }
 
+const chipLabel = (centre: Center): string => {
+  const code = centre.centreNo?.trim() || ''
+  const name = centre.centreName?.trim() || ''
+  if (code && name) {
+    const shortName = name.length > 28 ? `${name.slice(0, 28)}…` : name
+    return `${code} · ${shortName}`
+  }
+  return code || name || '-'
+}
+
 const searchableText = (centre: Center): string => {
   const parts = [
     centre.centreNo,
@@ -41,89 +68,203 @@ const searchableText = (centre: Center): string => {
   ]
   return parts
     .filter((part): part is string => Boolean(part && String(part).trim()))
-    .map((part) => `${part} ${toAsciiDigits(part)} ${normalizeCentreCode(part)}`)
+    .map((part) => {
+      const raw = part.trim()
+      const ascii = toAsciiDigits(raw)
+      const code = normalizeCentreCode(raw)
+      return `${raw} ${ascii} ${code}`
+    })
     .join(' ')
     .toLowerCase()
 }
 
-const queryVariants = (query: string): string[] => {
-  const trimmed = query.trim()
+/** Expand one token into English + Devanagari + digit-normalized forms. */
+const tokenVariants = (token: string): string[] => {
+  const trimmed = token.trim()
   if (!trimmed) return []
+  const variants = new Set<string>()
   const ascii = toAsciiDigits(trimmed).toLowerCase()
-  const variants = new Set<string>([ascii])
+  variants.add(ascii)
+  variants.add(trimmed.toLowerCase())
+  variants.add(normalizeCentreCode(trimmed).toLowerCase())
 
-  // "tha/001" / "thane" → also match Devanagari spellings in the list
-  const latinChunks = trimmed.match(/[A-Za-z]+/g) ?? []
-  for (const chunk of latinChunks) {
-    const marathi = transliterateEnglishToDevanagari(chunk)
-    if (marathi) variants.add(marathi.toLowerCase())
-  }
-  if (/^[A-Za-z0-9/\-\s]+$/u.test(trimmed)) {
-    const full = transliterateEnglishToDevanagari(trimmed.replace(/[0-9/\-]+/g, ' '))
-    if (full) variants.add(full.toLowerCase())
+  const marathi = transliterateEnglishToDevanagari(trimmed)
+  if (marathi) {
+    variants.add(marathi.toLowerCase())
+    // Common phonetic near-misses for पुणे
+    if (marathi === 'पुने') variants.add('पुणे')
+    if (marathi === 'पुणे') variants.add('पुने')
   }
 
   return [...variants].filter(Boolean)
 }
 
+const queryTokens = (query: string): string[] =>
+  query
+    .trim()
+    .split(/[\s,;]+/u)
+    .map((part) => part.trim())
+    .filter(Boolean)
+
+/**
+ * Multi-token AND match: every token must hit the centre text via at least one variant.
+ * Single token still matches broadly (code / name / city / district).
+ */
+const centreMatchesQuery = (centre: Center, query: string): boolean => {
+  const tokens = queryTokens(query)
+  if (tokens.length === 0) return true
+  const haystack = searchableText(centre)
+  return tokens.every((token) => {
+    const variants = tokenVariants(token)
+    return variants.some((variant) => variant.length > 0 && haystack.includes(variant))
+  })
+}
+
+const rankCentre = (centre: Center, query: string): number => {
+  const tokens = queryTokens(query)
+  const code = normalizeCentreCode(centre.centreNo ?? '').toLowerCase()
+  const name = (centre.centreName ?? '').toLowerCase()
+  const city = (centre.city ?? '').toLowerCase()
+  let score = 0
+  for (const token of tokens) {
+    for (const variant of tokenVariants(token)) {
+      if (!variant) continue
+      if (code.startsWith(variant)) score += 40
+      else if (code.includes(variant)) score += 25
+      if (city.includes(variant)) score += 20
+      if (name.includes(variant)) score += 10
+    }
+  }
+  return score
+}
+
+const findCentre = (centres: Center[], centreNo: string): Center | undefined =>
+  centres.find((item) => normalizeCentreCode(item.centreNo ?? '') === normalizeCentreCode(centreNo))
+
 /**
  * Searchable centre picker for Marathi lists (4000+ centres).
- * Type centre code, Marathi name/city, or English phonetic (e.g. thane, joshi).
+ * Supports single or multiple selection.
  */
-export const CentreSearchField = ({
-  label,
-  centres,
-  value,
-  disabled = false,
-  allowEmpty = true,
-  helperText,
-  onChange,
-}: Props) => {
-  const selected =
-    centres.find((item) => normalizeCentreCode(item.centreNo ?? '') === normalizeCentreCode(value))
-    ?? null
+export const CentreSearchField = (props: Props) => {
+  const {
+    label,
+    centres,
+    disabled = false,
+    allowEmpty = true,
+    helperText,
+    multiple = false,
+  } = props
+
+  const filterOptions = (options: Center[], state: { inputValue: string }) => {
+    const query = state.inputValue.trim()
+    if (!query) return options.slice(0, 80)
+
+    const matched = options
+      .filter((option) => centreMatchesQuery(option, query))
+      .sort((a, b) => {
+        const rankDiff = rankCentre(b, query) - rankCentre(a, query)
+        if (rankDiff !== 0) return rankDiff
+        return (a.centreNo ?? '').localeCompare(b.centreNo ?? '', 'mr')
+      })
+
+    return matched.slice(0, RESULT_LIMIT)
+  }
+
+  const common = {
+    size: 'small' as const,
+    fullWidth: true,
+    disabled,
+    options: centres,
+    getOptionLabel: centreLabel,
+    isOptionEqualToValue: (a: Center, b: Center) =>
+      normalizeCentreCode(a.centreNo ?? '') === normalizeCentreCode(b.centreNo ?? ''),
+    filterOptions,
+    filterSelectedOptions: true,
+    renderOption: (liProps: HTMLAttributes<HTMLLIElement> & { key?: string }, option: Center) => {
+      const { key, ...rest } = liProps
+      return (
+        <Box component="li" key={key ?? option.centreNo} {...rest} sx={{ display: 'block !important', py: 0.75 }}>
+          <Typography variant="body2" sx={{ ...marathiNameFieldSx, fontWeight: 600 }}>
+            {option.centreNo}
+            {option.centreName ? ` · ${option.centreName}` : ''}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={marathiNameFieldSx}>
+            {[option.city, option.districtName].filter(Boolean).join(' · ') || '—'}
+          </Typography>
+        </Box>
+      )
+    },
+    noOptionsText: 'No match — try pune, पुणे, english, or code पुणे/001',
+    clearOnBlur: false,
+    autoHighlight: true,
+    ListboxProps: {
+      style: { maxHeight: 360 },
+    },
+  }
+
+  if (multiple) {
+    const { value, onChange } = props as MultiProps
+    const selected = value
+      .map((code) => findCentre(centres, code))
+      .filter((item): item is Center => Boolean(item))
+
+    return (
+      <Autocomplete
+        {...common}
+        multiple
+        value={selected}
+        onChange={(_, next) => onChange(next.map((item) => item.centreNo?.trim() ?? '').filter(Boolean))}
+        disableCloseOnSelect
+        renderTags={(tagValue, getTagProps) =>
+          tagValue.map((option, index) => {
+            const { key, ...tagProps } = getTagProps({ index })
+            return (
+              <Chip
+                key={key ?? option.centreNo}
+                size="small"
+                label={chipLabel(option)}
+                sx={marathiNameFieldSx}
+                {...tagProps}
+              />
+            )
+          })
+        }
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label={label}
+            placeholder="Type pune / पुणे / english / centre no…"
+            helperText={
+              helperText
+              ?? 'Select one or more centres. Each centre prints on a new page.'
+            }
+            InputLabelProps={{ ...params.InputLabelProps, shrink: true }}
+            inputProps={{
+              ...params.inputProps,
+              lang: 'mr',
+              spellCheck: false,
+            }}
+            sx={marathiNameFieldSx}
+          />
+        )}
+      />
+    )
+  }
+
+  const { value, onChange } = props as SingleProps
+  const selected = findCentre(centres, value) ?? null
 
   return (
     <Autocomplete
-      size="small"
-      fullWidth
-      disabled={disabled}
-      options={centres}
+      {...common}
       value={selected}
-      getOptionLabel={centreLabel}
-      isOptionEqualToValue={(a, b) =>
-        normalizeCentreCode(a.centreNo ?? '') === normalizeCentreCode(b.centreNo ?? '')
-      }
-      filterOptions={(options, state) => {
-        const variants = queryVariants(state.inputValue)
-        if (variants.length === 0) return options.slice(0, 80)
-        const matched = options.filter((option) => {
-          const haystack = searchableText(option)
-          return variants.some((q) => haystack.includes(q))
-        })
-        return matched.slice(0, 80)
-      }}
       onChange={(_, next) => onChange(next?.centreNo?.trim() ?? '')}
       disableClearable={!allowEmpty}
-      renderOption={(props, option) => {
-        const { key, ...rest } = props as typeof props & { key?: string }
-        return (
-          <Box component="li" key={key ?? option.centreNo} {...rest} sx={{ display: 'block !important', py: 0.75 }}>
-            <Typography variant="body2" sx={{ ...marathiNameFieldSx, fontWeight: 600 }}>
-              {option.centreNo}
-              {option.centreName ? ` · ${option.centreName}` : ''}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={marathiNameFieldSx}>
-              {[option.city, option.districtName].filter(Boolean).join(' · ') || '—'}
-            </Typography>
-          </Box>
-        )
-      }}
       renderInput={(params) => (
         <TextField
           {...params}
           label={label}
-          placeholder="Type English or Marathi: thane, joshi, ठा/001…"
+          placeholder="Type English or Marathi: pune, joshi, ठा/001…"
           helperText={
             helperText
             ?? (allowEmpty
@@ -139,9 +280,6 @@ export const CentreSearchField = ({
           sx={marathiNameFieldSx}
         />
       )}
-      noOptionsText="No match — try English (thane), code (ठा/001), or Marathi name"
-      clearOnBlur={false}
-      autoHighlight
     />
   )
 }

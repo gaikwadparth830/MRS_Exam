@@ -171,6 +171,8 @@ export type ReportHeader = {
   month?: string | null
   year?: string | null
   title: string
+  titleMr?: string | null
+  examName?: string | null
   centreNo?: string | null
   centreName?: string | null
   regionName?: string | null
@@ -189,9 +191,12 @@ export type NameListReport = {
   rows: Array<{
     rollNo?: number | null
     name?: string | null
+    formCentre?: string | null
     examCentre?: string | null
     centreName?: string | null
     districtName?: string | null
+    khandAppearing?: string | null
+    flgPortion?: string | null
   }>
 }
 
@@ -201,6 +206,7 @@ export type ResultSheetReport = {
   rows: Array<{
     rollNo?: number | null
     name?: string | null
+    formCentre?: string | null
     examCentre?: string | null
     marks1?: string | null
     marks2?: string | null
@@ -212,6 +218,10 @@ export type ResultSheetReport = {
     marks8?: string | null
     oralMarks?: string | null
     totMarks?: number | null
+    khand1TotMarks?: number | null
+    khand2TotMarks?: number | null
+    khandAppearing?: string | null
+    flgPortion?: string | null
     grade?: string | null
     result?: string | null
     specialRank?: string | null
@@ -466,25 +476,135 @@ export const panditApi = {
     return data
   },
 
-  getRanksReport: async () => {
-    const { data } = await httpClient.get('/api/pandit/reports/ranks')
-    return data
+  getResultDetailsReport: async (params?: { centreNo?: string; regionNo?: number }) => {
+    const { data } = await httpClient.get('/api/pandit/reports/result-details', { params })
+    return data as {
+      header: ReportHeader
+      rows: Array<{
+        rollNo?: number | null
+        name?: string | null
+        formCentre?: string | null
+        examCentre?: string | null
+        khandAppearing?: string | null
+        flgPortion?: string | null
+        marks1?: string | null
+        marks2?: string | null
+        marks3?: string | null
+        marks4?: string | null
+        marks5?: string | null
+        marks6?: string | null
+        marks7?: string | null
+        marks8?: string | null
+        oralMarks?: string | null
+        khand1TotMarks?: number | null
+        khand2TotMarks?: number | null
+        totMarks?: number | null
+        grade?: string | null
+        result?: string | null
+        specialRank?: string | null
+        concessionFlag?: string | null
+        undFlag?: string | null
+        bothKhandFlag?: string | null
+      }>
+    }
   },
 
-  getStudentsPassingReport: async (formCentre?: string, regionNo?: number) => {
-    const { data } = await httpClient.get('/api/pandit/reports/students-passing', {
-      params: {
-        ...(formCentre ? { formCentre } : {}),
-        ...(regionNo ? { regionNo } : {}),
-      },
-    })
-    return data
+  getMarkSheetReport: async (params?: {
+    fromRoll?: number
+    toRoll?: number
+    variant?: string
+    portion?: string
+  }) => {
+    const { data } = await httpClient.get('/api/pandit/reports/mark-sheet', { params })
+    return data as {
+      header: ReportHeader
+      variant?: string
+      rows: Array<{
+        rollNo?: number | null
+        name?: string | null
+        formCentre?: string | null
+        examCentre?: string | null
+        marks1?: string | null
+        marks2?: string | null
+        marks3?: string | null
+        marks4?: string | null
+        marks5?: string | null
+        marks6?: string | null
+        marks7?: string | null
+        marks8?: string | null
+        oralMarks?: string | null
+        totMarks?: number | null
+        khand1TotMarks?: number | null
+        khand2TotMarks?: number | null
+        khandAppearing?: string | null
+        flgPortion?: string | null
+        grade?: string | null
+        result?: string | null
+        specialRank?: string | null
+      }>
+    }
+  },
+
+  getRanksReport: async () => {
+    const { data } = await httpClient.get('/api/pandit/reports/ranks')
+    return data as {
+      header: ReportHeader
+      rows: Array<{
+        rollNo?: number | null
+        name?: string | null
+        totMarks?: number | null
+        grade?: string | null
+        result?: string | null
+        specialRank?: string | null
+        formCentre?: string | null
+        examCentre?: string | null
+      }>
+    }
+  },
+
+  getStudentsPassingReport: async (params?: {
+    formCentre?: string
+    regionNo?: number
+    passingMode?: 'full' | 'khand1' | 'khand2'
+  }) => {
+    const { data } = await httpClient.get('/api/pandit/reports/students-passing', { params })
+    return data as {
+      header: ReportHeader
+      passingMode: string
+      rows: Array<{
+        rollNo?: number | null
+        name?: string | null
+        result?: string | null
+        grade?: string | null
+        totMarks?: number | null
+        formCentre?: string | null
+        examCentre?: string | null
+        khandAppearing?: string | null
+      }>
+    }
   },
 
   getLostBy2Report: async (regionNo?: number) => {
     const { data } = await httpClient.get('/api/pandit/reports/lost-by-2', {
       params: regionNo ? { regionNo } : undefined,
     })
-    return data
+    return data as {
+      header: ReportHeader
+      class3Marks?: number | null
+      minTotalKhand1?: number | null
+      minTotalKhand2?: number | null
+      rows: Array<{
+        rollNo?: number | null
+        name?: string | null
+        totMarks?: number | null
+        khand1TotMarks?: number | null
+        khand2TotMarks?: number | null
+        grade?: string | null
+        result?: string | null
+        nearMissReason?: string | null
+        formCentre?: string | null
+        examCentre?: string | null
+      }>
+    }
   },
 }

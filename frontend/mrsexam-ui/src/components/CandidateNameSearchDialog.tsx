@@ -32,6 +32,9 @@ type Props<T> = {
   open: boolean
   onClose: () => void
   title?: string
+  /** Label for the query field (default: Name). */
+  queryLabel?: string
+  queryHelperText?: string
   phoneticAssist: boolean
   onPhoneticAssistChange?: (enabled: boolean) => void
   /** Called when query has at least minChars (after debounce). */
@@ -51,6 +54,8 @@ export function CandidateNameSearchDialog<T>({
   open,
   onClose,
   title = 'Search by name',
+  queryLabel = 'Name',
+  queryHelperText,
   phoneticAssist,
   onPhoneticAssistChange,
   searchFn,
@@ -176,16 +181,17 @@ export function CandidateNameSearchDialog<T>({
           ) : null}
 
           <MarathiNameField
-            label="Name"
+            label={queryLabel}
             value={query}
             required={false}
             phoneticAssist={phoneticAssist}
             showAssistControls={false}
             onChange={setQuery}
             helperText={
-              phoneticAssist
-                ? 'Type English (gaikwad), press Space to convert, matches appear below.'
-                : 'Type Marathi name. Matches appear as you type.'
+              queryHelperText
+                ?? (phoneticAssist
+                  ? 'Type English (gaikwad), press Space to convert, matches appear below.'
+                  : 'Type Marathi name. Matches appear as you type.')
             }
           />
 

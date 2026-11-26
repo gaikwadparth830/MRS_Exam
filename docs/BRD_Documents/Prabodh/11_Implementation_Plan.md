@@ -13,7 +13,7 @@ Document ID: PLAN-PRABODH-001
 | M4 | Marks API + React grid | M3 | Week 5–6 |
 | M5 | Result engine + ranks + unit tests | M4 | Week 6–8 |
 | M6 | Roll number tools | M3 | Week 7–8 |
-| M7 | Reports (priority: result, mark sheet, certificate, att, hall ticket) | M5 | Week 8–11 |
+| M7 | Reports (see `12_Report_Migration_Catalog.md` + parent `00_Report_Migration_Guide_React_ASPNET.md`) | M5 | Week 8–11 |
 | M8 | UAT + parallel run vs Access | M7 | Week 11–13 |
 | M9 | Cutover | M8 | Week 14 |
 

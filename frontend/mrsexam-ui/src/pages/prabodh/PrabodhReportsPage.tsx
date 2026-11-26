@@ -23,22 +23,29 @@ import {
   prabodhApi,
   type AttendanceReport,
   type CertificateReport,
+  type HallTicketReport,
+  type LostByTwoReport,
+  type MarkSheetReport,
   type NameListReport,
   type RegisterReport,
   type ResultSheetReport,
 } from '../../api/prabodh/client'
 import { CentersService, RegionsService, type Center, type Region } from '../../api/generatedClient'
 import { CentreSearchField } from '../../components/CentreSearchField'
+import { AttendanceSheetPrint } from '../../components/reports/AttendanceSheetPrint'
+import { ReportPrintChrome } from '../../components/reports/ReportPrintChrome'
 import { PageFrame } from '../../layout/PageFrame'
-import { marathiNameFieldSx } from '../../utils/marathiTransliterate'
 import type { NavItemId } from '../../layout/navConfig'
 
 type ReportKind =
   | 'report-attendance'
   | 'report-name-list'
   | 'report-result-sheet'
+  | 'report-mark-sheet'
+  | 'report-hall-ticket'
   | 'report-certificate'
   | 'report-register'
+  | 'report-lost-by-2'
 
 type Props = {
   reportId: ReportKind
@@ -48,15 +55,23 @@ type Props = {
 const titles: Record<ReportKind, { title: string; description: string }> = {
   'report-attendance': {
     title: 'Attendance Sheet',
-    description: 'Exam-centre roll pairs for the default session.',
+    description: 'Select one or more centres. Each centre prints on a new page.',
   },
   'report-name-list': {
     title: 'Name List',
-    description: 'Roll number, name, and centre details for the default session.',
+    description: 'Roll, name, form/exam centre, gender, region.',
   },
   'report-result-sheet': {
     title: 'Result Sheet',
-    description: 'Pass/fail sheet with or without candidate names.',
+    description: 'Pass/fail sheet with Marks1–3, Oral, Total, Grade, Result, Rank.',
+  },
+  'report-mark-sheet': {
+    title: 'Mark Sheet',
+    description: 'Per-student marks, oral, total, grade, result, rank.',
+  },
+  'report-hall-ticket': {
+    title: 'Hall Ticket',
+    description: 'Pre-exam admit list for assigned rolls.',
   },
   'report-certificate': {
     title: 'Certificate',
@@ -66,15 +81,21 @@ const titles: Record<ReportKind, { title: string; description: string }> = {
     title: 'Register',
     description: 'Rebuilds dummy centre codes and prints region/centre counts.',
   },
+  'report-lost-by-2': {
+    title: 'Lost by 2 Marks',
+    description: 'Fail candidates within 2 marks of pass thresholds.',
+  },
 }
 
 const toList = <T,>(payload: unknown): T[] => (Array.isArray(payload) ? payload as T[] : [])
+const PRINT_ID = 'Prabodh-report-print'
 
 export const PrabodhReportsPage = ({ reportId, defaultSessionNo }: Props) => {
   const meta = titles[reportId]
   const [centres, setCentres] = useState<Center[]>([])
   const [regions, setRegions] = useState<Region[]>([])
   const [centreNo, setCentreNo] = useState('')
+  const [attendanceCentreNos, setAttendanceCentreNos] = useState<string[]>([])
   const [regionNo, setRegionNo] = useState<number | ''>('')
   const [mode, setMode] = useState<'named' | 'noname'>('named')
   const [fromRoll, setFromRoll] = useState('')
@@ -82,11 +103,14 @@ export const PrabodhReportsPage = ({ reportId, defaultSessionNo }: Props) => {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  const [attendance, setAttendance] = useState<AttendanceReport | null>(null)
+  const [attendanceSections, setAttendanceSections] = useState<AttendanceReport[]>([])
   const [nameList, setNameList] = useState<NameListReport | null>(null)
   const [resultSheet, setResultSheet] = useState<ResultSheetReport | null>(null)
+  const [markSheet, setMarkSheet] = useState<MarkSheetReport | null>(null)
+  const [hallTicket, setHallTicket] = useState<HallTicketReport | null>(null)
   const [certificates, setCertificates] = useState<CertificateReport | null>(null)
   const [register, setRegister] = useState<RegisterReport | null>(null)
+  const [lostByTwo, setLostByTwo] = useState<LostByTwoReport | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -112,42 +136,64 @@ export const PrabodhReportsPage = ({ reportId, defaultSessionNo }: Props) => {
     }
   }, [])
 
-  useEffect(() => {
-    setAttendance(null)
+  const clearResults = () => {
+    setAttendanceSections([])
     setNameList(null)
     setResultSheet(null)
+    setMarkSheet(null)
+    setHallTicket(null)
     setCertificates(null)
     setRegister(null)
+    setLostByTwo(null)
+  }
+
+  useEffect(() => {
+    clearResults()
     setError(null)
   }, [reportId])
 
   const header = useMemo(() => {
-    return attendance?.header
+    return attendanceSections[0]?.header
       ?? nameList?.header
       ?? resultSheet?.header
+      ?? markSheet?.header
+      ?? hallTicket?.header
       ?? certificates?.header
       ?? register?.header
+      ?? lostByTwo?.header
       ?? null
-  }, [attendance, nameList, resultSheet, certificates, register])
+  }, [attendanceSections, nameList, resultSheet, markSheet, hallTicket, certificates, register, lostByTwo])
 
   const onGenerate = async () => {
     setError(null)
     setIsLoading(true)
+    clearResults()
     try {
       if (reportId === 'report-attendance') {
-        if (!centreNo.trim()) throw new Error('Select exam centre.')
-        setAttendance(await prabodhApi.getAttendanceReport(centreNo.trim()))
-        setNameList(null); setResultSheet(null); setCertificates(null); setRegister(null)
+        const codes = attendanceCentreNos.map((c) => c.trim()).filter(Boolean)
+        if (codes.length < 1) throw new Error('Select at least one exam centre.')
+        const sections = await Promise.all(codes.map((code) => prabodhApi.getAttendanceReport(code)))
+        setAttendanceSections(sections)
       } else if (reportId === 'report-name-list') {
         setNameList(await prabodhApi.getNameListReport(centreNo.trim() || undefined))
-        setAttendance(null); setResultSheet(null); setCertificates(null); setRegister(null)
       } else if (reportId === 'report-result-sheet') {
         setResultSheet(await prabodhApi.getResultSheetReport({
           mode,
           centreNo: centreNo.trim() || undefined,
           regionNo: regionNo === '' ? undefined : Number(regionNo),
         }))
-        setAttendance(null); setNameList(null); setCertificates(null); setRegister(null)
+      } else if (reportId === 'report-mark-sheet') {
+        setMarkSheet(await prabodhApi.getMarkSheetReport({
+          regionNo: regionNo === '' ? undefined : Number(regionNo),
+          fromRoll: fromRoll.trim() ? Number(fromRoll) : undefined,
+          toRoll: toRoll.trim() ? Number(toRoll) : undefined,
+        }))
+      } else if (reportId === 'report-hall-ticket') {
+        setHallTicket(await prabodhApi.getHallTicketReport({
+          centreNo: centreNo.trim() || undefined,
+          fromRoll: fromRoll.trim() ? Number(fromRoll) : undefined,
+          toRoll: toRoll.trim() ? Number(toRoll) : undefined,
+        }))
       } else if (reportId === 'report-certificate') {
         if (regionNo === '') throw new Error('Select region.')
         setCertificates(await prabodhApi.getCertificateReport({
@@ -155,12 +201,14 @@ export const PrabodhReportsPage = ({ reportId, defaultSessionNo }: Props) => {
           fromRoll: fromRoll.trim() ? Number(fromRoll) : undefined,
           toRoll: toRoll.trim() ? Number(toRoll) : undefined,
         }))
-        setAttendance(null); setNameList(null); setResultSheet(null); setRegister(null)
+      } else if (reportId === 'report-lost-by-2') {
+        setLostByTwo(await prabodhApi.getLostByTwoReport(
+          regionNo === '' ? undefined : Number(regionNo),
+        ))
       } else {
         setRegister(await prabodhApi.getRegisterReport(
           regionNo === '' ? undefined : Number(regionNo),
         ))
-        setAttendance(null); setNameList(null); setResultSheet(null); setCertificates(null)
       }
     } catch (err) {
       setError(prabodhApi.messageFromError(err, err instanceof Error ? err.message : 'Report failed.'))
@@ -169,7 +217,20 @@ export const PrabodhReportsPage = ({ reportId, defaultSessionNo }: Props) => {
     }
   }
 
-  const onPrint = () => window.print()
+  const showCentre = reportId === 'report-attendance'
+    || reportId === 'report-name-list'
+    || reportId === 'report-result-sheet'
+    || reportId === 'report-hall-ticket'
+
+  const showRegion = reportId === 'report-result-sheet'
+    || reportId === 'report-mark-sheet'
+    || reportId === 'report-certificate'
+    || reportId === 'report-register'
+    || reportId === 'report-lost-by-2'
+
+  const showRollRange = reportId === 'report-mark-sheet'
+    || reportId === 'report-hall-ticket'
+    || reportId === 'report-certificate'
 
   return (
     <PageFrame
@@ -180,7 +241,7 @@ export const PrabodhReportsPage = ({ reportId, defaultSessionNo }: Props) => {
           <Button variant="contained" onClick={() => void onGenerate()} disabled={isLoading}>
             {isLoading ? 'Generating…' : 'Generate'}
           </Button>
-          <Button variant="outlined" onClick={onPrint} disabled={!header}>
+          <Button variant="outlined" onClick={() => window.print()} disabled={!header}>
             Print
           </Button>
         </Stack>
@@ -203,28 +264,31 @@ export const PrabodhReportsPage = ({ reportId, defaultSessionNo }: Props) => {
                   gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
                 }}
               >
-                {(reportId === 'report-attendance'
-                  || reportId === 'report-name-list'
-                  || reportId === 'report-result-sheet') ? (
+                {showCentre ? (
                   <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 2' }, minWidth: 0 }}>
-                    <CentreSearchField
-                      label={reportId === 'report-attendance' ? 'Exam Centre *' : 'Exam Centre'}
-                      centres={centres}
-                      value={centreNo}
-                      allowEmpty={reportId !== 'report-attendance'}
-                      helperText={
-                        reportId === 'report-attendance'
-                          ? 'Search by code, name, or city'
-                          : 'Search by code, name, or city — clear for all centres'
-                      }
-                      onChange={setCentreNo}
-                    />
+                    {reportId === 'report-attendance' ? (
+                      <CentreSearchField
+                        multiple
+                        label="Exam Centres *"
+                        centres={centres}
+                        value={attendanceCentreNos}
+                        helperText="Select one or more centres. Print starts a new page for each centre."
+                        onChange={setAttendanceCentreNos}
+                      />
+                    ) : (
+                      <CentreSearchField
+                        label="Exam Centre"
+                        centres={centres}
+                        value={centreNo}
+                        allowEmpty
+                        helperText="Search by code, name, or city — clear for all centres"
+                        onChange={setCentreNo}
+                      />
+                    )}
                   </Box>
                 ) : null}
 
-                {(reportId === 'report-result-sheet'
-                  || reportId === 'report-certificate'
-                  || reportId === 'report-register') ? (
+                {showRegion ? (
                   <FormControl size="small" fullWidth>
                     <InputLabel id="report-region-label">
                       {reportId === 'report-certificate' ? 'Region *' : 'Region'}
@@ -263,7 +327,7 @@ export const PrabodhReportsPage = ({ reportId, defaultSessionNo }: Props) => {
                   </FormControl>
                 ) : null}
 
-                {reportId === 'report-certificate' ? (
+                {showRollRange ? (
                   <>
                     <TextField
                       size="small"
@@ -288,78 +352,71 @@ export const PrabodhReportsPage = ({ reportId, defaultSessionNo }: Props) => {
           </CardContent>
         </Card>
 
-        {header ? (
+        {attendanceSections.length > 0 ? (
           <Card>
             <CardContent>
-              <Box id="Prabodh-report-print" sx={{ overflowX: 'auto' }}>
-                <Stack spacing={1.5} sx={{ mb: 2 }}>
-                  <Typography variant="h5" fontWeight={700}>{header.title}</Typography>
+              <AttendanceSheetPrint
+                printId={PRINT_ID}
+                sections={attendanceSections.map((section) => ({
+                  header: section.header,
+                  pairs: section.pairs,
+                }))}
+                examTitleMr="राष्ट्रभाषा प्रबोध परीक्षा"
+                paperCount={3}
+              />
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {header && attendanceSections.length === 0 ? (
+          <Card>
+            <CardContent>
+              <ReportPrintChrome
+                printId={PRINT_ID}
+                header={header}
+                summary={register ? (
+                  <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+                    <Typography variant="body2">Total: {register.totalCandidates}</Typography>
+                    <Typography variant="body2">Pass: {register.passCount}</Typography>
+                    <Typography variant="body2">Fail: {register.failCount}</Typography>
+                    <Typography variant="body2">Absent: {register.absentCount}</Typography>
+                    <Typography variant="body2">
+                      Stopped: {register.stoppedCount === 0 ? '-' : register.stoppedCount}
+                    </Typography>
+                    <Typography variant="body2">Pass %: {register.passPercent}</Typography>
+                  </Stack>
+                ) : lostByTwo?.class3Marks ? (
                   <Typography variant="body2">
-                    Session {header.sessionNo}
-                    {header.month ? ` · Month: ${header.month}` : ''}
-                    {header.year ? ` · Year: ${header.year}` : ''}
+                    Thresholds — Class3: {lostByTwo.class3Marks}
+                    {lostByTwo.minTotalKhand1 != null ? ` · Min total: ${lostByTwo.minTotalKhand1}` : ''}
                   </Typography>
-                  {header.centreNo ? (
-                    <Typography variant="body2">
-                      Centre: {header.centreNo}{header.centreName ? ` · ${header.centreName}` : ''}
-                    </Typography>
-                  ) : null}
-                  {header.regionName ? (
-                    <Typography variant="body2" sx={marathiNameFieldSx['& .MuiInputBase-input']}>
-                      Region: {header.regionName}
-                    </Typography>
-                  ) : null}
-                  {header.resultDate ? (
-                    <Typography variant="body2">
-                      Result date: {new Date(header.resultDate).toLocaleDateString()}
-                    </Typography>
-                  ) : null}
-                  <Typography variant="body2">Rows: {header.rowCount ?? '-'}</Typography>
-                </Stack>
-
-                {attendance ? (
-                  <>
-                    <Typography variant="body2" sx={{ mb: 1 }}>
-                      Max roll: {attendance.maxRollNo ?? '-'}
-                    </Typography>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Roll 1</TableCell>
-                          <TableCell>Roll 2</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {attendance.pairs.map((pair, index) => (
-                          <TableRow key={`${pair.rollNo1}-${index}`}>
-                            <TableCell>{pair.rollNo1 ?? '-'}</TableCell>
-                            <TableCell>{pair.rollNo2 ?? '-'}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </>
-                ) : null}
-
+                ) : undefined}
+              >
                 {nameList ? (
-                  <Table size="small">
+                  <Table size="small" className="report-print-table">
                     <TableHead>
                       <TableRow>
                         <TableCell>Roll No</TableCell>
                         <TableCell>Name</TableCell>
+                        <TableCell>Form Centre</TableCell>
                         <TableCell>Exam Centre</TableCell>
                         <TableCell>Centre Name</TableCell>
-                        <TableCell>District</TableCell>
+                        <TableCell>Gender</TableCell>
+                        <TableCell>Region</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {nameList.rows.map((row, index) => (
                         <TableRow key={`${row.rollNo}-${index}`}>
                           <TableCell>{row.rollNo ?? '-'}</TableCell>
-                          <TableCell sx={marathiNameFieldSx['& .MuiInputBase-input']}>{row.name ?? '-'}</TableCell>
+                          <TableCell className="marathi-cell">{row.name ?? '-'}</TableCell>
+                          <TableCell>{row.formCentre ?? '-'}</TableCell>
                           <TableCell>{row.examCentre ?? '-'}</TableCell>
-                          <TableCell sx={marathiNameFieldSx['& .MuiInputBase-input']}>{row.centreName ?? '-'}</TableCell>
-                          <TableCell sx={marathiNameFieldSx['& .MuiInputBase-input']}>{row.districtName ?? '-'}</TableCell>
+                          <TableCell className="marathi-cell">{row.centreName ?? '-'}</TableCell>
+                          <TableCell>{row.gender ?? '-'}</TableCell>
+                          <TableCell className="marathi-cell">
+                            {row.regionNo ?? '-'}{row.regionName ? ` · ${row.regionName}` : ''}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -367,17 +424,17 @@ export const PrabodhReportsPage = ({ reportId, defaultSessionNo }: Props) => {
                 ) : null}
 
                 {resultSheet ? (
-                  <Table size="small">
+                  <Table size="small" className="report-print-table">
                     <TableHead>
                       <TableRow>
                         <TableCell>Roll No</TableCell>
                         {resultSheet.mode === 'named' ? <TableCell>Name</TableCell> : null}
                         <TableCell>Exam Centre</TableCell>
-                        <TableCell>Paper 1</TableCell>
-                        <TableCell>Paper 2</TableCell>
-                        <TableCell>Paper 3</TableCell>
+                        <TableCell>Marks1</TableCell>
+                        <TableCell>Marks2</TableCell>
+                        <TableCell>Marks3</TableCell>
                         <TableCell>Oral</TableCell>
-                        <TableCell>Total</TableCell>
+                        <TableCell>Tot</TableCell>
                         <TableCell>Grade</TableCell>
                         <TableCell>Result</TableCell>
                         <TableCell>Rank</TableCell>
@@ -388,7 +445,7 @@ export const PrabodhReportsPage = ({ reportId, defaultSessionNo }: Props) => {
                         <TableRow key={`${row.rollNo}-${index}`}>
                           <TableCell>{row.rollNo ?? '-'}</TableCell>
                           {resultSheet.mode === 'named' ? (
-                            <TableCell sx={marathiNameFieldSx['& .MuiInputBase-input']}>{row.name ?? '-'}</TableCell>
+                            <TableCell className="marathi-cell">{row.name ?? '-'}</TableCell>
                           ) : null}
                           <TableCell>{row.examCentre ?? '-'}</TableCell>
                           <TableCell>{row.marks1 ?? '-'}</TableCell>
@@ -405,8 +462,82 @@ export const PrabodhReportsPage = ({ reportId, defaultSessionNo }: Props) => {
                   </Table>
                 ) : null}
 
+                {markSheet ? (
+                  <Table size="small" className="report-print-table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Roll No</TableCell>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Marks1</TableCell>
+                        <TableCell>Marks2</TableCell>
+                        <TableCell>Marks3</TableCell>
+                        <TableCell>Oral</TableCell>
+                        <TableCell>Tot</TableCell>
+                        <TableCell>Grade</TableCell>
+                        <TableCell>Result</TableCell>
+                        <TableCell>Rank</TableCell>
+                        <TableCell>Form Centre</TableCell>
+                        <TableCell>Exam Centre</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {markSheet.rows.map((row, index) => (
+                        <TableRow key={`${row.rollNo}-${index}`}>
+                          <TableCell>{row.rollNo ?? '-'}</TableCell>
+                          <TableCell className="marathi-cell">{row.name ?? '-'}</TableCell>
+                          <TableCell>{row.marks1 ?? '-'}</TableCell>
+                          <TableCell>{row.marks2 ?? '-'}</TableCell>
+                          <TableCell>{row.marks3 ?? '-'}</TableCell>
+                          <TableCell>{row.oralMarks ?? '-'}</TableCell>
+                          <TableCell>{row.totMarks ?? '-'}</TableCell>
+                          <TableCell>{row.grade ?? '-'}</TableCell>
+                          <TableCell>{row.result ?? '-'}</TableCell>
+                          <TableCell>{row.specialRank ?? '-'}</TableCell>
+                          <TableCell>{row.formCentre ?? '-'}</TableCell>
+                          <TableCell>{row.examCentre ?? '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : null}
+
+                {hallTicket ? (
+                  <Table size="small" className="report-print-table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Roll No</TableCell>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Form Centre</TableCell>
+                        <TableCell>Exam Centre</TableCell>
+                        <TableCell>Gender</TableCell>
+                        <TableCell>Session</TableCell>
+                        <TableCell>Paper 1</TableCell>
+                        <TableCell>Paper 2</TableCell>
+                        <TableCell>Paper 3</TableCell>
+                        <TableCell>Oral</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {hallTicket.rows.map((row, index) => (
+                        <TableRow key={`${row.rollNo}-${index}`}>
+                          <TableCell>{row.rollNo ?? '-'}</TableCell>
+                          <TableCell className="marathi-cell">{row.name ?? '-'}</TableCell>
+                          <TableCell>{row.formCentre ?? '-'}</TableCell>
+                          <TableCell>{row.examCentre ?? '-'}</TableCell>
+                          <TableCell>{row.gender ?? '-'}</TableCell>
+                          <TableCell>{row.sessionNo ?? '-'}</TableCell>
+                          <TableCell>{row.paper1Schedule ?? ''}</TableCell>
+                          <TableCell>{row.paper2Schedule ?? ''}</TableCell>
+                          <TableCell>{row.paper3Schedule ?? ''}</TableCell>
+                          <TableCell>{row.oralSchedule ?? ''}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : null}
+
                 {certificates ? (
-                  <Table size="small">
+                  <Table size="small" className="report-print-table">
                     <TableHead>
                       <TableRow>
                         <TableCell>Roll No</TableCell>
@@ -422,7 +553,7 @@ export const PrabodhReportsPage = ({ reportId, defaultSessionNo }: Props) => {
                       {certificates.rows.map((row, index) => (
                         <TableRow key={`${row.rollNo}-${index}`}>
                           <TableCell>{row.rollNo ?? '-'}</TableCell>
-                          <TableCell sx={marathiNameFieldSx['& .MuiInputBase-input']}>{row.name ?? '-'}</TableCell>
+                          <TableCell className="marathi-cell">{row.name ?? '-'}</TableCell>
                           <TableCell>{row.gender ?? '-'}</TableCell>
                           <TableCell>{row.grade ?? '-'}</TableCell>
                           <TableCell>{row.result ?? '-'}</TableCell>
@@ -435,50 +566,75 @@ export const PrabodhReportsPage = ({ reportId, defaultSessionNo }: Props) => {
                 ) : null}
 
                 {register ? (
-                  <>
-                    <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap sx={{ mb: 1.5 }}>
-                      <Typography variant="body2">Total: {register.totalCandidates}</Typography>
-                      <Typography variant="body2">Pass: {register.passCount}</Typography>
-                      <Typography variant="body2">Fail: {register.failCount}</Typography>
-                      <Typography variant="body2">Absent: {register.absentCount}</Typography>
-                      <Typography variant="body2">
-                        Stopped: {register.stoppedCount === 0 ? '-' : register.stoppedCount}
-                      </Typography>
-                      <Typography variant="body2">Pass %: {register.passPercent}</Typography>
-                    </Stack>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Dummy Centre</TableCell>
-                          <TableCell>Exam Centre</TableCell>
-                          <TableCell>Centre Name</TableCell>
-                          <TableCell>Region</TableCell>
-                          <TableCell>Count</TableCell>
-                          <TableCell>Pass</TableCell>
-                          <TableCell>Fail</TableCell>
-                          <TableCell>Absent</TableCell>
+                  <Table size="small" className="report-print-table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Dummy Centre</TableCell>
+                        <TableCell>Exam Centre</TableCell>
+                        <TableCell>Centre Name</TableCell>
+                        <TableCell>Region</TableCell>
+                        <TableCell>Count</TableCell>
+                        <TableCell>Pass</TableCell>
+                        <TableCell>Fail</TableCell>
+                        <TableCell>Absent</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {register.rows.map((row, index) => (
+                        <TableRow key={`${row.dummyCentreCode}-${row.examCentre}-${index}`}>
+                          <TableCell>{row.dummyCentreCode ?? '-'}</TableCell>
+                          <TableCell>{row.examCentre ?? '-'}</TableCell>
+                          <TableCell className="marathi-cell">{row.centreName ?? '-'}</TableCell>
+                          <TableCell className="marathi-cell">
+                            {row.regionNo ?? '-'}{row.regionName ? ` · ${row.regionName}` : ''}
+                          </TableCell>
+                          <TableCell>{row.candidateCount}</TableCell>
+                          <TableCell>{row.passCount}</TableCell>
+                          <TableCell>{row.failCount}</TableCell>
+                          <TableCell>{row.absentCount}</TableCell>
                         </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {register.rows.map((row, index) => (
-                          <TableRow key={`${row.dummyCentreCode}-${row.examCentre}-${index}`}>
-                            <TableCell>{row.dummyCentreCode ?? '-'}</TableCell>
-                            <TableCell>{row.examCentre ?? '-'}</TableCell>
-                            <TableCell sx={marathiNameFieldSx['& .MuiInputBase-input']}>{row.centreName ?? '-'}</TableCell>
-                            <TableCell sx={marathiNameFieldSx['& .MuiInputBase-input']}>
-                              {row.regionNo ?? '-'}{row.regionName ? ` · ${row.regionName}` : ''}
-                            </TableCell>
-                            <TableCell>{row.candidateCount}</TableCell>
-                            <TableCell>{row.passCount}</TableCell>
-                            <TableCell>{row.failCount}</TableCell>
-                            <TableCell>{row.absentCount}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </>
+                      ))}
+                    </TableBody>
+                  </Table>
                 ) : null}
-              </Box>
+
+                {lostByTwo ? (
+                  <Table size="small" className="report-print-table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Roll No</TableCell>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Marks1</TableCell>
+                        <TableCell>Marks2</TableCell>
+                        <TableCell>Marks3</TableCell>
+                        <TableCell>Oral</TableCell>
+                        <TableCell>Tot</TableCell>
+                        <TableCell>Grade</TableCell>
+                        <TableCell>Reason</TableCell>
+                        <TableCell>Centres</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {lostByTwo.rows.map((row, index) => (
+                        <TableRow key={`${row.rollNo}-${index}`}>
+                          <TableCell>{row.rollNo ?? '-'}</TableCell>
+                          <TableCell className="marathi-cell">{row.name ?? '-'}</TableCell>
+                          <TableCell>{row.marks1 ?? '-'}</TableCell>
+                          <TableCell>{row.marks2 ?? '-'}</TableCell>
+                          <TableCell>{row.marks3 ?? '-'}</TableCell>
+                          <TableCell>{row.oralMarks ?? '-'}</TableCell>
+                          <TableCell>{row.totMarks ?? '-'}</TableCell>
+                          <TableCell>{row.grade ?? '-'}</TableCell>
+                          <TableCell>{row.nearMissReason ?? '-'}</TableCell>
+                          <TableCell>
+                            {row.formCentre ?? '-'} / {row.examCentre ?? '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : null}
+              </ReportPrintChrome>
             </CardContent>
           </Card>
         ) : (
@@ -487,21 +643,6 @@ export const PrabodhReportsPage = ({ reportId, defaultSessionNo }: Props) => {
           </Alert>
         )}
       </Stack>
-
-      <style>{`
-        @media print {
-          body * { visibility: hidden !important; }
-          #Prabodh-report-print, #Prabodh-report-print * { visibility: visible !important; }
-          #Prabodh-report-print {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            padding: 16px;
-          }
-          .no-print { display: none !important; }
-        }
-      `}</style>
     </PageFrame>
   )
 }
@@ -510,5 +651,8 @@ export const isReportNavId = (id: NavItemId): id is ReportKind =>
   id === 'report-attendance'
   || id === 'report-name-list'
   || id === 'report-result-sheet'
+  || id === 'report-mark-sheet'
+  || id === 'report-hall-ticket'
   || id === 'report-certificate'
   || id === 'report-register'
+  || id === 'report-lost-by-2'

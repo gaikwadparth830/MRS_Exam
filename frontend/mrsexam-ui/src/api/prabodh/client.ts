@@ -98,6 +98,8 @@ export type ReportHeader = {
   month?: string | null
   year?: string | null
   title: string
+  titleMr?: string | null
+  examName?: string | null
   centreNo?: string | null
   centreName?: string | null
   regionName?: string | null
@@ -116,9 +118,13 @@ export type NameListReport = {
   rows: Array<{
     rollNo?: number | null
     name?: string | null
+    formCentre?: string | null
     examCentre?: string | null
     centreName?: string | null
     districtName?: string | null
+    gender?: string | null
+    regionNo?: number | null
+    regionName?: string | null
   }>
 }
 
@@ -137,6 +143,60 @@ export type ResultSheetReport = {
     grade?: string | null
     result?: string | null
     specialRank?: string | null
+  }>
+}
+
+export type MarkSheetReport = {
+  header: ReportHeader
+  rows: Array<{
+    rollNo?: number | null
+    name?: string | null
+    formCentre?: string | null
+    examCentre?: string | null
+    marks1?: string | null
+    marks2?: string | null
+    marks3?: string | null
+    oralMarks?: string | null
+    totMarks?: number | null
+    grade?: string | null
+    result?: string | null
+    specialRank?: string | null
+  }>
+}
+
+export type HallTicketReport = {
+  header: ReportHeader
+  rows: Array<{
+    rollNo?: number | null
+    name?: string | null
+    formCentre?: string | null
+    examCentre?: string | null
+    gender?: string | null
+    sessionNo?: number | null
+    paper1Schedule?: string | null
+    paper2Schedule?: string | null
+    paper3Schedule?: string | null
+    oralSchedule?: string | null
+  }>
+}
+
+export type LostByTwoReport = {
+  header: ReportHeader
+  class3Marks?: number | null
+  minTotalKhand1?: number | null
+  rows: Array<{
+    rollNo?: number | null
+    name?: string | null
+    formCentre?: string | null
+    examCentre?: string | null
+    marks1?: string | null
+    marks2?: string | null
+    marks3?: string | null
+    oralMarks?: string | null
+    totMarks?: number | null
+    grade?: string | null
+    result?: string | null
+    nearMissReason?: string | null
   }>
 }
 
@@ -396,4 +456,30 @@ export const prabodhApi = {
     })
     return data
   },
+
+  getMarkSheetReport: async (params: {
+    regionNo?: number
+    fromRoll?: number
+    toRoll?: number
+  }): Promise<MarkSheetReport> => {
+    const { data } = await httpClient.get<MarkSheetReport>('/api/prabodh/reports/mark-sheet', { params })
+    return data
+  },
+
+  getHallTicketReport: async (params: {
+    centreNo?: string
+    fromRoll?: number
+    toRoll?: number
+  }): Promise<HallTicketReport> => {
+    const { data } = await httpClient.get<HallTicketReport>('/api/prabodh/reports/hall-ticket', { params })
+    return data
+  },
+
+  getLostByTwoReport: async (regionNo?: number): Promise<LostByTwoReport> => {
+    const { data } = await httpClient.get<LostByTwoReport>('/api/prabodh/reports/lost-two-marks', {
+      params: regionNo ? { regionNo } : undefined,
+    })
+    return data
+  },
+
 }

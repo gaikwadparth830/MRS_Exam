@@ -11,7 +11,7 @@ Build after Prabodh shared foundation (auth, session, masters, report pipeline).
 | M2 | Form API+UI |
 | M3 | Marks API+UI (incl reg_lang column) |
 | M4 | Result engine + flag + tests |
-| M5 | Reports |
+| M5 | Reports (see `12_Report_Migration_Catalog.md` + `../00_Report_Migration_Guide_React_ASPNET.md`) |
 | M6 | UAT parallel run |
 | M7 | Cutover |
 

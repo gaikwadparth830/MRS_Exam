@@ -25,10 +25,13 @@ import {
   type CertificateReport,
   type NameListReport,
   type RegisterReport,
+  type ReportHeader,
   type ResultSheetReport,
 } from '../../api/pandit/client'
 import { CentersService, RegionsService, type Center, type Region } from '../../api/generatedClient'
 import { CentreSearchField } from '../../components/CentreSearchField'
+import { AttendanceSheetPrint } from '../../components/reports/AttendanceSheetPrint'
+import { ReportPrintChrome } from '../../components/reports/ReportPrintChrome'
 import { PageFrame } from '../../layout/PageFrame'
 import type { NavItemId } from '../../layout/navConfig'
 
@@ -36,11 +39,19 @@ type ReportKind =
   | 'report-attendance'
   | 'report-name-list'
   | 'report-result-sheet'
+  | 'report-result-details'
+  | 'report-mark-sheet'
   | 'report-certificate'
   | 'report-register'
   | 'report-ranks'
   | 'report-students-passing'
   | 'report-lost-by-2'
+
+type ResultDetailsData = Awaited<ReturnType<typeof panditApi.getResultDetailsReport>>
+type MarkSheetData = Awaited<ReturnType<typeof panditApi.getMarkSheetReport>>
+type RanksData = Awaited<ReturnType<typeof panditApi.getRanksReport>>
+type PassingData = Awaited<ReturnType<typeof panditApi.getStudentsPassingReport>>
+type LostData = Awaited<ReturnType<typeof panditApi.getLostBy2Report>>
 
 type Props = {
   reportId: ReportKind
@@ -48,22 +59,27 @@ type Props = {
 }
 
 const titles: Record<ReportKind, { title: string; description: string }> = {
-  'report-attendance': { title: 'Attendance Sheet', description: 'Exam-centre roll pairs.' },
+  'report-attendance': { title: 'Attendance Sheet', description: 'Select one or more centres. Each centre prints on a new page.' },
   'report-name-list': { title: 'Name List', description: 'Candidate name list by centre/region.' },
-  'report-result-sheet': { title: 'Result Sheet', description: 'With or without names.' },
+  'report-result-sheet': { title: 'Result Sheet', description: 'Khand tots, grade, result, rank.' },
+  'report-result-details': { title: 'Result Details', description: 'Papers 1–8, oral, khand tots, flags.' },
+  'report-mark-sheet': { title: 'Mark Sheet', description: 'Variant new with optional portion filter.' },
   'report-certificate': { title: 'Certificate', description: 'Pass / Khand pass candidates.' },
   'report-register': { title: 'Register', description: 'Centre counts and pass rates.' },
-  'report-ranks': { title: 'Ranks', description: 'FIRST / SECOND special ranks.' },
-  'report-students-passing': { title: 'Students Passing', description: 'Exam Pass / Khand pass list.' },
+  'report-ranks': { title: 'Ranks', description: 'FIRST / SECOND among Exam Pass.' },
+  'report-students-passing': { title: 'Students Passing', description: 'Full / Khand1 / Khand2 pass list.' },
   'report-lost-by-2': { title: 'Lost by 2 Marks', description: 'Near-miss fail candidates.' },
 }
 
 const toList = <T,>(payload: unknown): T[] => (Array.isArray(payload) ? payload as T[] : [])
+const PRINT_ID = 'Pandit-report-print'
 
 export const isPanditReportNavId = (id: NavItemId): id is ReportKind =>
   id === 'report-attendance'
   || id === 'report-name-list'
   || id === 'report-result-sheet'
+  || id === 'report-result-details'
+  || id === 'report-mark-sheet'
   || id === 'report-certificate'
   || id === 'report-register'
   || id === 'report-ranks'
@@ -75,18 +91,26 @@ export const PanditReportsPage = ({ reportId, defaultSessionNo }: Props) => {
   const [centres, setCentres] = useState<Center[]>([])
   const [regions, setRegions] = useState<Region[]>([])
   const [centreNo, setCentreNo] = useState('')
+  const [attendanceCentreNos, setAttendanceCentreNos] = useState<string[]>([])
   const [regionNo, setRegionNo] = useState<number | ''>('')
   const [mode, setMode] = useState<'named' | 'noname'>('named')
   const [fromRoll, setFromRoll] = useState('')
   const [toRoll, setToRoll] = useState('')
+  const [portion, setPortion] = useState<'ALL' | 'N' | 'O'>('ALL')
+  const [passingMode, setPassingMode] = useState<'full' | 'khand1' | 'khand2'>('full')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [attendance, setAttendance] = useState<AttendanceReport | null>(null)
+
+  const [attendanceSections, setAttendanceSections] = useState<AttendanceReport[]>([])
   const [nameList, setNameList] = useState<NameListReport | null>(null)
   const [resultSheet, setResultSheet] = useState<ResultSheetReport | null>(null)
+  const [resultDetails, setResultDetails] = useState<ResultDetailsData | null>(null)
+  const [markSheet, setMarkSheet] = useState<MarkSheetData | null>(null)
   const [certificates, setCertificates] = useState<CertificateReport | null>(null)
   const [register, setRegister] = useState<RegisterReport | null>(null)
-  const [genericRows, setGenericRows] = useState<Array<Record<string, unknown>>>([])
+  const [ranks, setRanks] = useState<RanksData | null>(null)
+  const [passing, setPassing] = useState<PassingData | null>(null)
+  const [lostByTwo, setLostByTwo] = useState<LostData | null>(null)
 
   useEffect(() => {
     void Promise.all([CentersService.getApiCenters(), RegionsService.getApiRegions()])
@@ -100,28 +124,48 @@ export const PanditReportsPage = ({ reportId, defaultSessionNo }: Props) => {
       })
   }, [])
 
-  useEffect(() => {
-    setAttendance(null)
+  const clearResults = () => {
+    setAttendanceSections([])
     setNameList(null)
     setResultSheet(null)
+    setResultDetails(null)
+    setMarkSheet(null)
     setCertificates(null)
     setRegister(null)
-    setGenericRows([])
+    setRanks(null)
+    setPassing(null)
+    setLostByTwo(null)
+  }
+
+  useEffect(() => {
+    clearResults()
     setError(null)
   }, [reportId])
 
-  const header = useMemo(
-    () => attendance?.header ?? nameList?.header ?? resultSheet?.header ?? certificates?.header ?? register?.header ?? null,
-    [attendance, nameList, resultSheet, certificates, register],
-  )
+  const header = useMemo((): ReportHeader | null => {
+    return attendanceSections[0]?.header
+      ?? nameList?.header
+      ?? resultSheet?.header
+      ?? resultDetails?.header
+      ?? markSheet?.header
+      ?? certificates?.header
+      ?? register?.header
+      ?? ranks?.header
+      ?? passing?.header
+      ?? lostByTwo?.header
+      ?? null
+  }, [attendanceSections, nameList, resultSheet, resultDetails, markSheet, certificates, register, ranks, passing, lostByTwo])
 
   const onGenerate = async () => {
     setError(null)
     setIsLoading(true)
+    clearResults()
     try {
       if (reportId === 'report-attendance') {
-        if (!centreNo.trim()) throw new Error('Select exam centre.')
-        setAttendance(await panditApi.getAttendanceReport(centreNo.trim()))
+        const codes = attendanceCentreNos.map((c) => c.trim()).filter(Boolean)
+        if (codes.length < 1) throw new Error('Select at least one exam centre.')
+        const sections = await Promise.all(codes.map((code) => panditApi.getAttendanceReport(code)))
+        setAttendanceSections(sections)
       } else if (reportId === 'report-name-list') {
         setNameList(await panditApi.getNameListReport(
           centreNo.trim() || undefined,
@@ -133,6 +177,18 @@ export const PanditReportsPage = ({ reportId, defaultSessionNo }: Props) => {
           centreNo: centreNo.trim() || undefined,
           regionNo: regionNo === '' ? undefined : Number(regionNo),
         }))
+      } else if (reportId === 'report-result-details') {
+        setResultDetails(await panditApi.getResultDetailsReport({
+          centreNo: centreNo.trim() || undefined,
+          regionNo: regionNo === '' ? undefined : Number(regionNo),
+        }))
+      } else if (reportId === 'report-mark-sheet') {
+        setMarkSheet(await panditApi.getMarkSheetReport({
+          fromRoll: fromRoll.trim() ? Number(fromRoll) : undefined,
+          toRoll: toRoll.trim() ? Number(toRoll) : undefined,
+          variant: 'new',
+          portion: portion === 'ALL' ? undefined : portion,
+        }))
       } else if (reportId === 'report-certificate') {
         setCertificates(await panditApi.getCertificateReport({
           regionNo: regionNo === '' ? undefined : Number(regionNo),
@@ -143,19 +199,17 @@ export const PanditReportsPage = ({ reportId, defaultSessionNo }: Props) => {
       } else if (reportId === 'report-register') {
         setRegister(await panditApi.getRegisterReport(regionNo === '' ? undefined : Number(regionNo)))
       } else if (reportId === 'report-ranks') {
-        const data = await panditApi.getRanksReport() as { rows?: Array<Record<string, unknown>> }
-        setGenericRows(data.rows ?? [])
+        setRanks(await panditApi.getRanksReport())
       } else if (reportId === 'report-students-passing') {
-        const data = await panditApi.getStudentsPassingReport(
-          centreNo.trim() || undefined,
-          regionNo === '' ? undefined : Number(regionNo),
-        ) as { rows?: Array<Record<string, unknown>> }
-        setGenericRows(data.rows ?? [])
+        setPassing(await panditApi.getStudentsPassingReport({
+          formCentre: centreNo.trim() || undefined,
+          regionNo: regionNo === '' ? undefined : Number(regionNo),
+          passingMode,
+        }))
       } else {
-        const data = await panditApi.getLostBy2Report(
+        setLostByTwo(await panditApi.getLostBy2Report(
           regionNo === '' ? undefined : Number(regionNo),
-        ) as { rows?: Array<Record<string, unknown>> }
-        setGenericRows(data.rows ?? [])
+        ))
       }
     } catch (err) {
       setError(panditApi.messageFromError(err, err instanceof Error ? err.message : 'Report failed.'))
@@ -164,18 +218,32 @@ export const PanditReportsPage = ({ reportId, defaultSessionNo }: Props) => {
     }
   }
 
+  const showCentre = reportId === 'report-attendance'
+    || reportId === 'report-name-list'
+    || reportId === 'report-result-sheet'
+    || reportId === 'report-result-details'
+    || reportId === 'report-certificate'
+    || reportId === 'report-students-passing'
+
+  const showRegion = reportId !== 'report-attendance' && reportId !== 'report-ranks' && reportId !== 'report-mark-sheet'
+
   return (
     <PageFrame
       title={meta.title}
       description={meta.description}
       actions={(
-        <Button variant="contained" onClick={() => void onGenerate()} disabled={isLoading}>
-          {isLoading ? 'Generating…' : 'Generate'}
-        </Button>
+        <Stack direction="row" spacing={1}>
+          <Button variant="contained" onClick={() => void onGenerate()} disabled={isLoading}>
+            {isLoading ? 'Generating…' : 'Generate'}
+          </Button>
+          <Button variant="outlined" onClick={() => window.print()} disabled={!header}>
+            Print
+          </Button>
+        </Stack>
       )}
     >
       <Stack spacing={2}>
-        <Card>
+        <Card className="no-print">
           <CardContent>
             <Stack spacing={2}>
               <Typography variant="body2" color="text.secondary">
@@ -188,21 +256,30 @@ export const PanditReportsPage = ({ reportId, defaultSessionNo }: Props) => {
                   gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
                 }}
               >
-                {(reportId === 'report-attendance'
-                  || reportId === 'report-name-list'
-                  || reportId === 'report-result-sheet'
-                  || reportId === 'report-certificate'
-                  || reportId === 'report-students-passing') ? (
-                  <CentreSearchField
-                    label={reportId === 'report-attendance' ? 'Exam Centre *' : 'Centre'}
-                    centres={centres}
-                    value={centreNo}
-                    allowEmpty={reportId !== 'report-attendance'}
-                    onChange={setCentreNo}
-                  />
+                {showCentre ? (
+                  <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 2' }, minWidth: 0 }}>
+                    {reportId === 'report-attendance' ? (
+                      <CentreSearchField
+                        multiple
+                        label="Exam Centres *"
+                        centres={centres}
+                        value={attendanceCentreNos}
+                        helperText="Select one or more centres. Print starts a new page for each centre."
+                        onChange={setAttendanceCentreNos}
+                      />
+                    ) : (
+                      <CentreSearchField
+                        label="Centre"
+                        centres={centres}
+                        value={centreNo}
+                        allowEmpty
+                        onChange={setCentreNo}
+                      />
+                    )}
+                  </Box>
                 ) : null}
 
-                {(reportId !== 'report-attendance' && reportId !== 'report-ranks') ? (
+                {showRegion ? (
                   <FormControl size="small" fullWidth>
                     <InputLabel id="pandit-report-region">Region</InputLabel>
                     <Select
@@ -239,6 +316,42 @@ export const PanditReportsPage = ({ reportId, defaultSessionNo }: Props) => {
                   </FormControl>
                 ) : null}
 
+                {reportId === 'report-mark-sheet' ? (
+                  <>
+                    <FormControl size="small" fullWidth>
+                      <InputLabel id="pandit-portion">Portion</InputLabel>
+                      <Select
+                        labelId="pandit-portion"
+                        label="Portion"
+                        value={portion}
+                        onChange={(e) => setPortion(e.target.value as 'ALL' | 'N' | 'O')}
+                      >
+                        <MenuItem value="ALL">All</MenuItem>
+                        <MenuItem value="N">NEW (N)</MenuItem>
+                        <MenuItem value="O">OLD (O)</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <TextField size="small" label="From Roll" value={fromRoll} onChange={(e) => setFromRoll(e.target.value)} />
+                    <TextField size="small" label="To Roll" value={toRoll} onChange={(e) => setToRoll(e.target.value)} />
+                  </>
+                ) : null}
+
+                {reportId === 'report-students-passing' ? (
+                  <FormControl size="small" fullWidth>
+                    <InputLabel id="pandit-passing-mode">Passing mode</InputLabel>
+                    <Select
+                      labelId="pandit-passing-mode"
+                      label="Passing mode"
+                      value={passingMode}
+                      onChange={(e) => setPassingMode(e.target.value as 'full' | 'khand1' | 'khand2')}
+                    >
+                      <MenuItem value="full">Full Exam Pass</MenuItem>
+                      <MenuItem value="khand1">Khand I Pass</MenuItem>
+                      <MenuItem value="khand2">Khand II Pass</MenuItem>
+                    </Select>
+                  </FormControl>
+                ) : null}
+
                 {reportId === 'report-certificate' ? (
                   <>
                     <TextField size="small" label="From Roll" value={fromRoll} onChange={(e) => setFromRoll(e.target.value)} />
@@ -251,173 +364,328 @@ export const PanditReportsPage = ({ reportId, defaultSessionNo }: Props) => {
           </CardContent>
         </Card>
 
-        {attendance ? (
+        {attendanceSections.length > 0 ? (
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>{attendance.header.title}</Typography>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Roll 1</TableCell>
-                    <TableCell>Roll 2</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {attendance.pairs.map((p, i) => (
-                    <TableRow key={i}>
-                      <TableCell>{p.rollNo1 ?? '-'}</TableCell>
-                      <TableCell>{p.rollNo2 ?? '-'}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <AttendanceSheetPrint
+                printId={PRINT_ID}
+                sections={attendanceSections.map((section) => ({
+                  header: section.header,
+                  pairs: section.pairs,
+                }))}
+                examTitleMr="राष्ट्रभाषा पंडित परीक्षा"
+                paperCount={5}
+              />
             </CardContent>
           </Card>
         ) : null}
 
-        {nameList ? (
+        {header && attendanceSections.length === 0 ? (
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>{nameList.header.title} ({nameList.rows.length})</Typography>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Roll</TableCell>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Centre</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {nameList.rows.map((r, i) => (
-                    <TableRow key={i}>
-                      <TableCell>{r.rollNo}</TableCell>
-                      <TableCell>{r.name}</TableCell>
-                      <TableCell>{r.examCentre}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        ) : null}
-
-        {resultSheet ? (
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>{resultSheet.header.title}</Typography>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Roll</TableCell>
-                    {resultSheet.mode === 'named' ? <TableCell>Name</TableCell> : null}
-                    <TableCell>Tot</TableCell>
-                    <TableCell>Grade</TableCell>
-                    <TableCell>Result</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {resultSheet.rows.map((r, i) => (
-                    <TableRow key={i}>
-                      <TableCell>{r.rollNo}</TableCell>
-                      {resultSheet.mode === 'named' ? <TableCell>{r.name}</TableCell> : null}
-                      <TableCell>{r.totMarks ?? '-'}</TableCell>
-                      <TableCell>{r.grade ?? '-'}</TableCell>
-                      <TableCell>{r.result ?? '-'}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        ) : null}
-
-        {certificates ? (
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>{certificates.header.title}</Typography>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Roll</TableCell>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Grade</TableCell>
-                    <TableCell>Result</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {certificates.rows.map((r, i) => (
-                    <TableRow key={i}>
-                      <TableCell>{r.rollNo}</TableCell>
-                      <TableCell>{r.name}</TableCell>
-                      <TableCell>{r.grade}</TableCell>
-                      <TableCell>{r.result}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        ) : null}
-
-        {register ? (
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                {register.header.title} · Pass {register.passCount}/{register.totalCandidates} ({register.passPercent}%)
-              </Typography>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Centre</TableCell>
-                    <TableCell>Region</TableCell>
-                    <TableCell>Count</TableCell>
-                    <TableCell>Pass</TableCell>
-                    <TableCell>Fail</TableCell>
-                    <TableCell>Absent</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {register.rows.map((r, i) => (
-                    <TableRow key={i}>
-                      <TableCell>{r.examCentre} {r.centreName ? `· ${r.centreName}` : ''}</TableCell>
-                      <TableCell>{r.regionNo}</TableCell>
-                      <TableCell>{r.candidateCount}</TableCell>
-                      <TableCell>{r.passCount}</TableCell>
-                      <TableCell>{r.failCount}</TableCell>
-                      <TableCell>{r.absentCount}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        ) : null}
-
-        {genericRows.length > 0 ? (
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>{meta.title} ({genericRows.length})</Typography>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    {Object.keys(genericRows[0]).map((k) => (
-                      <TableCell key={k}>{k}</TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {genericRows.map((row, i) => (
-                    <TableRow key={i}>
-                      {Object.keys(genericRows[0]).map((k) => (
-                        <TableCell key={k}>{String(row[k] ?? '-')}</TableCell>
+              <ReportPrintChrome
+                printId={PRINT_ID}
+                header={header}
+                summary={register ? (
+                  <Typography variant="body2">
+                    Pass {register.passCount}/{register.totalCandidates} ({register.passPercent}%)
+                  </Typography>
+                ) : undefined}
+              >
+                {nameList ? (
+                  <Table size="small" className="report-print-table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Roll</TableCell>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Form Centre</TableCell>
+                        <TableCell>Exam Centre</TableCell>
+                        <TableCell>Khand</TableCell>
+                        <TableCell>Portion</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {nameList.rows.map((r, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{r.rollNo ?? '-'}</TableCell>
+                          <TableCell className="marathi-cell">{r.name ?? '-'}</TableCell>
+                          <TableCell>{r.formCentre ?? '-'}</TableCell>
+                          <TableCell>{r.examCentre ?? '-'}</TableCell>
+                          <TableCell>{r.khandAppearing ?? '-'}</TableCell>
+                          <TableCell>{r.flgPortion ?? '-'}</TableCell>
+                        </TableRow>
                       ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                    </TableBody>
+                  </Table>
+                ) : null}
+
+                {resultSheet ? (
+                  <Table size="small" className="report-print-table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Roll</TableCell>
+                        {resultSheet.mode === 'named' ? <TableCell>Name</TableCell> : null}
+                        <TableCell>Khand</TableCell>
+                        <TableCell>K1 Tot</TableCell>
+                        <TableCell>K2 Tot</TableCell>
+                        <TableCell>Tot</TableCell>
+                        <TableCell>Grade</TableCell>
+                        <TableCell>Result</TableCell>
+                        <TableCell>Rank</TableCell>
+                        <TableCell>Centres</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {resultSheet.rows.map((r, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{r.rollNo ?? '-'}</TableCell>
+                          {resultSheet.mode === 'named' ? (
+                            <TableCell className="marathi-cell">{r.name ?? '-'}</TableCell>
+                          ) : null}
+                          <TableCell>{r.khandAppearing ?? '-'}</TableCell>
+                          <TableCell>{r.khand1TotMarks ?? '-'}</TableCell>
+                          <TableCell>{r.khand2TotMarks ?? '-'}</TableCell>
+                          <TableCell>{r.totMarks ?? '-'}</TableCell>
+                          <TableCell>{r.grade ?? '-'}</TableCell>
+                          <TableCell>{r.result ?? '-'}</TableCell>
+                          <TableCell>{r.specialRank ?? '-'}</TableCell>
+                          <TableCell>{r.formCentre ?? '-'} / {r.examCentre ?? '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : null}
+
+                {resultDetails ? (
+                  <Table size="small" className="report-print-table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Roll</TableCell>
+                        <TableCell>Name</TableCell>
+                        <TableCell>M1</TableCell>
+                        <TableCell>M2</TableCell>
+                        <TableCell>M3</TableCell>
+                        <TableCell>M4</TableCell>
+                        <TableCell>M5</TableCell>
+                        <TableCell>M6</TableCell>
+                        <TableCell>M7</TableCell>
+                        <TableCell>M8</TableCell>
+                        <TableCell>Oral</TableCell>
+                        <TableCell>K1</TableCell>
+                        <TableCell>K2</TableCell>
+                        <TableCell>Conc</TableCell>
+                        <TableCell>UND</TableCell>
+                        <TableCell>Both</TableCell>
+                        <TableCell>Result</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {resultDetails.rows.map((r, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{r.rollNo ?? '-'}</TableCell>
+                          <TableCell className="marathi-cell">{r.name ?? '-'}</TableCell>
+                          <TableCell>{r.marks1 ?? '-'}</TableCell>
+                          <TableCell>{r.marks2 ?? '-'}</TableCell>
+                          <TableCell>{r.marks3 ?? '-'}</TableCell>
+                          <TableCell>{r.marks4 ?? '-'}</TableCell>
+                          <TableCell>{r.marks5 ?? '-'}</TableCell>
+                          <TableCell>{r.marks6 ?? '-'}</TableCell>
+                          <TableCell>{r.marks7 ?? '-'}</TableCell>
+                          <TableCell>{r.marks8 ?? '-'}</TableCell>
+                          <TableCell>{r.oralMarks ?? '-'}</TableCell>
+                          <TableCell>{r.khand1TotMarks ?? '-'}</TableCell>
+                          <TableCell>{r.khand2TotMarks ?? '-'}</TableCell>
+                          <TableCell>{r.concessionFlag ?? '-'}</TableCell>
+                          <TableCell>{r.undFlag ?? '-'}</TableCell>
+                          <TableCell>{r.bothKhandFlag ?? '-'}</TableCell>
+                          <TableCell>{r.result ?? '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : null}
+
+                {markSheet ? (
+                  <Table size="small" className="report-print-table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Roll</TableCell>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Portion</TableCell>
+                        <TableCell>Khand</TableCell>
+                        <TableCell>M1–4</TableCell>
+                        <TableCell>M5–8</TableCell>
+                        <TableCell>Oral</TableCell>
+                        <TableCell>K1</TableCell>
+                        <TableCell>K2</TableCell>
+                        <TableCell>Tot</TableCell>
+                        <TableCell>Grade</TableCell>
+                        <TableCell>Result</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {markSheet.rows.map((r, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{r.rollNo ?? '-'}</TableCell>
+                          <TableCell className="marathi-cell">{r.name ?? '-'}</TableCell>
+                          <TableCell>{r.flgPortion ?? '-'}</TableCell>
+                          <TableCell>{r.khandAppearing ?? '-'}</TableCell>
+                          <TableCell>{[r.marks1, r.marks2, r.marks3, r.marks4].map((m) => m ?? '-').join('/')}</TableCell>
+                          <TableCell>{[r.marks5, r.marks6, r.marks7, r.marks8].map((m) => m ?? '-').join('/')}</TableCell>
+                          <TableCell>{r.oralMarks ?? '-'}</TableCell>
+                          <TableCell>{r.khand1TotMarks ?? '-'}</TableCell>
+                          <TableCell>{r.khand2TotMarks ?? '-'}</TableCell>
+                          <TableCell>{r.totMarks ?? '-'}</TableCell>
+                          <TableCell>{r.grade ?? '-'}</TableCell>
+                          <TableCell>{r.result ?? '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : null}
+
+                {certificates ? (
+                  <Table size="small" className="report-print-table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Roll</TableCell>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Grade</TableCell>
+                        <TableCell>Result</TableCell>
+                        <TableCell>Rank</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {certificates.rows.map((r, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{r.rollNo ?? '-'}</TableCell>
+                          <TableCell className="marathi-cell">{r.name ?? '-'}</TableCell>
+                          <TableCell>{r.grade ?? '-'}</TableCell>
+                          <TableCell>{r.result ?? '-'}</TableCell>
+                          <TableCell>{r.specialRank ?? '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : null}
+
+                {register ? (
+                  <Table size="small" className="report-print-table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Centre</TableCell>
+                        <TableCell>Region</TableCell>
+                        <TableCell>Count</TableCell>
+                        <TableCell>Pass</TableCell>
+                        <TableCell>Fail</TableCell>
+                        <TableCell>Absent</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {register.rows.map((r, i) => (
+                        <TableRow key={i}>
+                          <TableCell className="marathi-cell">
+                            {r.examCentre}{r.centreName ? ` · ${r.centreName}` : ''}
+                          </TableCell>
+                          <TableCell>{r.regionNo ?? '-'}</TableCell>
+                          <TableCell>{r.candidateCount}</TableCell>
+                          <TableCell>{r.passCount}</TableCell>
+                          <TableCell>{r.failCount}</TableCell>
+                          <TableCell>{r.absentCount}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : null}
+
+                {ranks ? (
+                  <Table size="small" className="report-print-table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Rank</TableCell>
+                        <TableCell>Roll</TableCell>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Tot</TableCell>
+                        <TableCell>Result</TableCell>
+                        <TableCell>Centre</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {ranks.rows.map((r, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{r.specialRank ?? '-'}</TableCell>
+                          <TableCell>{r.rollNo ?? '-'}</TableCell>
+                          <TableCell className="marathi-cell">{r.name ?? '-'}</TableCell>
+                          <TableCell>{r.totMarks ?? '-'}</TableCell>
+                          <TableCell>{r.result ?? '-'}</TableCell>
+                          <TableCell>{r.formCentre ?? '-'} / {r.examCentre ?? '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : null}
+
+                {passing ? (
+                  <Table size="small" className="report-print-table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Roll</TableCell>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Result</TableCell>
+                        <TableCell>Grade</TableCell>
+                        <TableCell>Tot</TableCell>
+                        <TableCell>Khand</TableCell>
+                        <TableCell>Centre</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {passing.rows.map((r, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{r.rollNo ?? '-'}</TableCell>
+                          <TableCell className="marathi-cell">{r.name ?? '-'}</TableCell>
+                          <TableCell>{r.result ?? '-'}</TableCell>
+                          <TableCell>{r.grade ?? '-'}</TableCell>
+                          <TableCell>{r.totMarks ?? '-'}</TableCell>
+                          <TableCell>{r.khandAppearing ?? '-'}</TableCell>
+                          <TableCell>{r.formCentre ?? '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : null}
+
+                {lostByTwo ? (
+                  <Table size="small" className="report-print-table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Roll</TableCell>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Tot</TableCell>
+                        <TableCell>K1</TableCell>
+                        <TableCell>K2</TableCell>
+                        <TableCell>Reason</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {lostByTwo.rows.map((r, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{r.rollNo ?? '-'}</TableCell>
+                          <TableCell className="marathi-cell">{r.name ?? '-'}</TableCell>
+                          <TableCell>{r.totMarks ?? '-'}</TableCell>
+                          <TableCell>{r.khand1TotMarks ?? '-'}</TableCell>
+                          <TableCell>{r.khand2TotMarks ?? '-'}</TableCell>
+                          <TableCell>{r.nearMissReason ?? '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : null}
+              </ReportPrintChrome>
             </CardContent>
           </Card>
-        ) : null}
+        ) : (
+          <Alert severity="info" className="no-print">Choose filters and click Generate.</Alert>
+        )}
       </Stack>
     </PageFrame>
   )
