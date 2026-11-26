@@ -10,11 +10,13 @@ namespace mrsexam_backend.Controllers
     {
         private readonly SambhashanResultService _results;
         private readonly SessionService _sessions;
+        private readonly PermissionService _permissions;
 
-        public SambhashanResultsController(SambhashanResultService results, SessionService sessions)
+        public SambhashanResultsController(SambhashanResultService results, SessionService sessions, PermissionService permissions)
         {
             _results = results;
             _sessions = sessions;
+        _permissions = permissions;
         }
 
         [HttpGet]
@@ -61,6 +63,7 @@ namespace mrsexam_backend.Controllers
         {
             try
             {
+                await _permissions.EnsureSuperAsync(cancellationToken);
                 await _sessions.ResetSambhashanLockAsync(cancellationToken);
                 return Ok(new { resgenSambhashan = "N" });
             }

@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+
+import { clearAuthClaims, loadAuthClaims } from '../auth/permissions'
 import { Alert, Card, CardContent, Typography } from '@mui/material'
 
 import { sambhashanApi, type CurrentSession } from '../api/sambhashan/client'
@@ -18,9 +20,6 @@ import { SambhashanRollNumbersPage } from './sambhashan/SambhashanRollNumbersPag
 import { SambhashanReportsPage, isReportNavId } from './sambhashan/SambhashanReportsPage'
 import { SelectSessionPage } from './sambhashan/SelectSessionPage'
 
-const ACCESS_TOKEN_KEY = 'accessToken'
-const CURRENT_USER_ID_KEY = 'currentUserId'
-const IS_SUPERVISOR_KEY = 'isSupervisor'
 
 const masterPageByNav: Partial<Record<NavItemId, MasterPageKey>> = {
   'master-region': 'Region Master',
@@ -29,6 +28,7 @@ const masterPageByNav: Partial<Record<NavItemId, MasterPageKey>> = {
   'master-exam': 'Exam Master',
   'master-paper': 'Paper Master',
   'master-session': 'Session Master',
+  'master-user': 'User Master',
 }
 
 type Props = {
@@ -40,8 +40,9 @@ export const SambhashanWorkspace = ({ onSignOut, onSwitchExam }: Props) => {
   const [activeItemId, setActiveItemId] = useState<NavItemId>(defaultNavItemId)
   const [defaultSession, setDefaultSession] = useState<Session | null>(null)
   const [currentSessionMeta, setCurrentSessionMeta] = useState<CurrentSession | null>(null)
-  const userId = localStorage.getItem(CURRENT_USER_ID_KEY)?.trim() ?? ''
-  const isSupervisor = localStorage.getItem(IS_SUPERVISOR_KEY) === 'Y'
+  const claims = loadAuthClaims()
+  const userId = claims.userId
+  const isSupervisor = claims.isSupervisor || claims.role === 'SUPER'
   const isLocked = currentSessionMeta?.isLockedSambhashan
     ?? (defaultSession?.resgenSambhashan?.trim().toUpperCase() === 'Y')
 
@@ -82,9 +83,7 @@ export const SambhashanWorkspace = ({ onSignOut, onSwitchExam }: Props) => {
   }, [])
 
   const handleSignOut = () => {
-    localStorage.removeItem(ACCESS_TOKEN_KEY)
-    localStorage.removeItem(CURRENT_USER_ID_KEY)
-    localStorage.removeItem(IS_SUPERVISOR_KEY)
+    clearAuthClaims()
     onSignOut()
   }
 

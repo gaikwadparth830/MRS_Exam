@@ -13,6 +13,7 @@ export type NavItemId =
   | 'master-exam'
   | 'master-paper'
   | 'master-session'
+  | 'master-user'
   | 'batch-insert'
   | 'reset-lock'
   | 'correct-marks'
@@ -69,6 +70,7 @@ export const balbodhiniNav: NavGroup[] = [
       { id: 'master-exam', label: 'Exam Master' },
       { id: 'master-paper', label: 'Paper Master' },
       { id: 'master-session', label: 'Session Master' },
+      { id: 'master-user', label: 'User Master', description: 'Users, roles, exams, centres', supervisorOnly: true },
       { id: 'select-session', label: 'Select Session' },
     ],
   },
@@ -123,6 +125,7 @@ export const prathamikNav: NavGroup[] = [
       { id: 'master-exam', label: 'Exam Master' },
       { id: 'master-paper', label: 'Paper Master' },
       { id: 'master-session', label: 'Session Master' },
+      { id: 'master-user', label: 'User Master', description: 'Users, roles, exams, centres', supervisorOnly: true },
       { id: 'select-session', label: 'Select Session' },
     ],
   },
@@ -177,6 +180,7 @@ export const sambhashanNav: NavGroup[] = [
       { id: 'master-exam', label: 'Exam Master' },
       { id: 'master-paper', label: 'Paper Master' },
       { id: 'master-session', label: 'Session Master' },
+      { id: 'master-user', label: 'User Master', description: 'Users, roles, exams, centres', supervisorOnly: true },
       { id: 'select-session', label: 'Select Session' },
     ],
   },
@@ -231,6 +235,7 @@ export const subodhNav: NavGroup[] = [
       { id: 'master-exam', label: 'Exam Master' },
       { id: 'master-paper', label: 'Paper Master' },
       { id: 'master-session', label: 'Session Master' },
+      { id: 'master-user', label: 'User Master', description: 'Users, roles, exams, centres', supervisorOnly: true },
       { id: 'select-session', label: 'Select Session' },
     ],
   },
@@ -285,6 +290,7 @@ export const prabodhNav: NavGroup[] = [
       { id: 'master-exam', label: 'Exam Master' },
       { id: 'master-paper', label: 'Paper Master' },
       { id: 'master-session', label: 'Session Master' },
+      { id: 'master-user', label: 'User Master', description: 'Users, roles, exams, centres', supervisorOnly: true },
       { id: 'select-session', label: 'Select Session' },
     ],
   },
@@ -337,6 +343,7 @@ export const praveenNav: NavGroup[] = [
       { id: 'master-exam', label: 'Exam Master' },
       { id: 'master-paper', label: 'Paper Master' },
       { id: 'master-session', label: 'Session Master' },
+      { id: 'master-user', label: 'User Master', description: 'Users, roles, exams, centres', supervisorOnly: true },
       { id: 'select-session', label: 'Select Session' },
     ],
   },
@@ -390,6 +397,7 @@ export const panditNav: NavGroup[] = [
       { id: 'master-exam', label: 'Exam Master' },
       { id: 'master-paper', label: 'Paper Master' },
       { id: 'master-session', label: 'Session Master' },
+      { id: 'master-user', label: 'User Master', description: 'Users, roles, exams, centres', supervisorOnly: true },
       { id: 'select-session', label: 'Select Session' },
     ],
   },
@@ -447,6 +455,7 @@ export const praveshikaNav: NavGroup[] = [
       { id: 'master-exam', label: 'Exam Master' },
       { id: 'master-paper', label: 'Paper Master' },
       { id: 'master-session', label: 'Session Master' },
+      { id: 'master-user', label: 'User Master', description: 'Users, roles, exams, centres', supervisorOnly: true },
       { id: 'select-session', label: 'Select Session' },
     ],
   },

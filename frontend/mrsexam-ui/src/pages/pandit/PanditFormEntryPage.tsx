@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Accordion,
   AccordionDetails,
@@ -23,6 +23,8 @@ import {
 } from '../../api/pandit/client'
 import { CentersService, type Center } from '../../api/generatedClient'
 import { CentreSearchField } from '../../components/CentreSearchField'
+import { CURRENT_USER_ID_KEY } from '../../auth/permissions'
+import { useCentreScope } from '../../auth/useCentreScope'
 import { MarathiNameField, MarathiPhoneticToggle } from '../../components/MarathiNameField'
 import { CandidateNameSearchDialog } from '../../components/CandidateNameSearchDialog'
 import { PageFrame } from '../../layout/PageFrame'
@@ -37,7 +39,6 @@ type Props = {
   isLocked?: boolean
 }
 
-const CURRENT_USER_ID_KEY = 'currentUserId'
 const PHONETIC_ASSIST_KEY = 'PanditPhoneticNameAssist'
 
 const emptyForm = (sessionNo?: number): Candidate => ({
@@ -174,6 +175,7 @@ export const PanditFormEntryPage = ({ defaultSessionNo, isLocked = false }: Prop
   const [originalRoll, setOriginalRoll] = useState<number | null>(null)
   const [mode, setMode] = useState<'view' | 'new' | 'edit'>('view')
   const [centres, setCentres] = useState<Center[]>([])
+  // filtered below
   const [formCentreInfo, setFormCentreInfo] = useState<CentreResolve | null>(null)
   const [examCentreInfo, setExamCentreInfo] = useState<CentreResolve | null>(null)
   const [centreCount, setCentreCount] = useState(0)
@@ -186,6 +188,9 @@ export const PanditFormEntryPage = ({ defaultSessionNo, isLocked = false }: Prop
     () => localStorage.getItem(PHONETIC_ASSIST_KEY) !== 'N',
   )
   const currentUserId = localStorage.getItem(CURRENT_USER_ID_KEY)?.trim() ?? ''
+  const { centreLimited, defaultCentre, filterOptions } = useCentreScope()
+  const centreOptions = useMemo(() => filterOptions(centres), [centres, filterOptions])
+  const centreFieldLocked = centreLimited && centreOptions.length <= 1
   const activeSessionNo = defaultSessionNo
   const readOnly = isLocked || mode === 'view'
 
@@ -448,6 +453,7 @@ export const PanditFormEntryPage = ({ defaultSessionNo, isLocked = false }: Prop
           <Chip label={`Session ${activeSessionNo ?? '-'}`} color="primary" variant="outlined" />
           <Chip label={`Centre forms ${centreCount}`} variant="outlined" />
           <Chip label={`Concession ${form.concessionFlag ?? 'N'}`} variant="outlined" />
+          {centreLimited ? <Chip label="Centre-limited user" color="info" /> : null}
           {isLocked ? <Chip label="Result lock ON" color="warning" /> : null}
         </Stack>
       )}
@@ -527,16 +533,18 @@ export const PanditFormEntryPage = ({ defaultSessionNo, isLocked = false }: Prop
               <CentreSearchField
                 label="Form Centre"
                 value={form.formCentre ?? ''}
-                centres={centres}
-                disabled={readOnly}
-                helperText={formCentreInfo?.display ?? (formCentreInfo?.isClosed ? 'Closed' : undefined)}
+                centres={centreOptions}
+                disabled={readOnly || centreFieldLocked}
+                allowEmpty={!centreLimited}
+                helperText={centreLimited ? 'Limited to your assigned centre(s).' : formCentreInfo?.display ?? (formCentreInfo?.isClosed ? 'Closed' : undefined)}
                 onChange={(v) => void onFormCentreChange(v)}
               />
               <CentreSearchField
                 label="Exam Centre"
                 value={form.examCentre ?? ''}
-                centres={centres}
-                disabled={readOnly}
+                centres={centreOptions}
+                disabled={readOnly || centreFieldLocked}
+                allowEmpty={!centreLimited}
                 helperText={examCentreInfo?.display}
                 onChange={(v) => void onExamCentreChange(v)}
               />
@@ -604,7 +612,12 @@ export const PanditFormEntryPage = ({ defaultSessionNo, isLocked = false }: Prop
               <Button variant="contained" disabled={isLocked} onClick={() => {
                 setMode('new')
                 setOriginalRoll(null)
-                setForm(emptyForm(activeSessionNo))
+                const preferred = centreLimited ? defaultCentre : ''
+                setForm({
+                  ...emptyForm(activeSessionNo),
+                  formCentre: preferred,
+                  examCentre: preferred,
+                })
               }}>New</Button>
               <Button variant="outlined" disabled={isLocked || !form.rollNo} onClick={() => {
                 setMode('edit')

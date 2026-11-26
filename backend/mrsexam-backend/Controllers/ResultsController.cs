@@ -10,11 +10,13 @@ namespace mrsexam_backend.Controllers
     {
         private readonly ResultService _results;
         private readonly SessionService _sessions;
+        private readonly PermissionService _permissions;
 
-        public ResultsController(ResultService results, SessionService sessions)
+        public ResultsController(ResultService results, SessionService sessions, PermissionService permissions)
         {
             _results = results;
             _sessions = sessions;
+            _permissions = permissions;
         }
 
         [HttpGet]
@@ -61,6 +63,7 @@ namespace mrsexam_backend.Controllers
         {
             try
             {
+                await _permissions.EnsureSuperAsync(cancellationToken);
                 await _sessions.ResetBalbodhiniLockAsync(cancellationToken);
                 return Ok(new { resgenBalbodhini = "N" });
             }
@@ -75,6 +78,7 @@ namespace mrsexam_backend.Controllers
         {
             try
             {
+                await _permissions.EnsureSuperAsync(cancellationToken);
                 await _sessions.ResetPrathamikLockAsync(cancellationToken);
                 return Ok(new { resgenPrathamik = "N" });
             }

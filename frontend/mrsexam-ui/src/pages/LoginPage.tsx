@@ -11,6 +11,7 @@ import {
 } from '@mui/material'
 
 import monoLogo from '../assets/MONO.png'
+import { ACCESS_TOKEN_KEY, saveAuthClaims, type AuthClaims, type FeatureCode, type ExamModuleCode } from '../auth/permissions'
 import { usePost } from '../hooks'
 
 type LoginRequest = {
@@ -25,16 +26,16 @@ type LoginResponse = {
   userKey?: string
   userId?: string
   isSupervisor?: boolean
+  role?: string
+  exams?: string[]
+  centres?: string[] | null
+  features?: string[]
   message?: string
 }
 
 type LoginPageProps = {
   onLoginSuccess: () => void
 }
-
-const ACCESS_TOKEN_KEY = 'accessToken'
-const CURRENT_USER_ID_KEY = 'currentUserId'
-const IS_SUPERVISOR_KEY = 'isSupervisor'
 
 const getTokenFromResponse = (payload: LoginResponse | null): string | null => {
   if (!payload) return null
@@ -76,8 +77,16 @@ export const LoginPage = ({ onLoginSuccess }: LoginPageProps) => {
 
     const token = getTokenFromResponse(response)
     if (token) localStorage.setItem(ACCESS_TOKEN_KEY, token)
-    localStorage.setItem(CURRENT_USER_ID_KEY, (response.userId ?? form.userId).trim().toUpperCase())
-    localStorage.setItem(IS_SUPERVISOR_KEY, response.isSupervisor ? 'Y' : 'N')
+
+    const claims: Partial<AuthClaims> = {
+      userId: (response.userId ?? form.userId).trim().toUpperCase(),
+      role: (response.role as AuthClaims['role']) ?? (response.isSupervisor ? 'SUPER' : 'OPERATOR'),
+      isSupervisor: Boolean(response.isSupervisor),
+      exams: (response.exams ?? []) as ExamModuleCode[],
+      centres: response.centres === undefined ? null : response.centres,
+      features: (response.features ?? []) as FeatureCode[],
+    }
+    saveAuthClaims(claims)
     onLoginSuccess()
   }
 

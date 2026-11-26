@@ -10302,7 +10302,7 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\hemal\\.nuget\\packages\\": {},
+    "C:\\Users\\hemal\\AppData\\Local\\Temp\\cursor-sandbox-cache\\1173a7d533786f4572864f61414074f6\\nuget": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
@@ -10311,7 +10311,7 @@
       "projectUniqueName": "Z:\\mrsexam\\backend\\mrsexam-backend\\mrsexam-backend.csproj",
       "projectName": "mrsexam-backend",
       "projectPath": "Z:\\mrsexam\\backend\\mrsexam-backend\\mrsexam-backend.csproj",
-      "packagesPath": "C:\\Users\\hemal\\.nuget\\packages\\",
+      "packagesPath": "C:\\Users\\hemal\\AppData\\Local\\Temp\\cursor-sandbox-cache\\1173a7d533786f4572864f61414074f6\\nuget",
       "outputPath": "Z:\\mrsexam\\backend\\mrsexam-backend\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [

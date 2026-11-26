@@ -13,6 +13,8 @@ namespace mrsexam_backend
         public DbSet<Center> Centres { get; set; } = null!;
         public DbSet<Region> Regions { get; set; } = null!;
         public DbSet<User> Users { get; set; } = null!;
+        public DbSet<UserExam> UserExams { get; set; } = null!;
+        public DbSet<UserCentre> UserCentres { get; set; } = null!;
         public DbSet<Session> Sessions { get; set; } = null!;
         public DbSet<Parameter> Parameters { get; set; } = null!;
         public DbSet<Exam> Exams { get; set; } = null!;
@@ -71,7 +73,24 @@ namespace mrsexam_backend
                 entity.Property(e => e.UserId).HasMaxLength(10).IsRequired();
                 entity.Property(e => e.Password).HasMaxLength(10);
                 entity.Property(e => e.UserKey).HasMaxLength(5);
+                entity.Property(e => e.Role).HasMaxLength(20);
                 entity.HasIndex(e => e.UserKey).HasDatabaseName("USERS$KEY");
+            });
+
+            modelBuilder.Entity<UserExam>(entity =>
+            {
+                entity.ToTable("USER_EXAM");
+                entity.HasKey(e => new { e.UserId, e.ExamCode });
+                entity.Property(e => e.UserId).HasMaxLength(10).IsRequired();
+                entity.Property(e => e.ExamCode).HasMaxLength(20).IsRequired();
+            });
+
+            modelBuilder.Entity<UserCentre>(entity =>
+            {
+                entity.ToTable("USER_CENTRE");
+                entity.HasKey(e => new { e.UserId, e.CentreNo });
+                entity.Property(e => e.UserId).HasMaxLength(10).IsRequired();
+                entity.Property(e => e.CentreNo).HasMaxLength(20).IsRequired();
             });
 
             modelBuilder.Entity<Session>(entity =>

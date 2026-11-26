@@ -5,25 +5,28 @@ import {
   type InternalAxiosRequestConfig,
 } from 'axios'
 
-const ACCESS_TOKEN_KEY = 'accessToken'
-const CURRENT_USER_ID_KEY = 'currentUserId'
+import { ACCESS_TOKEN_KEY, CURRENT_USER_ID_KEY, clearAuthClaims } from '../auth/permissions'
+
 const AUTH_HEADER = 'Authorization'
+const USER_ID_HEADER = 'X-User-Id'
 const API_LOGGING_ENABLED =
   import.meta.env.DEV || import.meta.env.VITE_API_LOGGING === 'true'
 
 const getToken = (): string | null => localStorage.getItem(ACCESS_TOKEN_KEY)
+const getUserId = (): string | null => localStorage.getItem(CURRENT_USER_ID_KEY)
 
-const setAuthHeader = (
+const setHeader = (
   config: InternalAxiosRequestConfig,
-  token: string,
+  name: string,
+  value: string,
 ): void => {
   if (config.headers instanceof AxiosHeaders) {
-    config.headers.set(AUTH_HEADER, `Bearer ${token}`)
+    config.headers.set(name, value)
     return
   }
 
   config.headers = AxiosHeaders.from(config.headers)
-  config.headers.set(AUTH_HEADER, `Bearer ${token}`)
+  config.headers.set(name, value)
 }
 
 const logRequest = (config: InternalAxiosRequestConfig): void => {
@@ -84,7 +87,12 @@ export const registerInterceptors = (client: AxiosInstance): void => {
 
     const token = getToken()
     if (token) {
-      setAuthHeader(config, token)
+      setHeader(config, AUTH_HEADER, `Bearer ${token}`)
+    }
+
+    const userId = getUserId()?.trim()
+    if (userId) {
+      setHeader(config, USER_ID_HEADER, userId)
     }
 
     logRequest(config)
@@ -101,8 +109,7 @@ export const registerInterceptors = (client: AxiosInstance): void => {
       logError(error)
 
       if (error.response?.status === 401) {
-        localStorage.removeItem(ACCESS_TOKEN_KEY)
-        localStorage.removeItem(CURRENT_USER_ID_KEY)
+        clearAuthClaims()
       }
 
       return Promise.reject(normalizeError(error))

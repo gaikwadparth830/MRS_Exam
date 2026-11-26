@@ -9,12 +9,18 @@ namespace mrsexam_backend.Services
         private readonly MrsexamContext _db;
         private readonly SessionService _sessions;
         private readonly CentreResolver _centres;
+        private readonly PermissionService _permissions;
 
-        public CandidateService(MrsexamContext db, SessionService sessions, CentreResolver centres)
+        public CandidateService(
+            MrsexamContext db,
+            SessionService sessions,
+            CentreResolver centres,
+            PermissionService permissions)
         {
             _db = db;
             _sessions = sessions;
             _centres = centres;
+            _permissions = permissions;
         }
 
         public async Task<IReadOnlyList<FormBalbodhini>> ListAsync(string? formCentre, string? direction, CancellationToken cancellationToken)
@@ -23,8 +29,7 @@ namespace mrsexam_backend.Services
             var query = _db.FormBalbodhinis.AsNoTracking()
                 .Where(f => f.SessionNo == session.SessionNo);
 
-            if (!string.IsNullOrWhiteSpace(formCentre))
-                query = query.Where(f => f.FormCentre == formCentre.Trim());
+            query = await ApplyCentreFilterAsync(query, formCentre, cancellationToken);
 
             query = string.Equals(direction, "desc", StringComparison.OrdinalIgnoreCase)
                 ? query.OrderByDescending(f => f.FormCentre).ThenByDescending(f => f.SrNo)
@@ -36,12 +41,20 @@ namespace mrsexam_backend.Services
         public async Task<FormBalbodhini?> GetAsync(int srno, CancellationToken cancellationToken)
         {
             var session = await RequireDefaultSessionAsync(cancellationToken);
-            return await _db.FormBalbodhinis.AsNoTracking()
+            var entity = await _db.FormBalbodhinis.AsNoTracking()
                 .FirstOrDefaultAsync(f => f.SrNo == srno && f.SessionNo == session.SessionNo, cancellationToken);
+            if (entity is null) return null;
+
+            var filter = await _permissions.GetCentreFilterAsync(_permissions.GetCurrentUserId(), cancellationToken);
+            if (filter is not null && !filter.Contains(entity.FormCentre ?? string.Empty))
+                return null;
+
+            return entity;
         }
 
         public async Task<int> CountForCentreAsync(string formCentre, CancellationToken cancellationToken)
         {
+            await _permissions.EnsureFormCentreAllowedAsync(formCentre, cancellationToken);
             var session = await RequireDefaultSessionAsync(cancellationToken);
             return await _db.FormBalbodhinis.CountAsync(
                 f => f.SessionNo == session.SessionNo && f.FormCentre == formCentre.Trim(),
@@ -52,8 +65,12 @@ namespace mrsexam_backend.Services
         {
             var session = await RequireDefaultSessionAsync(cancellationToken);
             var prefix = (name ?? string.Empty).Trim();
-            return await _db.FormBalbodhinis.AsNoTracking()
-                .Where(f => f.SessionNo == session.SessionNo && f.Name != null && f.Name.Contains(prefix))
+            var query = _db.FormBalbodhinis.AsNoTracking()
+                .Where(f => f.SessionNo == session.SessionNo && f.Name != null && f.Name.Contains(prefix));
+
+            query = await ApplyCentreFilterAsync(query, null, cancellationToken);
+
+            return await query
                 .OrderBy(f => f.FormCentre).ThenBy(f => f.SrNo)
                 .Take(150)
                 .ToListAsync(cancellationToken);
@@ -62,15 +79,23 @@ namespace mrsexam_backend.Services
         public async Task<FormBalbodhini?> SearchByRollAsync(int regionNo, short rollNo, CancellationToken cancellationToken)
         {
             var session = await RequireDefaultSessionAsync(cancellationToken);
-            return await _db.FormBalbodhinis.AsNoTracking()
+            var entity = await _db.FormBalbodhinis.AsNoTracking()
                 .FirstOrDefaultAsync(
                     f => f.SessionNo == session.SessionNo && f.RegionNo == regionNo && f.RollNo == rollNo,
                     cancellationToken);
+            if (entity is null) return null;
+
+            var filter = await _permissions.GetCentreFilterAsync(_permissions.GetCurrentUserId(), cancellationToken);
+            if (filter is not null && !filter.Contains(entity.FormCentre ?? string.Empty))
+                return null;
+
+            return entity;
         }
 
         public async Task<FormBalbodhini> CreateAsync(CandidateWriteRequest request, CancellationToken cancellationToken)
         {
             await _sessions.EnsureWritableAsync(cancellationToken);
+            await _permissions.EnsureFormCentreAllowedAsync(request.FormCentre, cancellationToken);
             var session = await RequireDefaultSessionAsync(cancellationToken);
             var validated = await ValidateWriteAsync(request, requireOpenFormCentre: true, cancellationToken);
 
@@ -101,6 +126,9 @@ namespace mrsexam_backend.Services
                 .FirstOrDefaultAsync(f => f.SrNo == srno && f.SessionNo == session.SessionNo, cancellationToken)
                 ?? throw new KeyNotFoundException("Candidate not found.");
 
+            await _permissions.EnsureFormCentreAllowedAsync(entity.FormCentre, cancellationToken);
+            await _permissions.EnsureFormCentreAllowedAsync(request.FormCentre, cancellationToken);
+
             var validated = await ValidateWriteAsync(request, requireOpenFormCentre: true, cancellationToken);
             var existingRoll = entity.RollNo;
 
@@ -125,6 +153,8 @@ namespace mrsexam_backend.Services
                 .FirstOrDefaultAsync(f => f.SrNo == srno && f.SessionNo == session.SessionNo, cancellationToken)
                 ?? throw new KeyNotFoundException("Candidate not found.");
 
+            await _permissions.EnsureFormCentreAllowedAsync(entity.FormCentre, cancellationToken);
+
             _db.FormBalbodhinis.Remove(entity);
             await _db.SaveChangesAsync(cancellationToken);
         }
@@ -136,6 +166,9 @@ namespace mrsexam_backend.Services
             var previous = await _db.FormBalbodhinis.AsNoTracking()
                 .FirstOrDefaultAsync(f => f.SrNo == request.PreviousSrNo && f.SessionNo == session.SessionNo, cancellationToken)
                 ?? throw new KeyNotFoundException("Previous candidate not found.");
+
+            await _permissions.EnsureFormCentreAllowedAsync(previous.FormCentre, cancellationToken);
+            await _permissions.EnsureFormCentreAllowedAsync(request.Candidate.FormCentre, cancellationToken);
 
             var next = await _db.FormBalbodhinis.AsNoTracking()
                 .Where(f => f.SessionNo == session.SessionNo
@@ -173,6 +206,7 @@ namespace mrsexam_backend.Services
 
         public async Task<object> BatchInsertAsync(BatchInsertDto request, CancellationToken cancellationToken)
         {
+            await _permissions.EnsureBatchInsertAllowedAsync(cancellationToken);
             await _sessions.EnsureWritableAsync(cancellationToken);
             var session = await RequireDefaultSessionAsync(cancellationToken);
 
@@ -228,6 +262,30 @@ namespace mrsexam_backend.Services
             await _db.FormBalbodhinis.AddRangeAsync(entities, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
             return new { inserted = entities.Count };
+        }
+
+        private async Task<IQueryable<FormBalbodhini>> ApplyCentreFilterAsync(
+            IQueryable<FormBalbodhini> query,
+            string? formCentre,
+            CancellationToken cancellationToken)
+        {
+            var filter = await _permissions.GetCentreFilterAsync(_permissions.GetCurrentUserId(), cancellationToken);
+            if (filter is not null)
+            {
+                if (filter.Count == 0)
+                    return query.Where(_ => false);
+
+                var allowed = filter.ToList();
+                query = query.Where(f => f.FormCentre != null && allowed.Contains(f.FormCentre));
+            }
+
+            if (!string.IsNullOrWhiteSpace(formCentre))
+            {
+                await _permissions.EnsureFormCentreAllowedAsync(formCentre, cancellationToken);
+                query = query.Where(f => f.FormCentre == formCentre.Trim());
+            }
+
+            return query;
         }
 
         private async Task<(string Name, string Gender, string FormCentre, string ExamCentre, int? RegionNo)> ValidateWriteAsync(

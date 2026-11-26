@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using mrsexam_backend;
+using mrsexam_backend.Middleware;
 using mrsexam_backend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,7 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.Configure<BalbodhiniOptions>(builder.Configuration.GetSection(BalbodhiniOptions.SectionName));
 builder.Services.Configure<PrathamikOptions>(builder.Configuration.GetSection(PrathamikOptions.SectionName));
@@ -19,6 +21,8 @@ builder.Services.Configure<PrabodhOptions>(builder.Configuration.GetSection(Prab
 builder.Services.Configure<PraveenOptions>(builder.Configuration.GetSection(PraveenOptions.SectionName));
 builder.Services.Configure<PanditOptions>(builder.Configuration.GetSection(PanditOptions.SectionName));
 builder.Services.Configure<SambhashanOptions>(builder.Configuration.GetSection(SambhashanOptions.SectionName));
+builder.Services.AddScoped<PermissionService>();
+builder.Services.AddScoped<UserAdminService>();
 builder.Services.AddScoped<SessionService>();
 builder.Services.AddScoped<CentreResolver>();
 builder.Services.AddScoped<CandidateService>();
@@ -92,6 +96,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("AllowFrontend");
+
+app.UseMiddleware<CurrentUserMiddleware>();
 
 app.UseAuthorization();
 

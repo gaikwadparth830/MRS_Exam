@@ -42,6 +42,7 @@ import {
   marathiNameFieldSx,
   transliterateEnglishToDevanagari as offlineTransliterate,
 } from '../../utils/marathiTransliterate'
+import { UserMasterPage } from './UserMasterPage'
 
 type FieldType = 'text' | 'number'
 
@@ -523,7 +524,8 @@ const masterCrudConfig = {
   'Session Master': sessionCrud,
 } as const
 
-export type MasterPageKey = keyof typeof masterCrudConfig
+export type MasterPageKey = keyof typeof masterCrudConfig | 'User Master'
+type MasterCrudPageKey = keyof typeof masterCrudConfig
 
 type MasterMenuPageProps = {
   pageKey: MasterPageKey
@@ -559,6 +561,14 @@ const isNonEmptyRow = (row: object, fields: Array<{ key: string }>): boolean => 
 }
 
 export const MasterMenuPage = ({ pageKey }: MasterMenuPageProps) => {
+  if (pageKey === 'User Master') {
+    return <UserMasterPage />
+  }
+
+  return <MasterCrudPage pageKey={pageKey} />
+}
+
+const MasterCrudPage = ({ pageKey }: { pageKey: MasterCrudPageKey }) => {
   const config = useMemo(() => masterCrudConfig[pageKey], [pageKey])
   const transliterationRequestId = useRef(0)
   const listRequestId = useRef(0)

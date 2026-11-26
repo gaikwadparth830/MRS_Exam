@@ -10,11 +10,13 @@ namespace mrsexam_backend.Controllers
     {
         private readonly SubodhResultService _results;
         private readonly SessionService _sessions;
+        private readonly PermissionService _permissions;
 
-        public SubodhResultsController(SubodhResultService results, SessionService sessions)
+        public SubodhResultsController(SubodhResultService results, SessionService sessions, PermissionService permissions)
         {
             _results = results;
             _sessions = sessions;
+        _permissions = permissions;
         }
 
         [HttpGet]
@@ -61,6 +63,7 @@ namespace mrsexam_backend.Controllers
         {
             try
             {
+                await _permissions.EnsureSuperAsync(cancellationToken);
                 await _sessions.ResetSubodhLockAsync(cancellationToken);
                 return Ok(new { resgenSubodh = "N" });
             }

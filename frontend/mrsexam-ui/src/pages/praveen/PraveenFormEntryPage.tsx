@@ -18,6 +18,8 @@ import {
 } from '../../api/praveen/client'
 import { CentersService, type Center } from '../../api/generatedClient'
 import { CentreSearchField } from '../../components/CentreSearchField'
+import { CURRENT_USER_ID_KEY } from '../../auth/permissions'
+import { useCentreScope } from '../../auth/useCentreScope'
 import { MarathiNameField, MarathiPhoneticToggle } from '../../components/MarathiNameField'
 import { CandidateNameSearchDialog } from '../../components/CandidateNameSearchDialog'
 import { PageFrame } from '../../layout/PageFrame'
@@ -43,7 +45,6 @@ const emptyForm = (sessionNo?: number): Candidate => ({
   userId: '',
 })
 
-const CURRENT_USER_ID_KEY = 'currentUserId'
 const PHONETIC_ASSIST_KEY = 'PraveenPhoneticNameAssist'
 
 const toCenterList = (payload: unknown): Center[] => {
@@ -114,6 +115,7 @@ export const PraveenFormEntryPage = ({ defaultSessionNo, isLocked = false }: Pro
   })
 
   const currentUserId = localStorage.getItem(CURRENT_USER_ID_KEY)?.trim() ?? ''
+  const { centreLimited, defaultCentre, filterOptions } = useCentreScope()
   const readOnly = isLocked || mode === 'view'
   const activeSessionNo = typeof defaultSessionNo === 'number' ? defaultSessionNo : sessionNo
 
@@ -216,9 +218,10 @@ export const PraveenFormEntryPage = ({ defaultSessionNo, isLocked = false }: Pro
   }, [form.formCentre, rows])
 
   const centreOptions = useMemo(
-    () => centres.slice().sort((a, b) => a.centreNo.localeCompare(b.centreNo)),
-    [centres],
+    () => filterOptions(centres.slice().sort((a, b) => (a.centreNo ?? '').localeCompare(b.centreNo ?? ''))),
+    [centres, filterOptions],
   )
+  const centreFieldLocked = centreLimited && centreOptions.length <= 1
 
   const findCentre = (centreNo: string): Center | undefined => {
     const wanted = normalizeCentreCode(centreNo)
@@ -363,8 +366,8 @@ export const PraveenFormEntryPage = ({ defaultSessionNo, isLocked = false }: Pro
     setOriginalKey(null)
     setForm((current) => ({
       ...emptyForm(activeSessionNo),
-      formCentre: current.formCentre ?? '',
-      examCentre: current.formCentre ?? '',
+      formCentre: centreLimited ? (defaultCentre || current.formCentre || '') : (current.formCentre ?? ''),
+        examCentre: centreLimited ? (defaultCentre || current.formCentre || '') : (current.formCentre ?? ''),
       regionNo: current.regionNo ?? 0,
     }))
     setError(null)
@@ -474,6 +477,7 @@ export const PraveenFormEntryPage = ({ defaultSessionNo, isLocked = false }: Pro
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
           <Chip label={`Session ${activeSessionNo ?? '-'}`} color="primary" variant="outlined" />
           <Chip label={`Centre forms ${centreCount}`} variant="outlined" />
+          {centreLimited ? <Chip label="Centre-limited user" color="info" /> : null}
           {isLocked ? <Chip label="Result lock ON" color="warning" /> : null}
         </Stack>
       )}
@@ -532,7 +536,9 @@ export const PraveenFormEntryPage = ({ defaultSessionNo, isLocked = false }: Pro
                 label="Form Centre *"
                 centres={centreOptions}
                 value={selectCentreValue(form.formCentre)}
-                disabled={readOnly}
+                disabled={readOnly || centreFieldLocked}
+                allowEmpty={!centreLimited}
+                helperText={centreLimited ? 'Limited to your assigned centre(s).' : undefined}
                 onChange={(centreNo) => void onFormCentreChange(centreNo)}
               />
             </Box>
@@ -549,7 +555,8 @@ export const PraveenFormEntryPage = ({ defaultSessionNo, isLocked = false }: Pro
                 label="Exam Centre *"
                 centres={centreOptions}
                 value={selectCentreValue(form.examCentre)}
-                disabled={readOnly}
+                disabled={readOnly || centreFieldLocked}
+                allowEmpty={!centreLimited}
                 onChange={(centreNo) => void onExamCentreChange(centreNo)}
               />
             </Box>

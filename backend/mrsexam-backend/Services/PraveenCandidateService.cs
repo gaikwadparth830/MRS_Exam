@@ -13,12 +13,14 @@ namespace mrsexam_backend.Services
         private readonly MrsexamContext _db;
         private readonly SessionService _sessions;
         private readonly CentreResolver _centres;
+        private readonly PermissionService _permissions;
 
-        public PraveenCandidateService(MrsexamContext db, SessionService sessions, CentreResolver centres)
+        public PraveenCandidateService(MrsexamContext db, SessionService sessions, CentreResolver centres, PermissionService permissions)
         {
             _db = db;
             _sessions = sessions;
             _centres = centres;
+            _permissions = permissions;
         }
 
         public async Task<IReadOnlyList<FormPraveen>> ListAsync(string? formCentre, string? direction, CancellationToken cancellationToken)
@@ -27,8 +29,20 @@ namespace mrsexam_backend.Services
             var query = _db.FormPraveens.AsNoTracking()
                 .Where(f => f.SessionNo == session.SessionNo);
 
+            var centreFilter = await _permissions.GetCentreFilterAsync(_permissions.GetCurrentUserId(), cancellationToken);
+            if (centreFilter is not null)
+            {
+                if (centreFilter.Count == 0)
+                    return Array.Empty<FormPraveen>();
+                var allowed = centreFilter.ToList();
+                query = query.Where(f => f.FormCentre != null && allowed.Contains(f.FormCentre));
+            }
+
             if (!string.IsNullOrWhiteSpace(formCentre))
+            {
+                await _permissions.EnsureFormCentreAllowedAsync(formCentre, cancellationToken);
                 query = query.Where(f => f.FormCentre == formCentre.Trim());
+            }
 
             query = string.Equals(direction, "desc", StringComparison.OrdinalIgnoreCase)
                 ? query.OrderByDescending(f => f.FormCentre).ThenByDescending(f => f.RollNo)
@@ -58,8 +72,16 @@ namespace mrsexam_backend.Services
         {
             var session = await RequireDefaultSessionAsync(cancellationToken);
             var prefix = (name ?? string.Empty).Trim();
-            return await _db.FormPraveens.AsNoTracking()
-                .Where(f => f.SessionNo == session.SessionNo && f.Name != null && f.Name.Contains(prefix))
+            var query = _db.FormPraveens.AsNoTracking()
+                .Where(f => f.SessionNo == session.SessionNo && f.Name != null && f.Name.Contains(prefix));
+            var centreFilter = await _permissions.GetCentreFilterAsync(_permissions.GetCurrentUserId(), cancellationToken);
+            if (centreFilter is not null)
+            {
+                if (centreFilter.Count == 0) return Array.Empty<FormPraveen>();
+                var allowed = centreFilter.ToList();
+                query = query.Where(f => f.FormCentre != null && allowed.Contains(f.FormCentre));
+            }
+            return await query
                 .OrderBy(f => f.FormCentre).ThenBy(f => f.RollNo)
                 .Take(150)
                 .ToListAsync(cancellationToken);
@@ -73,6 +95,7 @@ namespace mrsexam_backend.Services
         public async Task<FormPraveen> CreateAsync(PraveenCandidateWriteRequest request, CancellationToken cancellationToken)
         {
             await _sessions.EnsureWritablePraveenAsync(cancellationToken);
+            await _permissions.EnsureFormCentreAllowedAsync(request.FormCentre, cancellationToken);
             var session = await RequireDefaultSessionAsync(cancellationToken);
             var validated = await ValidateWriteAsync(request, requireOpenFormCentre: true, cancellationToken);
 
@@ -110,6 +133,9 @@ namespace mrsexam_backend.Services
                     f => f.RollNo == rollNo && f.RegionNo == regionNo && f.SessionNo == session.SessionNo,
                     cancellationToken)
                 ?? throw new KeyNotFoundException("Candidate not found.");
+
+            await _permissions.EnsureFormCentreAllowedAsync(entity.FormCentre, cancellationToken);
+            await _permissions.EnsureFormCentreAllowedAsync(request.FormCentre, cancellationToken);
 
             var validated = await ValidateWriteAsync(request, requireOpenFormCentre: true, cancellationToken);
 
@@ -180,12 +206,15 @@ namespace mrsexam_backend.Services
                     cancellationToken)
                 ?? throw new KeyNotFoundException("Candidate not found.");
 
+            await _permissions.EnsureFormCentreAllowedAsync(entity.FormCentre, cancellationToken);
+
             _db.FormPraveens.Remove(entity);
             await _db.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<object> BatchInsertAsync(BatchInsertDto request, CancellationToken cancellationToken)
         {
+            await _permissions.EnsureBatchInsertAllowedAsync(cancellationToken);
             await _sessions.EnsureWritablePraveenAsync(cancellationToken);
             var session = await RequireDefaultSessionAsync(cancellationToken);
 

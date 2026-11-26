@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 
+import { ACCESS_TOKEN_KEY, clearAuthClaims } from './auth/permissions'
 import { BalbodhiniWorkspace } from './pages/BalbodhiniWorkspace'
 import { ExamSelectPage, type ExamModule } from './pages/ExamSelectPage'
 import { LoginPage } from './pages/LoginPage'
@@ -11,7 +12,6 @@ import { PraveenWorkspace } from './pages/PraveenWorkspace'
 import { PanditWorkspace } from './pages/PanditWorkspace'
 import { SambhashanWorkspace } from './pages/SambhashanWorkspace'
 
-const ACCESS_TOKEN_KEY = 'accessToken'
 const EXAM_MODULE_KEY = 'examModule'
 
 function App() {
@@ -29,6 +29,7 @@ function App() {
 
   const handleSignOut = useCallback(() => {
     localStorage.removeItem(EXAM_MODULE_KEY)
+    clearAuthClaims()
     setExamModule(null)
     setIsAuthenticated(false)
   }, [])

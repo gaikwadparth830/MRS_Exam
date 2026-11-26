@@ -18,6 +18,7 @@ import {
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import { featureForNavId, hasFeature, loadAuthClaims } from '../auth/permissions'
 import monoLogo from '../assets/MONO.png'
 import { balbodhiniNav, findNavItem, type NavGroup, type NavItemId } from './navConfig'
 
@@ -66,15 +67,22 @@ export const BalbodhiniShell = ({
   const [collapsed, setCollapsed] = useState(false)
   const mainRef = useRef<HTMLDivElement | null>(null)
   const activeItem = findNavItem(activeItemId, navGroups)
+  const claims = useMemo(() => loadAuthClaims(), [])
+  const supervisor = isSupervisor || claims.role === 'SUPER' || claims.isSupervisor
 
   const visibleGroups = useMemo(
     () => navGroups
       .map((group) => ({
         ...group,
-        items: group.items.filter((item) => !item.supervisorOnly || isSupervisor),
+        items: group.items.filter((item) => {
+          if (item.supervisorOnly && !supervisor) return false
+          const feature = featureForNavId(item.id)
+          if (feature && !hasFeature(feature, claims)) return false
+          return true
+        }),
       }))
       .filter((group) => group.items.length > 0),
-    [isSupervisor, navGroups],
+    [claims, navGroups, supervisor],
   )
 
   // Keep report/form filters in view after switching a lower menu item.

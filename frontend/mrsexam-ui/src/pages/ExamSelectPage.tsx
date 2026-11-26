@@ -1,4 +1,7 @@
 import { Box, Button, Card, CardActionArea, CardContent, Stack, Typography } from '@mui/material'
+import { useMemo } from 'react'
+
+import { hasExam, loadAuthClaims } from '../auth/permissions'
 
 export type ExamModule = 'balbodhini' | 'prathamik' | 'praveshika' | 'subodh' | 'prabodh' | 'praveen' | 'pandit' | 'sambhashan'
 
@@ -86,6 +89,12 @@ const marathiTitleSx = {
 } as const
 
 export const ExamSelectPage = ({ onSelect }: Props) => {
+  const claims = useMemo(() => loadAuthClaims(), [])
+  const visibleExams = useMemo(
+    () => exams.filter((exam) => hasExam(exam.id, claims)),
+    [claims],
+  )
+
   return (
     <Box
       sx={{
@@ -105,6 +114,13 @@ export const ExamSelectPage = ({ onSelect }: Props) => {
           <Typography color="text.secondary" sx={{ mt: 1 }}>
             Choose the examination module to continue. / परीक्षा निवडा
           </Typography>
+          {visibleExams.length === 0 ? (
+            <Typography color="error" sx={{ mt: 1.5 }}>
+              {claims.role === 'CENTRE'
+                ? 'No exams assigned for this centre user. Ask SUPER to add USER_EXAM (and USER_CENTRE) rows.'
+                : 'No exams are assigned to this user. Ask SUPER to add USER_EXAM rows, or log in as SUPER / an OPERATOR.'}
+            </Typography>
+          ) : null}
         </Box>
 
         <Box
@@ -119,7 +135,7 @@ export const ExamSelectPage = ({ onSelect }: Props) => {
             },
           }}
         >
-          {exams.map((exam) => (
+          {visibleExams.map((exam) => (
             <Card
               key={exam.id}
               elevation={0}
@@ -158,9 +174,11 @@ export const ExamSelectPage = ({ onSelect }: Props) => {
           ))}
         </Box>
 
-        <Button variant="text" onClick={() => onSelect('balbodhini')} sx={{ color: '#0b4f6c' }}>
-          Continue with बालबोधिनी / Balbodhini
-        </Button>
+        {hasExam('balbodhini', claims) ? (
+          <Button variant="text" onClick={() => onSelect('balbodhini')} sx={{ color: '#0b4f6c' }}>
+            Continue with बालबोधिनी / Balbodhini
+          </Button>
+        ) : null}
       </Stack>
     </Box>
   )

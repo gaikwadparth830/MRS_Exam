@@ -10,11 +10,13 @@ namespace mrsexam_backend.Controllers
     {
         private readonly PraveenResultService _results;
         private readonly SessionService _sessions;
+        private readonly PermissionService _permissions;
 
-        public PraveenResultsController(PraveenResultService results, SessionService sessions)
+        public PraveenResultsController(PraveenResultService results, SessionService sessions, PermissionService permissions)
         {
             _results = results;
             _sessions = sessions;
+        _permissions = permissions;
         }
 
         [HttpGet]
@@ -61,6 +63,7 @@ namespace mrsexam_backend.Controllers
         {
             try
             {
+                await _permissions.EnsureSuperAsync(cancellationToken);
                 await _sessions.ResetPraveenLockAsync(cancellationToken);
                 return Ok(new { resgenPraveen = "N" });
             }

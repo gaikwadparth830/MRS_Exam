@@ -13,12 +13,14 @@ namespace mrsexam_backend.Services
         private readonly MrsexamContext _db;
         private readonly SessionService _sessions;
         private readonly CentreResolver _centres;
+        private readonly PermissionService _permissions;
 
-        public PanditCandidateService(MrsexamContext db, SessionService sessions, CentreResolver centres)
+        public PanditCandidateService(MrsexamContext db, SessionService sessions, CentreResolver centres, PermissionService permissions)
         {
             _db = db;
             _sessions = sessions;
             _centres = centres;
+            _permissions = permissions;
         }
 
         public async Task<IReadOnlyList<FormPandit>> ListAsync(string? formCentre, int? regionNo, string? direction, CancellationToken cancellationToken)
@@ -27,8 +29,20 @@ namespace mrsexam_backend.Services
             IQueryable<FormPandit> query = _db.FormPandits.AsNoTracking()
                 .Where(f => f.SessionNo == session.SessionNo);
 
+            var centreFilter = await _permissions.GetCentreFilterAsync(_permissions.GetCurrentUserId(), cancellationToken);
+            if (centreFilter is not null)
+            {
+                if (centreFilter.Count == 0)
+                    return Array.Empty<FormPandit>();
+                var allowed = centreFilter.ToList();
+                query = query.Where(f => f.FormCentre != null && allowed.Contains(f.FormCentre));
+            }
+
             if (!string.IsNullOrWhiteSpace(formCentre))
+            {
+                await _permissions.EnsureFormCentreAllowedAsync(formCentre, cancellationToken);
                 query = query.Where(f => f.FormCentre == formCentre.Trim());
+            }
 
             if (regionNo is > 0)
             {
@@ -67,8 +81,16 @@ namespace mrsexam_backend.Services
         {
             var session = await RequireDefaultSessionAsync(cancellationToken);
             var prefix = (name ?? string.Empty).Trim();
-            return await _db.FormPandits.AsNoTracking()
-                .Where(f => f.SessionNo == session.SessionNo && f.Name != null && f.Name.Contains(prefix))
+            var query = _db.FormPandits.AsNoTracking()
+                .Where(f => f.SessionNo == session.SessionNo && f.Name != null && f.Name.Contains(prefix));
+            var centreFilter = await _permissions.GetCentreFilterAsync(_permissions.GetCurrentUserId(), cancellationToken);
+            if (centreFilter is not null)
+            {
+                if (centreFilter.Count == 0) return Array.Empty<FormPandit>();
+                var allowed = centreFilter.ToList();
+                query = query.Where(f => f.FormCentre != null && allowed.Contains(f.FormCentre));
+            }
+            return await query
                 .OrderBy(f => f.FormCentre).ThenBy(f => f.RollNo)
                 .Take(150)
                 .ToListAsync(cancellationToken);
@@ -97,6 +119,7 @@ namespace mrsexam_backend.Services
         public async Task<FormPandit> CreateAsync(PanditCandidateWriteRequest request, CancellationToken cancellationToken)
         {
             await _sessions.EnsureWritablePanditAsync(cancellationToken);
+            await _permissions.EnsureFormCentreAllowedAsync(request.FormCentre, cancellationToken);
             var session = await RequireDefaultSessionAsync(cancellationToken);
             var validated = await ValidateWriteAsync(request, (short)session.SessionNo, requireOpenFormCentre: true, cancellationToken);
 
@@ -121,6 +144,9 @@ namespace mrsexam_backend.Services
             var entity = await _db.FormPandits
                 .FirstOrDefaultAsync(f => f.RollNo == rollNo && f.SessionNo == session.SessionNo, cancellationToken)
                 ?? throw new KeyNotFoundException("Candidate not found.");
+
+            await _permissions.EnsureFormCentreAllowedAsync(entity.FormCentre, cancellationToken);
+            await _permissions.EnsureFormCentreAllowedAsync(request.FormCentre, cancellationToken);
 
             var validated = await ValidateWriteAsync(request, (short)session.SessionNo, requireOpenFormCentre: true, cancellationToken);
 
@@ -163,12 +189,15 @@ namespace mrsexam_backend.Services
                 .FirstOrDefaultAsync(f => f.RollNo == rollNo && f.SessionNo == session.SessionNo, cancellationToken)
                 ?? throw new KeyNotFoundException("Candidate not found.");
 
+            await _permissions.EnsureFormCentreAllowedAsync(entity.FormCentre, cancellationToken);
+
             _db.FormPandits.Remove(entity);
             await _db.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<object> BatchInsertAsync(PanditBatchInsertDto request, CancellationToken cancellationToken)
         {
+            await _permissions.EnsureBatchInsertAllowedAsync(cancellationToken);
             await _sessions.EnsureWritablePanditAsync(cancellationToken);
             var session = await RequireDefaultSessionAsync(cancellationToken);
 

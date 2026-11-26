@@ -10,11 +10,13 @@ namespace mrsexam_backend.Controllers
     {
         private readonly PrathamikResultService _results;
         private readonly SessionService _sessions;
+        private readonly PermissionService _permissions;
 
-        public PrathamikResultsController(PrathamikResultService results, SessionService sessions)
+        public PrathamikResultsController(PrathamikResultService results, SessionService sessions, PermissionService permissions)
         {
             _results = results;
             _sessions = sessions;
+        _permissions = permissions;
         }
 
         [HttpGet]
@@ -61,6 +63,7 @@ namespace mrsexam_backend.Controllers
         {
             try
             {
+                await _permissions.EnsureSuperAsync(cancellationToken);
                 await _sessions.ResetPrathamikLockAsync(cancellationToken);
                 return Ok(new { resgenPrathamik = "N" });
             }

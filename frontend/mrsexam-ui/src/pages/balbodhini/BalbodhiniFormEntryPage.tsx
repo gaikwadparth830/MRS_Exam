@@ -25,6 +25,8 @@ import {
   type CentreResolve,
 } from '../../api/balbodhini/client'
 import { CentersService, type Center } from '../../api/generatedClient'
+import { CURRENT_USER_ID_KEY } from '../../auth/permissions'
+import { useCentreScope } from '../../auth/useCentreScope'
 import { CentreSearchField } from '../../components/CentreSearchField'
 import { MarathiNameField, MarathiPhoneticToggle } from '../../components/MarathiNameField'
 import { CandidateNameSearchDialog } from '../../components/CandidateNameSearchDialog'
@@ -48,7 +50,6 @@ const emptyForm = (sessionNo?: number): Candidate => ({
   userId: '',
 })
 
-const CURRENT_USER_ID_KEY = 'currentUserId'
 const PHONETIC_ASSIST_KEY = 'balbodhiniPhoneticNameAssist'
 
 const toCenterList = (payload: unknown): Center[] => {
@@ -81,6 +82,7 @@ export const BalbodhiniFormEntryPage = ({ defaultSessionNo, isLocked = false }: 
   })
 
   const currentUserId = localStorage.getItem(CURRENT_USER_ID_KEY)?.trim() ?? ''
+  const { centreLimited, defaultCentre, filterOptions } = useCentreScope()
   const readOnly = isLocked || mode === 'view'
 
   const onPhoneticAssistChange = (enabled: boolean) => {
@@ -135,9 +137,10 @@ export const BalbodhiniFormEntryPage = ({ defaultSessionNo, isLocked = false }: 
   }, [form.formCentre, rows])
 
   const centreOptions = useMemo(
-    () => centres.slice().sort((a, b) => a.centreNo.localeCompare(b.centreNo)),
-    [centres],
+    () => filterOptions(centres.slice().sort((a, b) => (a.centreNo ?? '').localeCompare(b.centreNo ?? ''))),
+    [centres, filterOptions],
   )
+  const centreFieldLocked = centreLimited && centreOptions.length <= 1
 
   const centreDisplayFromList = (centreNo: string): CentreResolve | null => {
     const code = centreNo.trim()
@@ -261,12 +264,17 @@ export const BalbodhiniFormEntryPage = ({ defaultSessionNo, isLocked = false }: 
     if (isLocked) return
     setMode('new')
     setInsertPreviousSrNo('')
-    setForm((current) => ({
-      ...emptyForm(defaultSessionNo),
-      formCentre: current.formCentre ?? '',
-      examCentre: current.formCentre ?? '',
-      regionNo: current.regionNo ?? null,
-    }))
+    setForm((current) => {
+      const preferred = centreLimited
+        ? (defaultCentre || current.formCentre || '')
+        : (current.formCentre ?? '')
+      return {
+        ...emptyForm(defaultSessionNo),
+        formCentre: preferred,
+        examCentre: preferred,
+        regionNo: current.regionNo ?? null,
+      }
+    })
     setError(null)
     setSuccess(null)
   }
@@ -375,6 +383,7 @@ export const BalbodhiniFormEntryPage = ({ defaultSessionNo, isLocked = false }: 
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
           <Chip label={`Session ${defaultSessionNo ?? '-'}`} color="primary" variant="outlined" />
           <Chip label={`Centre forms ${centreCount}`} variant="outlined" />
+          {centreLimited ? <Chip label="Centre-limited user" color="info" /> : null}
           {isLocked ? <Chip label="Result lock ON" color="warning" /> : null}
         </Stack>
       )}
@@ -427,7 +436,9 @@ export const BalbodhiniFormEntryPage = ({ defaultSessionNo, isLocked = false }: 
                 label="Form Centre *"
                 centres={centreOptions}
                 value={form.formCentre ?? ''}
-                disabled={readOnly}
+                disabled={readOnly || centreFieldLocked}
+                allowEmpty={!centreLimited}
+                helperText={centreLimited ? 'Limited to your assigned centre(s).' : undefined}
                 onChange={(centreNo) => void onFormCentreChange(centreNo)}
               />
             </Box>
@@ -443,7 +454,8 @@ export const BalbodhiniFormEntryPage = ({ defaultSessionNo, isLocked = false }: 
                 label="Exam Centre *"
                 centres={centreOptions}
                 value={form.examCentre ?? ''}
-                disabled={readOnly}
+                disabled={readOnly || centreFieldLocked}
+                allowEmpty={!centreLimited}
                 onChange={(centreNo) => void onExamCentreChange(centreNo)}
               />
             </Box>

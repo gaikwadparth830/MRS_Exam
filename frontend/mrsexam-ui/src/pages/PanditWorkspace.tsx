@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+
+import { clearAuthClaims, loadAuthClaims } from '../auth/permissions'
 import { Alert, Card, CardContent, Typography } from '@mui/material'
 
 import { panditApi, type CurrentSession } from '../api/pandit/client'
@@ -19,9 +21,6 @@ import { PanditRollNumbersPage } from './pandit/PanditRollNumbersPage'
 import { PanditReportsPage, isPanditReportNavId } from './pandit/PanditReportsPage'
 import { SelectSessionPage } from './pandit/SelectSessionPage'
 
-const ACCESS_TOKEN_KEY = 'accessToken'
-const CURRENT_USER_ID_KEY = 'currentUserId'
-const IS_SUPERVISOR_KEY = 'isSupervisor'
 
 const masterPageByNav: Partial<Record<NavItemId, MasterPageKey>> = {
   'master-region': 'Region Master',
@@ -30,6 +29,7 @@ const masterPageByNav: Partial<Record<NavItemId, MasterPageKey>> = {
   'master-exam': 'Exam Master',
   'master-paper': 'Paper Master',
   'master-session': 'Session Master',
+  'master-user': 'User Master',
 }
 
 type Props = {
@@ -41,8 +41,9 @@ export const PanditWorkspace = ({ onSignOut, onSwitchExam }: Props) => {
   const [activeItemId, setActiveItemId] = useState<NavItemId>(defaultNavItemId)
   const [defaultSession, setDefaultSession] = useState<Session | null>(null)
   const [currentSessionMeta, setCurrentSessionMeta] = useState<CurrentSession | null>(null)
-  const userId = localStorage.getItem(CURRENT_USER_ID_KEY)?.trim() ?? ''
-  const isSupervisor = localStorage.getItem(IS_SUPERVISOR_KEY) === 'Y'
+  const claims = loadAuthClaims()
+  const userId = claims.userId
+  const isSupervisor = claims.isSupervisor || claims.role === 'SUPER'
   const isLocked = currentSessionMeta?.isLockedPandit
     ?? ((defaultSession as Session & { resgenPandit?: string | null })?.resgenPandit?.trim().toUpperCase() === 'Y')
 
@@ -83,9 +84,7 @@ export const PanditWorkspace = ({ onSignOut, onSwitchExam }: Props) => {
   }, [])
 
   const handleSignOut = () => {
-    localStorage.removeItem(ACCESS_TOKEN_KEY)
-    localStorage.removeItem(CURRENT_USER_ID_KEY)
-    localStorage.removeItem(IS_SUPERVISOR_KEY)
+    clearAuthClaims()
     onSignOut()
   }
 

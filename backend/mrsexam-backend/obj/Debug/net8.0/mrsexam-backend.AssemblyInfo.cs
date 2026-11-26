@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("mrsexam-backend")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1156b059604a8f4ff08f60e70c075d702dc991fa")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+17d44965ee6e000c99905ce693f00eed4c35625b")]
 [assembly: System.Reflection.AssemblyProductAttribute("mrsexam-backend")]
 [assembly: System.Reflection.AssemblyTitleAttribute("mrsexam-backend")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

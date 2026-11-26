@@ -19,5 +19,10 @@ namespace mrsexam_backend.Models
         [Column("KEY")]
         [MaxLength(5)]
         public string? UserKey { get; set; }
+
+        /// <summary>SUPER | OPERATOR | CENTRE</summary>
+        [Column("ROLE")]
+        [MaxLength(20)]
+        public string? Role { get; set; }
     }
 }
