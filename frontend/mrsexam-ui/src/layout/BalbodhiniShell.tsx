@@ -70,6 +70,14 @@ export const BalbodhiniShell = ({
   const claims = useMemo(() => loadAuthClaims(), [])
   const supervisor = isSupervisor || claims.role === 'SUPER' || claims.isSupervisor
 
+  useEffect(() => {
+    const previous = document.title
+    document.title = examNameEn ? `MRS Exam · ${examNameEn}` : 'MRS Exam'
+    return () => {
+      document.title = previous
+    }
+  }, [examNameEn])
+
   const visibleGroups = useMemo(
     () => navGroups
       .map((group) => ({

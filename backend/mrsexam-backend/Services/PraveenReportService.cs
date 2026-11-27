@@ -142,12 +142,21 @@ namespace mrsexam_backend.Services
                     .FirstOrDefaultAsync(cancellationToken);
             }
 
+            string? centreName = null;
+            if (!string.IsNullOrWhiteSpace(centreCode))
+            {
+                centreName = await _db.Centres.AsNoTracking()
+                    .Where(c => c.CentreNo == centreCode)
+                    .Select(c => c.CentreName)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
+
             var header = BuildHeader(
                 session,
                 normalizedMode == "named" ? "Result Sheet" : "Result Sheet (No Name)",
-                "निकाल पत्रक",
+                "परीक्षा - फल",
                 centreCode,
-                null,
+                centreName,
                 regionName);
             header.ResultDate = session.ResultDate;
             header.RowCount = rows.Count;
@@ -546,6 +555,67 @@ namespace mrsexam_backend.Services
                 || trimmed == "*")
                 return false;
             return int.TryParse(trimmed, out marks);
+        }
+
+        /// <summary>
+        /// Centre-wise number of students appearing — contiguous ROLL_NO ranges per EXAM_CENTRE
+        /// (legacy Frm_CentreWiseNoOfStudent / Rpt_CentreWiseNoOfStudent).
+        /// </summary>
+        public async Task<CentreWiseStudentsReportDto> GetCentreWiseStudentsAsync(
+            int? regionNo,
+            CancellationToken cancellationToken)
+        {
+            var session = await RequireDefaultSessionAsync(cancellationToken);
+
+            var query = _db.FormPraveens.AsNoTracking()
+                .Where(f => f.SessionNo == (short)session.SessionNo
+                    && f.ExamCentre != null
+                    && f.ExamCentre.Trim() != string.Empty);
+
+            if (regionNo is > 0)
+                query = query.Where(f => f.RegionNo == regionNo);
+
+            var forms = await query
+                .Select(f => new { f.ExamCentre, f.RollNo })
+                .ToListAsync(cancellationToken);
+
+            var centreNos = forms
+                .Select(f => f.ExamCentre!.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var centreNames = await _db.Centres.AsNoTracking()
+                .Where(c => centreNos.Contains(c.CentreNo))
+                .Select(c => new { c.CentreNo, c.CentreName })
+                .ToDictionaryAsync(
+                    c => c.CentreNo,
+                    c => (string?)c.CentreName,
+                    StringComparer.OrdinalIgnoreCase,
+                    cancellationToken);
+
+            var rows = CentreWiseStudentsBuilder.BuildRows(
+                forms.Select(f => (f.ExamCentre!.Trim(), (int)f.RollNo)),
+                centreNames);
+
+            string? regionName = null;
+            if (regionNo is > 0)
+            {
+                regionName = await _db.Regions.AsNoTracking()
+                    .Where(r => r.RegionNo == regionNo)
+                    .Select(r => r.RegionName)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
+
+            var header = BuildHeader(
+                session,
+                "Centre-wise Students Appearing",
+                "केंद्रानुसार विद्यार्थी संख्या",
+                null,
+                null,
+                regionName);
+            header.RowCount = rows.Count;
+
+            return new CentreWiseStudentsReportDto { Header = header, Rows = rows };
         }
 
         private async Task<Session> RequireDefaultSessionAsync(CancellationToken cancellationToken)

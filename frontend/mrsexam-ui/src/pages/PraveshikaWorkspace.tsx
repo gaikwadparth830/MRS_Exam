@@ -18,6 +18,8 @@ import {
 import { PraveshikaMarksPage } from './praveshika/PraveshikaMarksPage'
 import { PraveshikaRollNumbersPage } from './praveshika/PraveshikaRollNumbersPage'
 import { PraveshikaReportsPage, isReportNavId } from './praveshika/PraveshikaReportsPage'
+import { UserWiseFormsReportPage } from './common/UserWiseFormsReportPage'
+import { CentreListReportPage } from './common/CentreListReportPage'
 import { SelectSessionPage } from './praveshika/SelectSessionPage'
 
 
@@ -148,6 +150,10 @@ export const PraveshikaWorkspace = ({ onSignOut, onSwitchExam }: Props) => {
         )
       case 'batch-insert':
         return <PraveshikaBatchInsertPage defaultSessionNo={defaultSession?.sessionNo} />
+      case 'report-centre-list':
+        return <CentreListReportPage />
+      case 'report-userwise-forms':
+        return <UserWiseFormsReportPage defaultSessionNo={defaultSession?.sessionNo} />
       case 'reset-lock':
         return <PraveshikaResetLockPage />
       default: {

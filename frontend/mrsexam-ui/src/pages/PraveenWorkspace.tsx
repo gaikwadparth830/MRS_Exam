@@ -18,6 +18,8 @@ import {
 import { PraveenMarksPage } from './praveen/PraveenMarksPage'
 import { PraveenRollNumbersPage } from './praveen/PraveenRollNumbersPage'
 import { PraveenReportsPage, isReportNavId } from './praveen/PraveenReportsPage'
+import { UserWiseFormsReportPage } from './common/UserWiseFormsReportPage'
+import { CentreListReportPage } from './common/CentreListReportPage'
 import { SelectSessionPage } from './praveen/SelectSessionPage'
 
 
@@ -145,6 +147,10 @@ export const PraveenWorkspace = ({ onSignOut, onSwitchExam }: Props) => {
         )
       case 'batch-insert':
         return <PraveenBatchInsertPage defaultSessionNo={defaultSession?.sessionNo} />
+      case 'report-centre-list':
+        return <CentreListReportPage />
+      case 'report-userwise-forms':
+        return <UserWiseFormsReportPage defaultSessionNo={defaultSession?.sessionNo} />
       case 'reset-lock':
         return <PraveenResetLockPage />
       default: {

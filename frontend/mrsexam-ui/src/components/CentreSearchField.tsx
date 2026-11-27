@@ -157,13 +157,20 @@ export const CentreSearchField = (props: Props) => {
 
   const filterOptions = (options: Center[], state: { inputValue: string }) => {
     const query = state.inputValue.trim()
-    if (!query) return options.slice(0, 80)
+    // Region-filtered lists are a few hundred–~2k centres across several districts.
+    // Do not cap those to 80 — that hid every district after the first.
+    if (!query) {
+      if (options.length <= 2500) return options
+      return options.slice(0, 80)
+    }
 
     const matched = options
       .filter((option) => centreMatchesQuery(option, query))
       .sort((a, b) => {
         const rankDiff = rankCentre(b, query) - rankCentre(a, query)
         if (rankDiff !== 0) return rankDiff
+        const byDistrict = (a.districtName ?? '').localeCompare(b.districtName ?? '', 'mr')
+        if (byDistrict !== 0) return byDistrict
         return (a.centreNo ?? '').localeCompare(b.centreNo ?? '', 'mr')
       })
 
@@ -215,6 +222,11 @@ export const CentreSearchField = (props: Props) => {
         value={selected}
         onChange={(_, next) => onChange(next.map((item) => item.centreNo?.trim() ?? '').filter(Boolean))}
         disableCloseOnSelect
+        sx={{
+          '& .MuiAutocomplete-tag': {
+            opacity: 1,
+          },
+        }}
         renderTags={(tagValue, getTagProps) =>
           tagValue.map((option, index) => {
             const { key, ...tagProps } = getTagProps({ index })
@@ -222,9 +234,28 @@ export const CentreSearchField = (props: Props) => {
               <Chip
                 key={key ?? option.centreNo}
                 size="small"
+                color="primary"
+                variant="filled"
                 label={chipLabel(option)}
-                sx={marathiNameFieldSx}
                 {...tagProps}
+                sx={{
+                  fontFamily: '"Noto Sans Devanagari", "IBM Plex Sans", sans-serif',
+                  fontWeight: 700,
+                  color: '#fff !important',
+                  bgcolor: 'primary.main !important',
+                  opacity: '1 !important',
+                  maxWidth: '100%',
+                  '& .MuiChip-label': {
+                    color: '#fff !important',
+                    opacity: '1 !important',
+                    px: 1,
+                  },
+                  '& .MuiChip-deleteIcon': {
+                    color: 'rgba(255,255,255,0.95) !important',
+                    opacity: '1 !important',
+                    '&:hover': { color: '#fff !important' },
+                  },
+                }}
               />
             )
           })

@@ -113,6 +113,14 @@ export const ReportPrintChrome = ({ printId, header, children, summary }: Props)
           #${printId} .marathi-cell {
             font-family: "Noto Sans Devanagari", "IBM Plex Sans", sans-serif !important;
           }
+          #${printId} .result-sheet-section {
+            page-break-after: always;
+            break-after: page;
+          }
+          #${printId} .result-sheet-section:last-child {
+            page-break-after: auto;
+            break-after: auto;
+          }
           .no-print { display: none !important; }
         }
       `}</style>

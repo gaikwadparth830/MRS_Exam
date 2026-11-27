@@ -165,6 +165,19 @@ export type RegisterReport = {
   }>
 }
 
+export type CentreWiseStudentsReport = {
+  header: ReportHeader
+  rows: Array<{
+    centreNo?: string | null
+    centreName?: string | null
+    rollFrom?: number | null
+    rollTo?: number | null
+    rollFrom2?: number | null
+    rollTo2?: number | null
+    studentCount?: number
+  }>
+}
+
 const messageFromError = (error: unknown, fallback: string): string => {
   if (error && typeof error === 'object' && 'response' in error) {
     const response = (error as { response?: { data?: unknown } }).response
@@ -373,6 +386,14 @@ export const subodhApi = {
     const { data } = await httpClient.post<RegisterReport>('/api/subodh/reports/register', null, {
       params: regionNo ? { regionNo } : undefined,
     })
+    return data
+  },
+
+  getCentreWiseStudentsReport: async (regionNo?: number): Promise<CentreWiseStudentsReport> => {
+    const { data } = await httpClient.get<CentreWiseStudentsReport>(
+      '/api/subodh/reports/centre-wise-students',
+      { params: regionNo ? { regionNo } : undefined },
+    )
     return data
   },
 }

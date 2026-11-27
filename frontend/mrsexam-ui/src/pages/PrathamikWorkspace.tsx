@@ -18,6 +18,8 @@ import {
 import { PrathamikMarksPage } from './prathamik/PrathamikMarksPage'
 import { PrathamikRollNumbersPage } from './prathamik/PrathamikRollNumbersPage'
 import { PrathamikReportsPage, isReportNavId } from './prathamik/PrathamikReportsPage'
+import { UserWiseFormsReportPage } from './common/UserWiseFormsReportPage'
+import { CentreListReportPage } from './common/CentreListReportPage'
 import { SelectSessionPage } from './prathamik/SelectSessionPage'
 
 
@@ -148,6 +150,10 @@ export const PrathamikWorkspace = ({ onSignOut, onSwitchExam }: Props) => {
         )
       case 'batch-insert':
         return <PrathamikBatchInsertPage defaultSessionNo={defaultSession?.sessionNo} />
+      case 'report-centre-list':
+        return <CentreListReportPage />
+      case 'report-userwise-forms':
+        return <UserWiseFormsReportPage defaultSessionNo={defaultSession?.sessionNo} />
       case 'reset-lock':
         return <PrathamikResetLockPage />
       default: {

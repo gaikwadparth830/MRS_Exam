@@ -132,5 +132,21 @@ namespace mrsexam_backend.Controllers
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        /// <summary>Centre-wise contiguous roll ranges (legacy Centre-wise No. of Students Appearing).</summary>
+        [HttpGet("centre-wise-students")]
+        public async Task<IActionResult> CentreWiseStudents(
+            [FromQuery] int? regionNo = null,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return Ok(await _reports.GetCentreWiseStudentsAsync(regionNo, cancellationToken));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }

@@ -18,6 +18,8 @@ import {
 import { SambhashanMarksPage } from './sambhashan/SambhashanMarksPage'
 import { SambhashanRollNumbersPage } from './sambhashan/SambhashanRollNumbersPage'
 import { SambhashanReportsPage, isReportNavId } from './sambhashan/SambhashanReportsPage'
+import { UserWiseFormsReportPage } from './common/UserWiseFormsReportPage'
+import { CentreListReportPage } from './common/CentreListReportPage'
 import { SelectSessionPage } from './sambhashan/SelectSessionPage'
 
 
@@ -148,6 +150,10 @@ export const SambhashanWorkspace = ({ onSignOut, onSwitchExam }: Props) => {
         )
       case 'batch-insert':
         return <SambhashanBatchInsertPage defaultSessionNo={defaultSession?.sessionNo} />
+      case 'report-centre-list':
+        return <CentreListReportPage />
+      case 'report-userwise-forms':
+        return <UserWiseFormsReportPage defaultSessionNo={defaultSession?.sessionNo} />
       case 'reset-lock':
         return <SambhashanResetLockPage />
       default: {

@@ -6,7 +6,11 @@ import {
   Card,
   CardContent,
   FormControl,
+  FormControlLabel,
+  FormLabel,
   InputLabel,
+  Radio,
+  RadioGroup,
   MenuItem,
   Select,
   Stack,
@@ -22,6 +26,7 @@ import {
 import {
   praveshikaApi,
   type AttendanceReport,
+  type CentreWiseStudentsReport,
   type CertificateReport,
   type NameListReport,
   type RegisterReport,
@@ -29,7 +34,10 @@ import {
 } from '../../api/praveshika/client'
 import { CentersService, RegionsService, type Center, type Region } from '../../api/generatedClient'
 import { CentreSearchField } from '../../components/CentreSearchField'
+import { CentreWiseStudentsPrint } from '../../components/reports/CentreWiseStudentsPrint'
+import { NameListPrint } from '../../components/reports/NameListPrint'
 import { PageFrame } from '../../layout/PageFrame'
+import { splitNameListByCentre } from '../../utils/splitNameListByCentre'
 import { marathiNameFieldSx } from '../../utils/marathiTransliterate'
 import type { NavItemId } from '../../layout/navConfig'
 
@@ -39,6 +47,7 @@ type ReportKind =
   | 'report-result-sheet'
   | 'report-certificate'
   | 'report-register'
+  | 'report-centre-wise-students'
 
 type Props = {
   reportId: ReportKind
@@ -66,6 +75,10 @@ const titles: Record<ReportKind, { title: string; description: string }> = {
     title: 'Register',
     description: 'Rebuilds dummy centre codes and prints region/centre counts.',
   },
+  'report-centre-wise-students': {
+    title: 'Centre-wise Students Appearing',
+    description: 'Contiguous roll from–to ranges per exam centre (optional region filter).',
+  },
 }
 
 const toList = <T,>(payload: unknown): T[] => (Array.isArray(payload) ? payload as T[] : [])
@@ -79,6 +92,7 @@ export const PraveshikaReportsPage = ({ reportId, defaultSessionNo }: Props) => 
   const [mode, setMode] = useState<'named' | 'noname'>('named')
   const [fromRoll, setFromRoll] = useState('')
   const [toRoll, setToRoll] = useState('')
+  const [nameListScope, setNameListScope] = useState<'all' | 'centre'>('all')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -87,6 +101,7 @@ export const PraveshikaReportsPage = ({ reportId, defaultSessionNo }: Props) => 
   const [resultSheet, setResultSheet] = useState<ResultSheetReport | null>(null)
   const [certificates, setCertificates] = useState<CertificateReport | null>(null)
   const [register, setRegister] = useState<RegisterReport | null>(null)
+  const [centreWiseStudents, setCentreWiseStudents] = useState<CentreWiseStudentsReport | null>(null)
 
   useEffect(() => {
     let mounted = true
@@ -118,6 +133,7 @@ export const PraveshikaReportsPage = ({ reportId, defaultSessionNo }: Props) => 
     setResultSheet(null)
     setCertificates(null)
     setRegister(null)
+    setCentreWiseStudents(null)
     setError(null)
   }, [reportId])
 
@@ -127,8 +143,9 @@ export const PraveshikaReportsPage = ({ reportId, defaultSessionNo }: Props) => 
       ?? resultSheet?.header
       ?? certificates?.header
       ?? register?.header
+      ?? centreWiseStudents?.header
       ?? null
-  }, [attendance, nameList, resultSheet, certificates, register])
+  }, [attendance, nameList, resultSheet, certificates, register, centreWiseStudents])
 
   const onGenerate = async () => {
     setError(null)
@@ -137,17 +154,22 @@ export const PraveshikaReportsPage = ({ reportId, defaultSessionNo }: Props) => 
       if (reportId === 'report-attendance') {
         if (!centreNo.trim()) throw new Error('Select exam centre.')
         setAttendance(await praveshikaApi.getAttendanceReport(centreNo.trim()))
-        setNameList(null); setResultSheet(null); setCertificates(null); setRegister(null)
+        setNameList(null); setResultSheet(null); setCertificates(null); setRegister(null); setCentreWiseStudents(null)
       } else if (reportId === 'report-name-list') {
-        setNameList(await praveshikaApi.getNameListReport(centreNo.trim() || undefined))
-        setAttendance(null); setResultSheet(null); setCertificates(null); setRegister(null)
+        if (nameListScope === 'centre') {
+          if (!centreNo.trim()) throw new Error('Select exam centre.')
+          setNameList(await praveshikaApi.getNameListReport(centreNo.trim()))
+        } else {
+          setNameList(await praveshikaApi.getNameListReport(undefined))
+        }
+        setAttendance(null); setResultSheet(null); setCertificates(null); setRegister(null); setCentreWiseStudents(null)
       } else if (reportId === 'report-result-sheet') {
         setResultSheet(await praveshikaApi.getResultSheetReport({
           mode,
           centreNo: centreNo.trim() || undefined,
           regionNo: regionNo === '' ? undefined : Number(regionNo),
         }))
-        setAttendance(null); setNameList(null); setCertificates(null); setRegister(null)
+        setAttendance(null); setNameList(null); setCertificates(null); setRegister(null); setCentreWiseStudents(null)
       } else if (reportId === 'report-certificate') {
         if (regionNo === '') throw new Error('Select region.')
         setCertificates(await praveshikaApi.getCertificateReport({
@@ -155,12 +177,17 @@ export const PraveshikaReportsPage = ({ reportId, defaultSessionNo }: Props) => 
           fromRoll: fromRoll.trim() ? Number(fromRoll) : undefined,
           toRoll: toRoll.trim() ? Number(toRoll) : undefined,
         }))
-        setAttendance(null); setNameList(null); setResultSheet(null); setRegister(null)
+        setAttendance(null); setNameList(null); setResultSheet(null); setRegister(null); setCentreWiseStudents(null)
+      } else if (reportId === 'report-centre-wise-students') {
+        setCentreWiseStudents(await praveshikaApi.getCentreWiseStudentsReport(
+          regionNo === '' ? undefined : Number(regionNo),
+        ))
+        setAttendance(null); setNameList(null); setResultSheet(null); setCertificates(null); setRegister(null)
       } else {
         setRegister(await praveshikaApi.getRegisterReport(
           regionNo === '' ? undefined : Number(regionNo),
         ))
-        setAttendance(null); setNameList(null); setResultSheet(null); setCertificates(null)
+        setAttendance(null); setNameList(null); setResultSheet(null); setCertificates(null); setCentreWiseStudents(null)
       }
     } catch (err) {
       setError(praveshikaApi.messageFromError(err, err instanceof Error ? err.message : 'Report failed.'))
@@ -203,20 +230,35 @@ export const PraveshikaReportsPage = ({ reportId, defaultSessionNo }: Props) => 
                   gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
                 }}
               >
+                {reportId === 'report-name-list' ? (
+                  <FormControl component="fieldset" sx={{ gridColumn: { xs: '1 / -1', md: 'span 3' } }}>
+                    <FormLabel component="legend">Name list scope</FormLabel>
+                    <RadioGroup
+                      row
+                      value={nameListScope}
+                      onChange={(e) => {
+                        const next = e.target.value as 'all' | 'centre'
+                        setNameListScope(next)
+                        setNameList(null)
+                        if (next === 'all') setCentreNo('')
+                      }}
+                    >
+                      <FormControlLabel value="all" control={<Radio size="small" />} label="All" />
+                      <FormControlLabel value="centre" control={<Radio size="small" />} label="Centre-wise" />
+                    </RadioGroup>
+                  </FormControl>
+                ) : null}
+
                 {(reportId === 'report-attendance'
-                  || reportId === 'report-name-list'
-                  || reportId === 'report-result-sheet') ? (
+                  || reportId === 'report-result-sheet'
+                  || (reportId === 'report-name-list' && nameListScope === 'centre')) ? (
                   <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 2' }, minWidth: 0 }}>
                     <CentreSearchField
-                      label={reportId === 'report-attendance' ? 'Exam Centre *' : 'Exam Centre'}
+                      label={reportId === 'report-attendance' || reportId === 'report-name-list' ? 'Exam Centre *' : 'Exam Centre'}
                       centres={centres}
                       value={centreNo}
-                      allowEmpty={reportId !== 'report-attendance'}
-                      helperText={
-                        reportId === 'report-attendance'
-                          ? 'Search by code, name, or city'
-                          : 'Search by code, name, or city — clear for all centres'
-                      }
+                      allowEmpty={reportId === 'report-result-sheet'}
+                      helperText="Search by code, name, or city"
                       onChange={setCentreNo}
                     />
                   </Box>
@@ -224,7 +266,8 @@ export const PraveshikaReportsPage = ({ reportId, defaultSessionNo }: Props) => 
 
                 {(reportId === 'report-result-sheet'
                   || reportId === 'report-certificate'
-                  || reportId === 'report-register') ? (
+                  || reportId === 'report-register'
+                  || reportId === 'report-centre-wise-students') ? (
                   <FormControl size="small" fullWidth>
                     <InputLabel id="report-region-label">
                       {reportId === 'report-certificate' ? 'Region *' : 'Region'}
@@ -288,7 +331,46 @@ export const PraveshikaReportsPage = ({ reportId, defaultSessionNo }: Props) => 
           </CardContent>
         </Card>
 
-        {header ? (
+        {centreWiseStudents ? (
+          <Card>
+            <CardContent sx={{ p: { xs: 1, md: 2 } }}>
+              <CentreWiseStudentsPrint
+                printId="Praveshika-report-print"
+                header={centreWiseStudents.header}
+                examLabel="Praveshika"
+                rows={centreWiseStudents.rows.map((row) => ({
+                  centreNo: row.centreNo,
+                  centreName: row.centreName
+                    ?? centres.find((c) => (c.centreNo ?? '').trim() === (row.centreNo ?? '').trim())?.centreName
+                    ?? null,
+                  rollFrom: row.rollFrom,
+                  rollTo: row.rollTo,
+                  rollFrom2: row.rollFrom2,
+                  rollTo2: row.rollTo2,
+                }))}
+              />
+            </CardContent>
+          </Card>
+        ) : nameList ? (
+          <Card>
+            <CardContent sx={{ p: { xs: 1, md: 2 } }}>
+              <NameListPrint
+                printId="Praveshika-report-print"
+                header={nameList.header}
+                examTitleMr="राष्ट्रभाषा प्रवेशिका परीक्षा"
+                sections={splitNameListByCentre(nameList.rows).map((section) => ({
+                  centreName: section.centreName
+                    ?? centres.find((c) => (c.centreNo ?? '').trim() === (section.centreNo ?? '').trim())?.centreName
+                    ?? null,
+                  districtName: section.districtName
+                    ?? centres.find((c) => (c.centreNo ?? '').trim() === (section.centreNo ?? '').trim())?.districtName
+                    ?? null,
+                  rows: section.rows.map((row) => ({ rollNo: row.rollNo, name: row.name })),
+                }))}
+              />
+            </CardContent>
+          </Card>
+        ) : header ? (
           <Card>
             <CardContent>
               <Box id="Praveshika-report-print" sx={{ overflowX: 'auto' }}>
@@ -339,31 +421,6 @@ export const PraveshikaReportsPage = ({ reportId, defaultSessionNo }: Props) => 
                       </TableBody>
                     </Table>
                   </>
-                ) : null}
-
-                {nameList ? (
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Roll No</TableCell>
-                        <TableCell>Name</TableCell>
-                        <TableCell>Exam Centre</TableCell>
-                        <TableCell>Centre Name</TableCell>
-                        <TableCell>District</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {nameList.rows.map((row, index) => (
-                        <TableRow key={`${row.rollNo}-${index}`}>
-                          <TableCell>{row.rollNo ?? '-'}</TableCell>
-                          <TableCell sx={marathiNameFieldSx['& .MuiInputBase-input']}>{row.name ?? '-'}</TableCell>
-                          <TableCell>{row.examCentre ?? '-'}</TableCell>
-                          <TableCell sx={marathiNameFieldSx['& .MuiInputBase-input']}>{row.centreName ?? '-'}</TableCell>
-                          <TableCell sx={marathiNameFieldSx['& .MuiInputBase-input']}>{row.districtName ?? '-'}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
                 ) : null}
 
                 {resultSheet ? (
@@ -508,3 +565,4 @@ export const isReportNavId = (id: NavItemId): id is ReportKind =>
   || id === 'report-result-sheet'
   || id === 'report-certificate'
   || id === 'report-register'
+  || id === 'report-centre-wise-students'

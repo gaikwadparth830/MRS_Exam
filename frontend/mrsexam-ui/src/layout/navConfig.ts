@@ -17,6 +17,8 @@ export type NavItemId =
   | 'batch-insert'
   | 'reset-lock'
   | 'correct-marks'
+  | 'report-userwise-forms'
+  | 'report-centre-list'
   | 'report-attendance'
   | 'report-name-list'
   | 'report-result-sheet'
@@ -28,6 +30,7 @@ export type NavItemId =
   | 'report-ranks'
   | 'report-students-passing'
   | 'report-lost-by-2'
+  | 'report-centre-wise-students'
 
 export type NavItem = {
   id: NavItemId
@@ -82,6 +85,7 @@ export const balbodhiniNav: NavGroup[] = [
     label: 'Supervisor',
     items: [
       { id: 'reset-lock', label: 'Reset Result Lock', supervisorOnly: true },
+      { id: 'report-userwise-forms', label: 'UserWise Forms Entered', description: 'Common: forms per user × exam', supervisorOnly: true },
       { id: 'correct-marks', label: 'Correct Marks', supervisorOnly: true, comingSoon: true },
     ],
   },
@@ -89,11 +93,17 @@ export const balbodhiniNav: NavGroup[] = [
     id: 'reports',
     label: 'Reports',
     items: [
+      { id: 'report-centre-list', label: 'Centre List', description: 'केंद्र सूची — no, name, address' },
       { id: 'report-attendance', label: 'Attendance Sheet', description: 'Centre roll pairs' },
       { id: 'report-name-list', label: 'Name List', description: 'Candidate name list' },
       { id: 'report-result-sheet', label: 'Result Sheet', description: 'With or without names' },
       { id: 'report-certificate', label: 'Certificate', description: 'Pass candidates by region' },
       { id: 'report-register', label: 'Register', description: 'Dummy centre counts' },
+      {
+        id: 'report-centre-wise-students',
+        label: 'Centre-wise Students',
+        description: 'Roll from–to ranges per exam centre',
+      },
     ],
   },
 ]
@@ -137,6 +147,7 @@ export const prathamikNav: NavGroup[] = [
     label: 'Supervisor',
     items: [
       { id: 'reset-lock', label: 'Reset Result Lock', supervisorOnly: true },
+      { id: 'report-userwise-forms', label: 'UserWise Forms Entered', description: 'Common: forms per user × exam', supervisorOnly: true },
       { id: 'correct-marks', label: 'Correct Marks', supervisorOnly: true, comingSoon: true },
     ],
   },
@@ -144,11 +155,17 @@ export const prathamikNav: NavGroup[] = [
     id: 'reports',
     label: 'Reports',
     items: [
+      { id: 'report-centre-list', label: 'Centre List', description: 'केंद्र सूची — no, name, address' },
       { id: 'report-attendance', label: 'Attendance Sheet', description: 'Centre roll pairs' },
       { id: 'report-name-list', label: 'Name List', description: 'Candidate name list' },
       { id: 'report-result-sheet', label: 'Result Sheet', description: 'With or without names' },
       { id: 'report-certificate', label: 'Certificate', description: 'Pass candidates by region' },
       { id: 'report-register', label: 'Register', description: 'Dummy centre counts' },
+      {
+        id: 'report-centre-wise-students',
+        label: 'Centre-wise Students',
+        description: 'Roll from–to ranges per exam centre',
+      },
     ],
   },
 ]
@@ -192,6 +209,7 @@ export const sambhashanNav: NavGroup[] = [
     label: 'Supervisor',
     items: [
       { id: 'reset-lock', label: 'Reset Result Lock', supervisorOnly: true },
+      { id: 'report-userwise-forms', label: 'UserWise Forms Entered', description: 'Common: forms per user × exam', supervisorOnly: true },
       { id: 'correct-marks', label: 'Correct Marks', supervisorOnly: true, comingSoon: true },
     ],
   },
@@ -199,11 +217,17 @@ export const sambhashanNav: NavGroup[] = [
     id: 'reports',
     label: 'Reports',
     items: [
+      { id: 'report-centre-list', label: 'Centre List', description: 'केंद्र सूची — no, name, address' },
       { id: 'report-attendance', label: 'Attendance Sheet', description: 'Centre roll pairs' },
       { id: 'report-name-list', label: 'Name List', description: 'Candidate name list' },
       { id: 'report-result-sheet', label: 'Result Sheet', description: 'With or without names' },
       { id: 'report-certificate', label: 'Certificate', description: 'Pass candidates by region' },
       { id: 'report-register', label: 'Register', description: 'Dummy centre counts' },
+      {
+        id: 'report-centre-wise-students',
+        label: 'Centre-wise Students',
+        description: 'Roll from–to ranges per exam centre',
+      },
     ],
   },
 ]
@@ -247,6 +271,7 @@ export const subodhNav: NavGroup[] = [
     label: 'Supervisor',
     items: [
       { id: 'reset-lock', label: 'Reset Result Lock', supervisorOnly: true },
+      { id: 'report-userwise-forms', label: 'UserWise Forms Entered', description: 'Common: forms per user × exam', supervisorOnly: true },
       { id: 'correct-marks', label: 'Correct Marks', supervisorOnly: true, comingSoon: true },
     ],
   },
@@ -254,11 +279,17 @@ export const subodhNav: NavGroup[] = [
     id: 'reports',
     label: 'Reports',
     items: [
+      { id: 'report-centre-list', label: 'Centre List', description: 'केंद्र सूची — no, name, address' },
       { id: 'report-attendance', label: 'Attendance Sheet', description: 'Centre roll pairs' },
       { id: 'report-name-list', label: 'Name List', description: 'Candidate name list' },
       { id: 'report-result-sheet', label: 'Result Sheet', description: 'With or without names' },
       { id: 'report-certificate', label: 'Certificate', description: 'Pass candidates by region' },
       { id: 'report-register', label: 'Register', description: 'Dummy centre counts' },
+      {
+        id: 'report-centre-wise-students',
+        label: 'Centre-wise Students',
+        description: 'Roll from–to ranges per exam centre',
+      },
     ],
   },
 ]
@@ -302,6 +333,7 @@ export const prabodhNav: NavGroup[] = [
     label: 'Supervisor',
     items: [
       { id: 'reset-lock', label: 'Reset Result Lock', supervisorOnly: true },
+      { id: 'report-userwise-forms', label: 'UserWise Forms Entered', description: 'Common: forms per user × exam', supervisorOnly: true },
       { id: 'correct-marks', label: 'Correct Marks', supervisorOnly: true, comingSoon: true },
     ],
   },
@@ -309,6 +341,7 @@ export const prabodhNav: NavGroup[] = [
     id: 'reports',
     label: 'Reports',
     items: [
+      { id: 'report-centre-list', label: 'Centre List', description: 'केंद्र सूची — no, name, address' },
       { id: 'report-attendance', label: 'Attendance Sheet', description: 'Centre roll pairs' },
       { id: 'report-name-list', label: 'Name List', description: 'Candidate name list' },
       { id: 'report-result-sheet', label: 'Result Sheet', description: 'With or without names' },
@@ -317,6 +350,11 @@ export const prabodhNav: NavGroup[] = [
       { id: 'report-certificate', label: 'Certificate', description: 'Pass candidates by region' },
       { id: 'report-register', label: 'Register', description: 'Dummy centre counts' },
       { id: 'report-lost-by-2', label: 'Lost by 2 Marks', description: 'Near-miss fails' },
+      {
+        id: 'report-centre-wise-students',
+        label: 'Centre-wise Students',
+        description: 'Roll from–to ranges per exam centre',
+      },
     ],
   },
 ]
@@ -358,6 +396,7 @@ export const praveenNav: NavGroup[] = [
     label: 'Supervisor',
     items: [
       { id: 'reset-lock', label: 'Reset Result Lock', supervisorOnly: true },
+      { id: 'report-userwise-forms', label: 'UserWise Forms Entered', description: 'Common: forms per user × exam', supervisorOnly: true },
       { id: 'correct-marks', label: 'Correct Marks', supervisorOnly: true, comingSoon: true },
     ],
   },
@@ -365,6 +404,7 @@ export const praveenNav: NavGroup[] = [
     id: 'reports',
     label: 'Reports',
     items: [
+      { id: 'report-centre-list', label: 'Centre List', description: 'केंद्र सूची — no, name, address' },
       { id: 'report-attendance', label: 'Attendance Sheet', description: 'Centre roll pairs' },
       { id: 'report-name-list', label: 'Name List', description: 'Candidate name list' },
       { id: 'report-result-sheet', label: 'Result Sheet', description: 'Marks 1–5, Oral, Project' },
@@ -373,6 +413,11 @@ export const praveenNav: NavGroup[] = [
       { id: 'report-register', label: 'Register', description: 'Dummy centre counts' },
       { id: 'report-ranks', label: 'Ranks', description: 'FIRST / SECOND among Pass' },
       { id: 'report-lost-by-2', label: 'Lost by 2 Marks', description: 'Near-miss fails' },
+      {
+        id: 'report-centre-wise-students',
+        label: 'Centre-wise Students',
+        description: 'Roll from–to ranges per exam centre',
+      },
     ],
   },
 ]
@@ -415,6 +460,7 @@ export const panditNav: NavGroup[] = [
     label: 'Supervisor',
     items: [
       { id: 'reset-lock', label: 'Reset Result Lock', supervisorOnly: true },
+      { id: 'report-userwise-forms', label: 'UserWise Forms Entered', description: 'Common: forms per user × exam', supervisorOnly: true },
       { id: 'correct-marks', label: 'Correct Marks', supervisorOnly: true, comingSoon: true },
     ],
   },
@@ -422,6 +468,7 @@ export const panditNav: NavGroup[] = [
     id: 'reports',
     label: 'Reports',
     items: [
+      { id: 'report-centre-list', label: 'Centre List', description: 'केंद्र सूची — no, name, address' },
       { id: 'report-attendance', label: 'Attendance Sheet', description: 'Centre roll pairs' },
       { id: 'report-name-list', label: 'Name List', description: 'Candidate name list' },
       { id: 'report-result-sheet', label: 'Result Sheet', description: 'Khand tots, grade, result' },
@@ -432,6 +479,11 @@ export const panditNav: NavGroup[] = [
       { id: 'report-ranks', label: 'Ranks', description: 'FIRST / SECOND' },
       { id: 'report-students-passing', label: 'Students Passing', description: 'Exam / Khand pass list' },
       { id: 'report-lost-by-2', label: 'Lost by 2 Marks', description: 'Near-miss fails' },
+      {
+        id: 'report-centre-wise-students',
+        label: 'Centre-wise Students',
+        description: 'Roll from–to ranges per exam centre',
+      },
     ],
   },
 ]
@@ -475,6 +527,7 @@ export const praveshikaNav: NavGroup[] = [
     label: 'Supervisor',
     items: [
       { id: 'reset-lock', label: 'Reset Result Lock', supervisorOnly: true },
+      { id: 'report-userwise-forms', label: 'UserWise Forms Entered', description: 'Common: forms per user × exam', supervisorOnly: true },
       { id: 'correct-marks', label: 'Correct Marks', supervisorOnly: true, comingSoon: true },
     ],
   },
@@ -482,11 +535,17 @@ export const praveshikaNav: NavGroup[] = [
     id: 'reports',
     label: 'Reports',
     items: [
+      { id: 'report-centre-list', label: 'Centre List', description: 'केंद्र सूची — no, name, address' },
       { id: 'report-attendance', label: 'Attendance Sheet', description: 'Centre roll pairs' },
       { id: 'report-name-list', label: 'Name List', description: 'Candidate name list' },
       { id: 'report-result-sheet', label: 'Result Sheet', description: 'With or without names' },
       { id: 'report-certificate', label: 'Certificate', description: 'Pass candidates by region' },
       { id: 'report-register', label: 'Register', description: 'Dummy centre counts' },
+      {
+        id: 'report-centre-wise-students',
+        label: 'Centre-wise Students',
+        description: 'Roll from–to ranges per exam centre',
+      },
     ],
   },
 ]

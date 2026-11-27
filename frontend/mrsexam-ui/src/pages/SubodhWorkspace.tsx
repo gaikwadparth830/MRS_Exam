@@ -18,6 +18,8 @@ import {
 import { SubodhMarksPage } from './subodh/SubodhMarksPage'
 import { SubodhRollNumbersPage } from './subodh/SubodhRollNumbersPage'
 import { SubodhReportsPage, isReportNavId } from './subodh/SubodhReportsPage'
+import { UserWiseFormsReportPage } from './common/UserWiseFormsReportPage'
+import { CentreListReportPage } from './common/CentreListReportPage'
 import { SelectSessionPage } from './subodh/SelectSessionPage'
 
 
@@ -148,6 +150,10 @@ export const SubodhWorkspace = ({ onSignOut, onSwitchExam }: Props) => {
         )
       case 'batch-insert':
         return <SubodhBatchInsertPage defaultSessionNo={defaultSession?.sessionNo} />
+      case 'report-centre-list':
+        return <CentreListReportPage />
+      case 'report-userwise-forms':
+        return <UserWiseFormsReportPage defaultSessionNo={defaultSession?.sessionNo} />
       case 'reset-lock':
         return <SubodhResetLockPage />
       default: {

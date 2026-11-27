@@ -66,6 +66,8 @@ builder.Services.AddScoped<SambhashanRollNumberService>();
 builder.Services.AddScoped<SambhashanMarksService>();
 builder.Services.AddScoped<SambhashanResultService>();
 builder.Services.AddScoped<SambhashanReportService>();
+builder.Services.AddScoped<UserWiseFormsReportService>();
+builder.Services.AddScoped<CentreListReportService>();
 builder.Services.AddScoped<DistrictUnicodeMigrationService>();
 builder.Services.AddScoped<CentreUnicodeMigrationService>();
 builder.Services.AddScoped<PrabodhFormUnicodeMigrationService>();

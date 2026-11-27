@@ -19,6 +19,8 @@ import {
 import { PanditMarksPage } from './pandit/PanditMarksPage'
 import { PanditRollNumbersPage } from './pandit/PanditRollNumbersPage'
 import { PanditReportsPage, isPanditReportNavId } from './pandit/PanditReportsPage'
+import { UserWiseFormsReportPage } from './common/UserWiseFormsReportPage'
+import { CentreListReportPage } from './common/CentreListReportPage'
 import { SelectSessionPage } from './pandit/SelectSessionPage'
 
 
@@ -148,6 +150,10 @@ export const PanditWorkspace = ({ onSignOut, onSwitchExam }: Props) => {
         )
       case 'batch-insert':
         return <PanditBatchInsertPage defaultSessionNo={defaultSession?.sessionNo} />
+      case 'report-centre-list':
+        return <CentreListReportPage />
+      case 'report-userwise-forms':
+        return <UserWiseFormsReportPage defaultSessionNo={defaultSession?.sessionNo} />
       case 'reset-lock':
         return <PanditResetLockPage />
       default: {

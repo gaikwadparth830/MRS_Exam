@@ -18,6 +18,8 @@ import {
 import { PrabodhMarksPage } from './prabodh/PrabodhMarksPage'
 import { PrabodhRollNumbersPage } from './prabodh/PrabodhRollNumbersPage'
 import { PrabodhReportsPage, isReportNavId } from './prabodh/PrabodhReportsPage'
+import { UserWiseFormsReportPage } from './common/UserWiseFormsReportPage'
+import { CentreListReportPage } from './common/CentreListReportPage'
 import { SelectSessionPage } from './prabodh/SelectSessionPage'
 
 
@@ -148,6 +150,10 @@ export const PrabodhWorkspace = ({ onSignOut, onSwitchExam }: Props) => {
         )
       case 'batch-insert':
         return <PrabodhBatchInsertPage defaultSessionNo={defaultSession?.sessionNo} />
+      case 'report-centre-list':
+        return <CentreListReportPage />
+      case 'report-userwise-forms':
+        return <UserWiseFormsReportPage defaultSessionNo={defaultSession?.sessionNo} />
       case 'reset-lock':
         return <PrabodhResetLockPage />
       default: {

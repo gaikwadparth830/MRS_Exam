@@ -284,4 +284,52 @@ namespace mrsexam_backend.Dtos
         public int FailCount { get; set; }
         public int AbsentCount { get; set; }
     }
+
+    /// <summary>Legacy Rpt_CentreWiseNoOfStudent — contiguous roll ranges per exam centre.</summary>
+    public sealed class CentreWiseStudentsReportDto
+    {
+        public ReportHeaderDto Header { get; set; } = new();
+        public List<CentreWiseStudentsRowDto> Rows { get; set; } = new();
+    }
+
+    public sealed class CentreWiseStudentsRowDto
+    {
+        public string? CentreNo { get; set; }
+        public string? CentreName { get; set; }
+        public int? RollFrom { get; set; }
+        public int? RollTo { get; set; }
+        /// <summary>Second contiguous block when present (legacy column 4); otherwise null → print "- से -".</summary>
+        public int? RollFrom2 { get; set; }
+        public int? RollTo2 { get; set; }
+        public int StudentCount { get; set; }
+    }
+
+    /// <summary>Legacy Frm_Userwiselist_Totforms / Rpt_TotalForms — forms per user × exam.</summary>
+    public sealed class UserWiseFormsReportDto
+    {
+        public ReportHeaderDto Header { get; set; } = new();
+        public List<UserWiseFormsRowDto> Rows { get; set; } = new();
+    }
+
+    public sealed class UserWiseFormsRowDto
+    {
+        public string? UserId { get; set; }
+        public string? Exam { get; set; }
+        public int FormCount { get; set; }
+    }
+
+    /// <summary>Legacy Rpt_CentreList — केंद्र सूची.</summary>
+    public sealed class CentreListReportDto
+    {
+        public ReportHeaderDto Header { get; set; } = new();
+        public string PrintDate { get; set; } = string.Empty;
+        public List<CentreListRowDto> Rows { get; set; } = new();
+    }
+
+    public sealed class CentreListRowDto
+    {
+        public string? CentreNo { get; set; }
+        public string? CentreName { get; set; }
+        public string? Address { get; set; }
+    }
 }

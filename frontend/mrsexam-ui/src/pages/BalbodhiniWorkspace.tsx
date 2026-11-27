@@ -18,6 +18,8 @@ import {
 import { BalbodhiniMarksPage } from './balbodhini/BalbodhiniMarksPage'
 import { BalbodhiniRollNumbersPage } from './balbodhini/BalbodhiniRollNumbersPage'
 import { BalbodhiniReportsPage, isReportNavId } from './balbodhini/BalbodhiniReportsPage'
+import { UserWiseFormsReportPage } from './common/UserWiseFormsReportPage'
+import { CentreListReportPage } from './common/CentreListReportPage'
 import { SelectSessionPage } from './balbodhini/SelectSessionPage'
 
 
@@ -147,6 +149,10 @@ export const BalbodhiniWorkspace = ({ onSignOut, onSwitchExam }: Props) => {
         )
       case 'batch-insert':
         return <BalbodhiniBatchInsertPage defaultSessionNo={defaultSession?.sessionNo} />
+      case 'report-centre-list':
+        return <CentreListReportPage />
+      case 'report-userwise-forms':
+        return <UserWiseFormsReportPage defaultSessionNo={defaultSession?.sessionNo} />
       case 'reset-lock':
         return <BalbodhiniResetLockPage />
       default: {

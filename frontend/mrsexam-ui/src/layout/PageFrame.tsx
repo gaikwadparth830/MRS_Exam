@@ -2,7 +2,6 @@ import { Box, Stack, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
 
 type PageFrameProps = {
-  eyebrow?: string
   title: string
   description?: string
   actions?: ReactNode
@@ -10,7 +9,6 @@ type PageFrameProps = {
 }
 
 export const PageFrame = ({
-  eyebrow = 'Balbodhini Examination',
   title,
   description,
   actions,
@@ -30,10 +28,7 @@ export const PageFrame = ({
         }}
       >
         <Box>
-          <Typography variant="overline" color="primary.main">
-            {eyebrow}
-          </Typography>
-          <Typography variant="h4" component="h1" sx={{ mt: 0.25 }}>
+          <Typography variant="h4" component="h1">
             {title}
           </Typography>
           {description ? (
